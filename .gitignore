@@ -1,7 +1,4 @@
-AIA_Raw_vs_Gated-Jet_Proposal-2x2.ipynb
-.ipynb_checkpoints/AIA_Raw_vs_Gated-Jet_Proposal-2x2-checkpoint.ipynb
-.ipynb_checkpoints/ADF_SSN_01_Uniform_vs_Masked_Removal-checkpoint.ipynb
 .ipynb_checkpoints/
+__pycache__/
+output/
 *.png
-ADF_SSN_04_Interval_Distribution.ipynb
-functions/__pycache__/detect_peaks.cpython-36.pyc
