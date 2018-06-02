@@ -51,11 +51,8 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         :param plot: Flag that enables the plotting and saving of relevant figures
         """
 
-        SSN_Class.ssn_cl.__init__(self, ref_data_path=ref_data_path,
-                                  silso_path=silso_path,
-                                  obs_data_path=obs_data_path,
+        SSN_Class.ssn_cl.__init__(self,obs_data_path=obs_data_path,
                                   obs_observer_path=obs_observer_path,
-                                  output_path=output_path,
                                   font=font)
 
         # Create output folder
@@ -147,18 +144,6 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         print('done.', flush=True)
 
-
-        #--------------------------------------------------------------------------------------------------------------
-        print('Reading Observer data...', end="", flush=True)
-
-        GN_Dat = pd.read_csv(obs_data_path, quotechar = '"', encoding = 'ansi',header = 15)
-
-        GN_Dat['GROUPS'] = GN_Dat['GROUPS'].astype(float)
-
-        GN_Obs = pd.read_csv(obs_observer_path, quotechar = '"', encoding = 'ansi')
-
-        print('done.', flush=True)
-
         #--------------------------------------------------------------------------------------------------
         print('Creating window masks...', end="", flush=True)
 
@@ -169,10 +154,10 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         for cen in cenPointsR:
             if cen[1] == 1:
                 risMask['MASK'][np.logical_and(REF_Dat['FRACYEAR'].values >= cen[0] - phTol,
-                                       REF_Dat['FRACYEAR'].values <= cen[0] + phTol)] = True
+                                               REF_Dat['FRACYEAR'].values <= cen[0] + phTol)] = True
             else:
                 decMask['MASK'][np.logical_and(REF_Dat['FRACYEAR'].values >= cen[0] - phTol,
-                                       REF_Dat['FRACYEAR'].values <= cen[0] + phTol)] = True
+                                               REF_Dat['FRACYEAR'].values <= cen[0] + phTol)] = True
 
         # Creating cadence mask
         cadMask = np.zeros(REF_Dat.shape[0], dtype=bool)
@@ -196,13 +181,22 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         # Storing variables in object-----------------------------------------------------------------------------------
 
+        self.output_path = output_path  # Location of all output files
+
+        self.font = font  # Font to be used while plotting
         self.dt = dt  # Temporal Stride in days
         self.phTol = phTol  # Cycle phase tolerance in years
         self.thN = thN  # Number of thresholds including 0
         self.thI = thI  # Threshold increments
 
+        self.REF_Dat = REF_Dat  # Reference data with individual group areas each day
+
         self.risMask = risMask  # Mask indicating the code where to place the search window during raising phases
         self.decMask = decMask  # Mask indicating the code where to place the search window during raising phases
+
+        self.endPoints = {'SILSO': endPointsS}  # Variable that stores the boundaries of each rising and decaying phase
+        self.cenPoints = {'SILSO': cenPointsS}  # Variable that stores the centers of each rising and decaying phase
+
 
         # --------------------------------------------------------------------------------------------------------------
 
@@ -318,8 +312,6 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         print('Processing ' + NamObs, flush=True)
 
-        print('Calculating Ordinal day and Fractional year...', end="", flush=True)
-
         # Picking observations
         ObsDat = self.GN_Dat[self.GN_Dat.STATION == CalObs].copy()
 
@@ -328,17 +320,6 @@ class ssnADF_cl(SSN_Class.ssn_cl):
             print('done. NO VALID INTERVALS IN OBSERVER', flush=True)
             print(' ', flush=True)
             return False
-
-
-        ObsDat['ORDINAL'] = ObsDat.apply(lambda x: datetime.date(x['YEAR'].astype(int),x['MONTH'].astype(int),x['DAY'].astype(int)).toordinal(),axis=1)
-        ObsDat['FRACYEAR'] = ObsDat.apply(lambda x: x['YEAR'].astype(int)
-                                                    + (  datetime.date(x['YEAR'].astype(int),x['MONTH'].astype(int),x['DAY'].astype(int)).toordinal()
-                                                       - datetime.date(x['YEAR'].astype(int),1,1).toordinal() )
-                                                    / (  datetime.date(x['YEAR'].astype(int)+1,1,1).toordinal()
-                                                       - datetime.date(x['YEAR'].astype(int),1,1).toordinal() )
-                                          ,axis=1)
-
-        print('done.', flush=True)
 
         # Finding missing days
         ObsInt = np.arange(np.min(ObsDat['ORDINAL']), np.max(ObsDat['ORDINAL'] + 1))
@@ -350,7 +331,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         day = np.array(list(map(lambda x: datetime.date.fromordinal(x).day, ObsInt[MisDays])))
 
         station = day * 0 + CalObs
-        observer = day * 0 + ObsDat.iloc[0, 4]
+        observer = day * 0 + 1
         groups = day * np.nan
 
         fractyear = np.array(list(map(lambda year, month, day: year + (datetime.date(year, month, day).toordinal()
@@ -359,14 +340,14 @@ class ssnADF_cl(SSN_Class.ssn_cl):
                                                                   - datetime.date(year, 1, 1).toordinal()), year, month,
                                       day)))
 
-        NoObs = pd.DataFrame(np.column_stack((year, month, day, station, observer, groups, ObsInt[MisDays], fractyear)),
+        NoObs = pd.DataFrame(np.column_stack((year, month, day, ObsInt[MisDays], station, observer, groups, fractyear)),
                              columns=ObsDat.columns.values)
 
         # Append dataframe with missing days
         ObsDat = ObsDat.append(NoObs, ignore_index=True)
 
         # Recast using original data types
-        origType = ObsDat.dtypes.to_dict()
+        origType = self.GN_Dat.dtypes.to_dict()
         ObsDat = ObsDat.apply(lambda x: x.astype(origType[x.name]))
 
         # Sorting according to date

@@ -47,7 +47,7 @@ y_row += ['Avg.ResOO']
 Y_vals.append(y_row)
 
 # Defining Observer
-for CalObs in range(1, 600):
+for CalObs in range(412, 600):
 
     #CalObs = 412
 
