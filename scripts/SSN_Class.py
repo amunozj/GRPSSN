@@ -25,7 +25,7 @@ class ssn_cl(object):
         # --------------------------------------------------------------------------------------------------------------
         print('Reading Observer data...', end="", flush=True)
 
-        ssn_data = SSN_data()
+        self.ssn_data = SSN_data()
 
         GN_Dat = pd.read_csv(obs_data_path, quotechar='"', encoding='utf-8', header=15)
 
@@ -38,22 +38,20 @@ class ssn_cl(object):
         # Storing variables in object-----------------------------------------------------------------------------------
 
         # Color specification
-        ssn_data.ClrS = (0.74, 0.00, 0.00)
-        ssn_data.ClrN = (0.20, 0.56, 1.00)
+        self.ssn_data.ClrS = (0.74, 0.00, 0.00)
+        self.ssn_data.ClrN = (0.20, 0.56, 1.00)
 
-        ssn_data.Clr = [(0.00, 0.00, 0.00),
+        self.ssn_data.Clr = [(0.00, 0.00, 0.00),
                     (0.31, 0.24, 0.00),
                     (0.43, 0.16, 0.49),
                     (0.32, 0.70, 0.30),
                     (0.45, 0.70, 0.90),
                     (1.00, 0.82, 0.67)]
 
-        ssn_data.font = font  # Font to be used while plotting
+        self.ssn_data.font = font  # Font to be used while plotting
 
-        ssn_data.GN_Dat = GN_Dat  # Observer data containing group numbers for each observer
-        ssn_data.GN_Obs = GN_Obs  # Observer data containing observer names and codes
-
-        self.ssn_data = ssn_data # Store as global for this class
+        self.ssn_data.GN_Dat = GN_Dat  # Observer data containing group numbers for each observer
+        self.ssn_data.GN_Obs = GN_Obs  # Observer data containing observer names and codes
 
         print('Done reading observer data.', flush=True)
         print(' ', flush=True)
