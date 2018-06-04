@@ -46,7 +46,7 @@ y_row = ['Observer',
 Y_vals.append(y_row)
 
 # Defining Observer
-for CalObs in range(412, 600):
+for CalObs in range(SSN_Config.OBS_START_ID, SSN_Config.OBS_END_ID):
 
     if CalObs in SSN_Config.SKIP_OBS:
         continue

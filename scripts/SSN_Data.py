@@ -11,7 +11,9 @@ class SSN_Config:
     Class to store static config variables
     """
 
-    # Skip observers
+    # Observer ID range and who to skip
+    OBS_START_ID = 412
+    OBS_END_ID = 600
     SKIP_OBS = [332]
 
     # ADF variables
