@@ -11,6 +11,9 @@ class SSN_Config:
     Class to store static config variables
     """
 
+    # Skip observers
+    SKIP_OBS = [332]
+
     # ADF variables
     ADF_TYPE = "ADF"  # 1 - QDF
     MONTH_TYPE = "FULL"  # ACTIVE
@@ -25,3 +28,4 @@ class SSN_Config:
     PLOT_DIST_THRESH = True
     PLOT_SINGLE_THRESH_SCATTER = True
     PLOT_MULTI_THRESH_SCATTER = True
+

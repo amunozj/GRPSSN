@@ -45,13 +45,10 @@ y_row = ['Observer',
 
 Y_vals.append(y_row)
 
-skip_obs = [332]
-
 # Defining Observer
 for CalObs in range(412, 600):
 
-    # CalObs = 412
-    if CalObs in skip_obs:
+    if CalObs in SSN_Config.SKIP_OBS:
         continue
 
     print("######## Beginning run on observer {} ########\n".format(CalObs))
