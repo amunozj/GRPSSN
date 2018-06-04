@@ -1,6 +1,8 @@
 import pandas as pd
 import datetime
 import numpy as np
+import sys
+sys.path.insert(1, r'../functions')  # add to pythonpath
 from detect_peaks import detect_peaks
 from astropy import convolution as conv
 from scipy import signal
