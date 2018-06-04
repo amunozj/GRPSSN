@@ -21,8 +21,6 @@ class ssnADF_cl(SSN_Class.ssn_cl):
     A class for managing SSN data, reference data, and performing ADF calculations
     """
 
-    ssn_data = None
-
     def __init__(self,
                  ref_data_path='input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
                  silso_path='input_data/SN_m_tot_V2.0.csv',
@@ -189,23 +187,24 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         # Storing variables in object-----------------------------------------------------------------------------------
 
         # ssn_data object to store metadata
-        ssn_data = self.ssn_data
 
-        ssn_data.output_path = output_path  # Location of all output files
+        self.ssn_data.output_path = output_path  # Location of all output files
 
-        ssn_data.font = font  # Font to be used while plotting
-        ssn_data.ssn_datadt = dt  # Temporal Stride in days
-        ssn_data.phTol = phTol  # Cycle phase tolerance in years
-        ssn_data.thN = thN  # Number of thresholds including 0
-        ssn_data.thI = thI  # Threshold increments
+        self.ssn_data.font = font  # Font to be used while plotting
+        self.ssn_data.ssn_datadt = dt  # Temporal Stride in days
+        self.ssn_data.phTol = phTol  # Cycle phase tolerance in years
+        self.ssn_data.thN = thN  # Number of thresholds including 0
+        self.ssn_data.thI = thI  # Threshold increments
 
-        ssn_data.REF_Dat = REF_Dat  # Reference data with individual group areas each day
+        self.ssn_data.REF_Dat = REF_Dat  # Reference data with individual group areas each day
 
-        ssn_data.risMask = risMask  # Mask indicating the code where to place the search window during raising phases
-        ssn_data.decMask = decMask  # Mask indicating the code where to place the search window during raising phases
+        self.ssn_data.risMask = risMask  # Mask indicating the code where to place the search window during raising phases
+        self.ssn_data.decMask = decMask  # Mask indicating the code where to place the search window during raising phases
 
-        ssn_data.endPoints = {'SILSO': endPointsS}  # Variable that stores the boundaries of each rising and decaying phase
-        ssn_data.cenPoints = {'SILSO': cenPointsS}  # Variable that stores the centers of each rising and decaying phase
+        self.ssn_data.endPoints = {
+            'SILSO': endPointsS}  # Variable that stores the boundaries of each rising and decaying phase
+        self.ssn_data.cenPoints = {
+            'SILSO': cenPointsS}  # Variable that stores the centers of each rising and decaying phase
 
         # ssn_data = {'output_path': output_path,  # Location of all output files
         #             'font': font,  # Font to be used while plotting
@@ -223,10 +222,11 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
 
 
+
         # --------------------------------------------------------------------------------------------------------------
 
         if plot:
-            SSN_Plotter._plotSearchWindows(ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max)
+            SSN_Plotter._plotSearchWindows(self.ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max)
 
         print('Done initializing data.', flush=True)
         print(' ', flush=True)
@@ -400,11 +400,11 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         # Storing variables in object-----------------------------------------------------------------------------------
 
+
         ssn_data.CalObs = CalObs  # Observer identifier denoting observer to be processed
         ssn_data.NamObs = NamObs  # Name of observer
         ssn_data.minObD = minObD  # Minimum fraction of observed days for an interval to be considered useful
         ssn_data.MoLngt = MoLngt  # Duration of the interval ("month") used to calculate the ADF
-
         ssn_data.ObsDat = ObsDat  # Data of observer being analyzed
 
         ssn_data.endPoints['OBS'] = endPoints  # Variable that stores the boundaries of each rising and decaying phase
@@ -413,6 +413,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         ssn_data.vldIntr = vldIntr  # Variable indicating whether each rising or decaying interval has enough data to be valid
         ssn_data.obsPlt = obsPlt  # Variable with the oserver average groups for plotting
 
+        self.ssn_data = ssn_data
 
         # --------------------------------------------------------------------------------------------------------------
 
@@ -474,13 +475,15 @@ class ssnADF_cl(SSN_Class.ssn_cl):
                     cadMaskI = ssn_data.decMask['INDEX']
 
                 # Selecting interval
-                TObsDat = ssn_data.ObsDat.loc[np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
-                                                         ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
-                , 'GROUPS'].values.copy()
+                TObsDat = ssn_data.ObsDat.loc[
+                    np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                                   ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
+                    , 'GROUPS'].values.copy()
 
-                TObsFYr = ssn_data.ObsDat.loc[np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
-                                                         ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
-                , 'FRACYEAR'].values.copy()
+                TObsFYr = ssn_data.ObsDat.loc[
+                    np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                                   ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
+                    , 'FRACYEAR'].values.copy()
 
                 # Find index of center of sub-interval
                 minYear = np.min(np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]))
@@ -500,7 +503,8 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
                     # Calculating number of groups in reference data for given threshold
                     grpsREFw = np.nansum(
-                        np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], TIdx * ssn_data.thI),
+                        np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3],
+                                   TIdx * ssn_data.thI),
                         axis=1).astype(float)
                     grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
 
@@ -607,13 +611,17 @@ class ssnADF_cl(SSN_Class.ssn_cl):
                             # Calculating Earth Mover's Distance
 
                             ADFObs, bins = np.histogram(np.divide(
-                                GDObsI[siInx][TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                                ODObsI[siInx][TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
+                                GDObsI[siInx][
+                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
+                                ODObsI[siInx][
+                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
                                 bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
                             ADFREF, bins = np.histogram(np.divide(
-                                GDREFI[siInx][TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                                ODREFI[siInx][TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
+                                GDREFI[siInx][
+                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
+                                ODREFI[siInx][
+                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
                                 bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
                             EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
@@ -812,6 +820,8 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         ssn_data.mResI = mResI  # Mean residual of the y=x line for each separate interval
         ssn_data.rSqDT = rSqDT  # R square of the y=x line using the average threshold for each interval
         ssn_data.mResDT = mResDT  # Mean residual of the y=x line using the average threshold for each interval
+
+        self.ssn_data = ssn_data
         # --------------------------------------------------------------------------------------------------------------
 
         print('done.', flush=True)
@@ -963,37 +973,45 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
                             ADFObsI = np.divide(
                                 ssn_data.GDObsI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODObsI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD],
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD],
                                 ssn_data.ODObsI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODObsI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD])
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD])
 
                             ADFREFI = np.divide(
                                 ssn_data.GDREFI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODREFI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD],
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD],
                                 ssn_data.ODREFI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODREFI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD])
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD])
 
                         # If not, append ADF from all sub-interval for the specified shifts
                         else:
                             ADFObsI = np.append(ADFObsI, np.divide(
                                 ssn_data.GDObsI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODObsI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD],
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD],
                                 ssn_data.ODObsI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODObsI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD]))
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD]))
 
                             ADFREFI = np.append(ADFREFI, np.divide(
                                 ssn_data.GDREFI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODREFI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD],
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD],
                                 ssn_data.ODREFI[siInx][TIdx, valShfInx[siInx][comb[siInx]], ssn_data.ODREFI[siInx][TIdx,
-                                                                                        valShfInx[siInx][comb[siInx]],
-                                                                                        :] / ssn_data.MoLngt >= ssn_data.minObD]))
+                                                                                            valShfInx[siInx][
+                                                                                                comb[siInx]],
+                                                                                            :] / ssn_data.MoLngt >= ssn_data.minObD]))
 
                 # Calculating Earth Mover's Distance
                 ADFObs, bins = np.histogram(ADFObsI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
@@ -1090,12 +1108,14 @@ class ssnADF_cl(SSN_Class.ssn_cl):
             for n in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
                 # Plot only if the period is valid and has overlap
-                if ssn_data.vldIntr[n] and np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
-                                                             ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][
-                                                                         n + 1, 0])) > 0:
+                if ssn_data.vldIntr[n] and np.sum(
+                        np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
+                                       ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][
+                                                   n + 1, 0])) > 0:
                     # Calculating number of groups in reference data for given threshold
-                    grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], wAv),
-                                         axis=1).astype(float)
+                    grpsREFw = np.nansum(
+                        np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], wAv),
+                        axis=1).astype(float)
                     grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
 
                     # Selecting observer's interval
@@ -1150,6 +1170,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         ssn_data.rSqOO = rSqOO  # R square of the y=x line using a common threshold, but only the valid intervals
         ssn_data.mResOO = mResOO  # Mean residual of the y=x line using a common threshold, but only the valid intervals
+
         # --------------------------------------------------------------------------------------------------------------
 
         print('done.', flush=True)
