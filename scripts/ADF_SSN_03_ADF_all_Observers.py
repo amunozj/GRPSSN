@@ -9,18 +9,18 @@ output_path = 'TestFrag'
 
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = SSN_ADF_Class.ssnADF_cl(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
-                         silso_path='../input_data/SN_m_tot_V2.0.csv',
-                         obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
-                         obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
-                         output_path='output/' + output_path,
-                         font={'family': 'sans-serif',
-                               'weight': 'normal',
-                               'size': 21},
-                         dt=14,  # Temporal Stride in days
-                         phTol=2,  # Cycle phase tolerance in years
-                         thN=100,  # Number of thresholds including 0
-                         thI=1,  # Threshold increments
-                         plot=plotSwitch)
+                                  silso_path='../input_data/SN_m_tot_V2.0.csv',
+                                  obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
+                                  obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
+                                  output_path='output/' + output_path,
+                                  font={'family': 'sans-serif',
+                                        'weight': 'normal',
+                                        'size': 21},
+                                  dt=14,  # Temporal Stride in days
+                                  phTol=2,  # Cycle phase tolerance in years
+                                  thN=100,  # Number of thresholds including 0
+                                  thI=1,  # Threshold increments
+                                  plot=plotSwitch)
 
 # Creating Variable to save csv
 Y_vals = []
@@ -45,19 +45,18 @@ Y_vals.append(y_row)
 
 skip_obs = [332]
 
-
 # Defining Observer
 for CalObs in range(412, 600):
 
-    #CalObs = 412
+    # CalObs = 412
     if CalObs in skip_obs:
         continue
-
 
     # Processing observer
     obs_valid = ssn_adf.processObserver(CalObs=CalObs,  # Observer identifier denoting observer to be processed
                                         MoLngt=30,  # Duration of the interval ("month") used to calculate the ADF
-                                        minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
+                                        minObD=0.33,
+                                        # Minimum proportion of days with observation for a "month" to be considered valid
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
     # Plot active vs. observed days
@@ -81,11 +80,10 @@ for CalObs in range(412, 600):
             if obs_ref_overlap and np.sum(ssn_adf.vldIntr) > 1:
                 ssn_adf.plotIntervalScatterPlots()
 
-
-
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
-        plot_obs = ssn_adf.ADFsimultaneousEMD(disThres=1.20,  # Threshold above which we will ignore timeshifts in simultaneous fit
-                                   MaxIter=1000)  # Maximum number of iterations above which we skip simultaneous fit
+        plot_obs = ssn_adf.ADFsimultaneousEMD(disThres=1.20,
+                                              # Threshold above which we will ignore timeshifts in simultaneous fit
+                                              MaxIter=1000)  # Maximum number of iterations above which we skip simultaneous fit
 
         if plotSwitch and plot_obs:
 
