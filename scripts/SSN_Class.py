@@ -1,5 +1,5 @@
 import pandas as pd
-from SSN_data import SSN_data
+from SSN_Data import SSN_Data
 
 class ssn_cl(object):
     """
@@ -25,7 +25,7 @@ class ssn_cl(object):
         # --------------------------------------------------------------------------------------------------------------
         print('Reading Observer data...', end="", flush=True)
 
-        self.ssn_data = SSN_data()
+        self.ssn_data = SSN_Data()
 
         GN_Dat = pd.read_csv(obs_data_path, quotechar='"', encoding='utf-8', header=15)
 

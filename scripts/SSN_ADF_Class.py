@@ -27,9 +27,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
                  obs_data_path='input_data/GNObservations_JV_V1.22.csv',
                  obs_observer_path='input_data/GNObservers_JV_V1.22.csv',
                  output_path='output',
-                 font={'family': 'sans-serif',
-                       'weight': 'normal',
-                       'size': 21},
+                 font=None,
                  dt=30,
                  phTol=2,
                  thN=50,
@@ -52,6 +50,10 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         :param plot: Flag that enables the plotting and saving of relevant figures
         """
 
+        if font is None:
+            font = {'family': 'sans-serif', 'weight': 'normal', 'size': 21}
+
+
         SSN_Class.ssn_cl.__init__(self, obs_data_path=obs_data_path,
                                   obs_observer_path=obs_observer_path,
                                   font=font)
@@ -60,7 +62,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
-        ## ----------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------------------------
         print('Reading Reference Data...', end="", flush=True)
 
         REF_Dat = pd.read_csv(ref_data_path, quotechar='"', encoding='utf-8', header=0)
@@ -90,7 +92,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         print('done.', flush=True)
 
-        ## ----------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------------------------
         print('Reading SILSO Data...', end="", flush=True)
 
         SILSO_Sn = pd.read_csv(silso_path, quotechar='"', encoding='utf-8', header=0)
@@ -186,8 +188,6 @@ class ssnADF_cl(SSN_Class.ssn_cl):
 
         # Storing variables in object-----------------------------------------------------------------------------------
 
-        # ssn_data object to store metadata
-
         self.ssn_data.output_path = output_path  # Location of all output files
 
         self.ssn_data.font = font  # Font to be used while plotting
@@ -205,23 +205,6 @@ class ssnADF_cl(SSN_Class.ssn_cl):
             'SILSO': endPointsS}  # Variable that stores the boundaries of each rising and decaying phase
         self.ssn_data.cenPoints = {
             'SILSO': cenPointsS}  # Variable that stores the centers of each rising and decaying phase
-
-        # ssn_data = {'output_path': output_path,  # Location of all output files
-        #             'font': font,  # Font to be used while plotting
-        #             'dt': dt,  # Temporal Stride in days
-        #             'phTol': phTol,  # Cycle phase tolerance in years
-        #             'thN': thN,  # Number of thresholds including 0
-        #             'thI': thI,  # Threshold increments
-        #             'REF_dat': REF_Dat,  # Reference data with individual group areas each day
-        #             'risMask': risMask,  # Mask indicating the code where to place the search window during raising phases
-        #             'decMask': decMask,  # Mask indicating the code where to place the search window during raising phases
-        #             'endPoints': {'SILSO': endPointsS},  # Variable that stores the boundaries of each rising and decaying phase
-        #             'cenPoints': {'SILSO': cenPointsS},  # Variable that stores the centers of each rising and decaying phase
-        #             'Clr': ssn_data.Clr  #Color variable from SSN_Class
-        #             }
-
-
-
 
         # --------------------------------------------------------------------------------------------------------------
 
@@ -441,6 +424,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         comparing the observer and the reference
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
+        :param ssn_data: SSN_data class object storing SSN metadata
         :param nBest: Number of top best matches to keep
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """

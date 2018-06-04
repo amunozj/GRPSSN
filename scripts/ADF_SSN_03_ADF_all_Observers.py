@@ -3,7 +3,7 @@ import csv
 import numpy as np
 
 import SSN_ADF_Class, SSN_Plotter
-from SSN_data import SSN_Config
+from SSN_Data import SSN_Config
 
 plotSwitch = True
 output_path = 'TestFrag'
