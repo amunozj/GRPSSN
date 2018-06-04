@@ -62,7 +62,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         ## ----------------------------------------------------------------------------------------------------
         print('Reading Reference Data...', end="", flush=True)
 
-        REF_Dat = pd.read_csv(ref_data_path, quotechar = '"', encoding = 'ansi',header = 0)
+        REF_Dat = pd.read_csv(ref_data_path, quotechar = '"', encoding = 'utf-8',header = 0)
         print('done.')
 
         print('Calculating ordinal day, fractional year, and number of groups...', end="")
@@ -90,7 +90,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         ## ----------------------------------------------------------------------------------------------------
         print('Reading SILSO Data...', end="", flush=True)
 
-        SILSO_Sn = pd.read_csv(silso_path, quotechar = '"', encoding = 'ansi', header = 0)
+        SILSO_Sn = pd.read_csv(silso_path, quotechar = '"', encoding = 'utf-8', header = 0)
 
         # Smoothing
 

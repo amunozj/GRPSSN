@@ -26,11 +26,11 @@ class ssn_cl(object):
         #--------------------------------------------------------------------------------------------------------------
         print('Reading Observer data...', end="", flush=True)
 
-        GN_Dat = pd.read_csv(obs_data_path, quotechar = '"', encoding = 'ansi',header = 15)
+        GN_Dat = pd.read_csv(obs_data_path, quotechar = '"', encoding = 'utf-8',header = 15)
 
         GN_Dat['GROUPS'] = GN_Dat['GROUPS'].astype(float)
 
-        GN_Obs = pd.read_csv(obs_observer_path, quotechar = '"', encoding = 'ansi')
+        GN_Obs = pd.read_csv(obs_observer_path, quotechar = '"', encoding = 'utf-8')
 
         print('done.', flush=True)
 
