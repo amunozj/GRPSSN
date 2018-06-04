@@ -2,18 +2,17 @@ import pandas as pd
 import datetime
 import numpy as np
 import sys
-
-sys.path.insert(1, r'../functions')  # add to pythonpath
-from detect_peaks import detect_peaks
 from astropy import convolution as conv
 from scipy import signal
 import scipy as sp
 from copy import copy
-
 from pyemd import emd
 import os.path
 
 import SSN_Class, SSN_Plotter
+
+sys.path.insert(1, r'../functions')  # add to pythonpath
+from detect_peaks import detect_peaks
 
 
 class ssnADF_cl(SSN_Class.ssn_cl):

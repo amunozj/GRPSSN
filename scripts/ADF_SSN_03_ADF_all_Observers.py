@@ -1,7 +1,5 @@
-# Modules
 import csv
 import numpy as np
-
 import SSN_ADF_Class, SSN_Plotter
 from SSN_Data import SSN_Config
 
