@@ -327,7 +327,6 @@ def plotOptimalThresholdWindow(SSN_data,
 
     # Going through different sub-intervals
     for siInx in range(0, SSN_data.cenPoints['OBS'].shape[0]):
-
         # Creating axis
         ax1 = fig.add_axes([ppadh, ppadv + (siInx + 1) * (pxy / fszv + ppadv2), pxx / fszh, pxy / fszv])
 
@@ -478,6 +477,8 @@ def plotOptimalThresholdWindow(SSN_data,
             # True Interval
             ax1.scatter(OpMat[0, 0], OpMat[0, 1], c='r', edgecolors='w', linewidths=2, s=200, zorder=11)
 
+
+            print(siInx, SSN_data.Clr)
             # Best 5 points
             for i in range(1, 5):
                 ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=150, zorder=11, alpha=0.5)
