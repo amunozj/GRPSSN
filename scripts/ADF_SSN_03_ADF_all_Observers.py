@@ -1,10 +1,6 @@
 # Modules
-import sys
-import os.path
 import csv
 import numpy as np
-
-sys.path.insert(1, r'../functions')  # add to pythonpath
 
 import SSN_ADF_Class
 
@@ -30,95 +26,101 @@ ssn_adf = SSN_ADF_Class.ssnADF_cl(ref_data_path='../input_data/SC_SP_RG_DB_KM_gr
 Y_vals = []
 
 # Naming Columns
-y_row = ['Observer']
-y_row += ['Station']
-y_row += ['AvThreshold']
-y_row += ['SDThreshold']
-y_row += ['R2']
-y_row += ['Avg.Res']
-y_row += ['AvThresholdS']
-y_row += ['SDThresholdS']
-y_row += ['R2S']
-y_row += ['Avg.Res.S']
-y_row += ['R2DT']
-y_row += ['Avg.ResDT']
-y_row += ['R2OO']
-y_row += ['Avg.ResOO']
+y_row = ['Observer',
+         'Station',
+         'AvThreshold',
+         'SDThreshold',
+         'R2',
+         'Avg.Res',
+         'AvThresholdS',
+         'SDThresholdS',
+         'R2S',
+         'Avg.Res.S',
+         'R2DT',
+         'Avg.ResDT',
+         'R2OO',
+         'Avg.ResOO']
+
 Y_vals.append(y_row)
+
+skip_obs = [332]
+
 
 # Defining Observer
 for CalObs in range(412, 600):
 
     #CalObs = 412
+    if CalObs in skip_obs:
+        continue
 
-    if CalObs != 332:
 
-        # Processing observer
-        obs_valid = ssn_adf.processObserver(CalObs=CalObs,  # Observer identifier denoting observer to be processed
-                                            MoLngt=30,  # Duration of the interval ("month") used to calculate the ADF
-                                            minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
-                                            vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
+    # Processing observer
+    obs_valid = ssn_adf.processObserver(CalObs=CalObs,  # Observer identifier denoting observer to be processed
+                                        MoLngt=30,  # Duration of the interval ("month") used to calculate the ADF
+                                        minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
+                                        vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
-        # Plot active vs. observed days
+    # Plot active vs. observed days
+    if plotSwitch:
+        ssn_adf.plotActiveVsObserved()
+
+    # Continue only if observer has valid intervals
+    if obs_valid:
+
+        # Calculating the Earth's Mover Distance using sliding windows for different intervals
+        obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(nBest=50)  # Number of top best matches to keep
+
         if plotSwitch:
-            ssn_adf.plotActiveVsObserved()
+            # Plot active vs. observed days
+            ssn_adf.plotOptimalThresholdWindow()
 
-        # Continue only if observer has valid intervals
-        if obs_valid:
+            # Plot Distribution of active thresholds
+            ssn_adf.plotDistributionOfThresholdsMI()
 
-            # Calculating the Earth's Mover Distance using sliding windows for different intervals
-            obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(nBest=50)  # Number of top best matches to keep
-
-            if plotSwitch:
-                # Plot active vs. observed days
-                ssn_adf.plotOptimalThresholdWindow()
-
-                # Plot Distribution of active thresholds
-                ssn_adf.plotDistributionOfThresholdsMI()
-
-                # If there is overlap between the observer and reference plot the y=x scatterplots
-                if obs_ref_overlap and np.sum(ssn_adf.vldIntr) > 1:
-                    ssn_adf.plotIntervalScatterPlots()
+            # If there is overlap between the observer and reference plot the y=x scatterplots
+            if obs_ref_overlap and np.sum(ssn_adf.vldIntr) > 1:
+                ssn_adf.plotIntervalScatterPlots()
 
 
 
-            # Calculating the Earth's Mover Distance using common thresholds for different intervals
-            plot_obs = ssn_adf.ADFsimultaneousEMD(disThres=1.20,  # Threshold above which we will ignore timeshifts in simultaneous fit
-                                       MaxIter=1000)  # Maximum number of iterations above which we skip simultaneous fit
+        # Calculating the Earth's Mover Distance using common thresholds for different intervals
+        plot_obs = ssn_adf.ADFsimultaneousEMD(disThres=1.20,  # Threshold above which we will ignore timeshifts in simultaneous fit
+                                   MaxIter=1000)  # Maximum number of iterations above which we skip simultaneous fit
 
-            if plotSwitch and plot_obs:
+        if plotSwitch and plot_obs:
 
-                if np.sum(ssn_adf.vldIntr) > 1:
-                    # Plotting minimum EMD figure
-                    ssn_adf.plotMinEMD()
+            if np.sum(ssn_adf.vldIntr) > 1:
+                # Plotting minimum EMD figure
+                ssn_adf.plotMinEMD()
 
-                    # Plot the result of simultaneous fit
-                    ssn_adf.plotSimultaneousFit()
+                # Plot the result of simultaneous fit
+                ssn_adf.plotSimultaneousFit()
 
-                    # Plot the distribution of thresholds
-                    ssn_adf.plotDistributionOfThresholds()
+                # Plot the distribution of thresholds
+                ssn_adf.plotDistributionOfThresholds()
 
-                # If there is overlap between the observer and reference plot the y=x scatterplots
-                if obs_ref_overlap:
-                    ssn_adf.plotSingleThresholdScatterPlot()
-                    ssn_adf.plotMultiThresholdScatterPlot()
+            # If there is overlap between the observer and reference plot the y=x scatterplots
+            if obs_ref_overlap:
+                ssn_adf.plotSingleThresholdScatterPlot()
+                ssn_adf.plotMultiThresholdScatterPlot()
 
-            # Saving row
-            y_row = [ssn_adf.CalObs]
-            y_row += [ssn_adf.NamObs]
-            y_row += [ssn_adf.wAv]
-            y_row += [ssn_adf.wSD]
-            y_row += [ssn_adf.rSq]
-            y_row += [ssn_adf.mRes]
-            y_row += [ssn_adf.wAvI]
-            y_row += [ssn_adf.wSDI]
-            y_row += [ssn_adf.rSqI]
-            y_row += [ssn_adf.mResI]
-            y_row += [ssn_adf.rSqDT]
-            y_row += [ssn_adf.mResDT]
-            y_row += [ssn_adf.rSqOO]
-            y_row += [ssn_adf.mResOO]
-            Y_vals.append(y_row)
+        # Saving row
+        y_row = [ssn_adf.CalObs,
+                 ssn_adf.NamObs,
+                 ssn_adf.wAv,
+                 ssn_adf.wSD,
+                 ssn_adf.rSq,
+                 ssn_adf.mRes,
+                 ssn_adf.wAvI,
+                 ssn_adf.wSDI,
+                 ssn_adf.rSqI,
+                 ssn_adf.mResI,
+                 ssn_adf.rSqDT,
+                 ssn_adf.mResDT,
+                 ssn_adf.rSqOO,
+                 ssn_adf.mResOO]
 
-        writer = csv.writer(open('output/' + output_path + '/Observer_ADF.csv', 'w', newline=''))
-        writer.writerows(Y_vals)
+        Y_vals.append(y_row)
+
+    writer = csv.writer(open('output/' + output_path + '/Observer_ADF.csv', 'w', newline=''))
+    writer.writerows(Y_vals)
