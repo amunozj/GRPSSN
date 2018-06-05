@@ -3,14 +3,15 @@ from astropy import convolution as conv
 import matplotlib.pyplot as plt
 from matplotlib import colors as clrs
 from pyemd import emd
+from SSN_Config import SSN_ADF_Config as config
 
 
 def plotSearchWindows(SSN_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
-                       dpi=300,
-                       pxx=4000,
-                       pxy=1300,
-                       padv=50,
-                       padh=50):
+                      dpi=300,
+                      pxx=4000,
+                      pxy=1300,
+                      padv=50,
+                      padh=50):
     """
     Function that plots the search window separated for convenience.
 
@@ -27,7 +28,7 @@ def plotSearchWindows(SSN_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
     :param padh: Horizontal padding in pixels at the edge of the figure in pixels
     """
 
-    figure_path = SSN_data.output_path + '/01_Search_Windows.png'
+    figure_path = '{}/01_Search_Windows.png'.format(SSN_data.output_path)
 
     print('Creating and saving search window figure...', end="", flush=True)
 
@@ -67,10 +68,12 @@ def plotSearchWindows(SSN_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
                 zorder=10)
     ax1.scatter(REF_max['FRACYEAR'], REF_max['MSMOOTH'], color='none', edgecolor='yellow', alpha=1, s=100, linewidths=3,
                 zorder=10)
-    ax1.fill(SSN_data.REF_Dat['FRACYEAR'], SSN_data.risMask['PLOT'] * np.max(SILSO_Sn['MMEAN']), edgecolor=SSN_data.Clr[4],
+    ax1.fill(SSN_data.REF_Dat['FRACYEAR'], SSN_data.risMask['PLOT'] * np.max(SILSO_Sn['MMEAN']),
+             edgecolor=SSN_data.Clr[4],
              color=SSN_data.Clr[4], alpha=0.3,
              zorder=15)
-    ax1.fill(SSN_data.REF_Dat['FRACYEAR'], SSN_data.decMask['PLOT'] * np.max(SILSO_Sn['MMEAN']), edgecolor=SSN_data.Clr[2],
+    ax1.fill(SSN_data.REF_Dat['FRACYEAR'], SSN_data.decMask['PLOT'] * np.max(SILSO_Sn['MMEAN']),
+             edgecolor=SSN_data.Clr[2],
              color=SSN_data.Clr[2], alpha=0.3,
              zorder=15)
 
@@ -112,8 +115,10 @@ def plotActiveVsObserved(SSN_data,
 
     print('Creating and saving active vs. observed days figure...', end="", flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/02_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_active_vs_observed_days.png'
+    figure_path = config.get_file_output_string('02', 'active_vs_observed_days',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     # Selecting the maximum integer amount of "months" out of the original data
     grpsOb = SSN_data.ObsDat['GROUPS'].values
@@ -245,7 +250,8 @@ def plotActiveVsObserved(SSN_data,
 
     for Idx in range(0, SSN_data.cenPoints['OBS'].shape[0]):
         if SSN_data.vldIntr[Idx]:
-            ax3.fill([SSN_data.endPoints['OBS'][Idx, 0], SSN_data.endPoints['OBS'][Idx, 0], SSN_data.endPoints['OBS'][Idx + 1, 0],
+            ax3.fill([SSN_data.endPoints['OBS'][Idx, 0], SSN_data.endPoints['OBS'][Idx, 0],
+                      SSN_data.endPoints['OBS'][Idx + 1, 0],
                       SSN_data.endPoints['OBS'][Idx + 1, 0]],
                      [0, np.ceil(np.nanmax(AvGrpOb)) + 1, np.ceil(np.nanmax(AvGrpOb)) + 1, 0],
                      color=SSN_data.Clr[1 + np.mod(Idx, 2) * 2], alpha=0.2)
@@ -288,8 +294,10 @@ def plotOptimalThresholdWindow(SSN_data,
     font = SSN_data.font
     plt.rc('font', **font)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/03_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Optimal_Threshold_Window.png'
+    figure_path = config.get_file_output_string('03', 'Optimal_Threshold_Window',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     print('Creating and saving optimal threshold figure...', end="", flush=True)
 
@@ -399,7 +407,8 @@ def plotOptimalThresholdWindow(SSN_data,
 
                         # Calculating number of groups in reference data for given threshold
                         grpsREFw = np.nansum(
-                            np.greater(SSN_data.REF_Dat.values[:, 3:SSN_data.REF_Dat.values.shape[1] - 3], TIdx * SSN_data.thI),
+                            np.greater(SSN_data.REF_Dat.values[:, 3:SSN_data.REF_Dat.values.shape[1] - 3],
+                                       TIdx * SSN_data.thI),
                             axis=1).astype(float)
                         grpsREFw[np.isnan(SSN_data.REF_Dat['AREA1'])] = np.nan
 
@@ -477,18 +486,19 @@ def plotOptimalThresholdWindow(SSN_data,
             # True Interval
             ax1.scatter(OpMat[0, 0], OpMat[0, 1], c='r', edgecolors='w', linewidths=2, s=200, zorder=11)
 
-
             print(siInx, SSN_data.Clr)
             # Best 5 points
             for i in range(1, 5):
                 ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=150, zorder=11, alpha=0.5)
                 ax2.plot(
                     SSN_data.obsPlt['X'][
-                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr), SSN_data.obsPlt['X'] < np.max(TObsFYr))] -
+                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr),
+                                       SSN_data.obsPlt['X'] < np.max(TObsFYr))] -
                     SSN_data.cenPoints['OBS'][siInx, 0] +
                     OpMat[i, 0]
                     , SSN_data.obsPlt['Y'][
-                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr), SSN_data.obsPlt['X'] < np.max(TObsFYr))],
+                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr),
+                                       SSN_data.obsPlt['X'] < np.max(TObsFYr))],
                     color=SSN_data.Clr[5 - siInx], linewidth=3
                     , alpha=0.2)
 
@@ -497,11 +507,13 @@ def plotOptimalThresholdWindow(SSN_data,
                 ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=100, zorder=11, alpha=0.5)
                 ax2.plot(
                     SSN_data.obsPlt['X'][
-                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr), SSN_data.obsPlt['X'] < np.max(TObsFYr))] -
+                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr),
+                                       SSN_data.obsPlt['X'] < np.max(TObsFYr))] -
                     SSN_data.cenPoints['OBS'][siInx, 0] +
                     OpMat[i, 0]
                     , SSN_data.obsPlt['Y'][
-                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr), SSN_data.obsPlt['X'] < np.max(TObsFYr))],
+                        np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr),
+                                       SSN_data.obsPlt['X'] < np.max(TObsFYr))],
                     color=SSN_data.Clr[5 - siInx], linewidth=3
                     , alpha=0.2)
 
@@ -585,8 +597,10 @@ def plotDistributionOfThresholdsMI(SSN_data,
 
     print('Creating and saving distribution of thresholds for different intervals figure...', end="", flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/04_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Distribution_of_Thresholds_MI.png'
+    figure_path = config.get_file_output_string('04', 'Distribution_of_Thresholds_MI',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     frc = 0.8  # Fraction of the panel devoted to histograms
 
@@ -621,7 +635,8 @@ def plotDistributionOfThresholdsMI(SSN_data,
                          pxx / fszh * frc, pxy / fszv * (1 - frc)], label='a' + str(n))
                     axd.hist(SSN_data.bestTh[n][:, 2], bins=(np.arange(0, SSN_data.nBest, 2)) / SSN_data.nBest * (
                         np.ceil(np.max(SSN_data.bestTh[n][:, 2])) - np.floor(np.min(SSN_data.bestTh[n][:, 2])))
-                                                        + np.floor(np.min(SSN_data.bestTh[n][:, 2])), color=SSN_data.Clr[4],
+                                                            + np.floor(np.min(SSN_data.bestTh[n][:, 2])),
+                             color=SSN_data.Clr[4],
                              alpha=.6,
                              density=True);
 
@@ -634,7 +649,8 @@ def plotDistributionOfThresholdsMI(SSN_data,
                     ax2 = fig.add_axes(
                         [ppadh + i * (pxx / fszh + ppadh2) + pxx / fszh * frc, ppadv + j * (pxy / fszv + ppadv2),
                          pxx / fszh * frc * (1 - frc), pxy / fszv * frc], label='b' + str(n))
-                    ax2.hist(SSN_data.bestTh[n][:, 1], bins=np.arange(0, SSN_data.thN, SSN_data.thI * 2), color=SSN_data.Clr[2],
+                    ax2.hist(SSN_data.bestTh[n][:, 1], bins=np.arange(0, SSN_data.thN, SSN_data.thI * 2),
+                             color=SSN_data.Clr[2],
                              alpha=.6,
                              orientation='horizontal', density=True);
 
@@ -646,17 +662,21 @@ def plotDistributionOfThresholdsMI(SSN_data,
                     ax1 = fig.add_axes(
                         [ppadh + i * (pxx / fszh + ppadh2), ppadv + j * (pxy / fszv + ppadv2), pxx / fszh * frc,
                          pxy / fszv * frc], sharex=axd, label='b' + str(n))
-                    ax1.scatter(SSN_data.bestTh[n][:, 2], SSN_data.bestTh[n][:, 1], color="0.25", edgecolor="k", alpha=0.1,
+                    ax1.scatter(SSN_data.bestTh[n][:, 2], SSN_data.bestTh[n][:, 1], color="0.25", edgecolor="k",
+                                alpha=0.1,
                                 s=100,
                                 linewidths=2)
 
-                    ax1.plot(np.array([np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
+                    ax1.plot(np.array(
+                        [np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
                              np.array([1, 1]) * SSN_data.wAvI[n], '--'
                              , color=SSN_data.Clr[4], linewidth=3)
-                    ax1.plot(np.array([np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
+                    ax1.plot(np.array(
+                        [np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
                              np.array([1, 1]) * SSN_data.wAvI[n] - SSN_data.wSDI[n], ':'
                              , color=SSN_data.Clr[4], linewidth=2)
-                    ax1.plot(np.array([np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
+                    ax1.plot(np.array(
+                        [np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
                              np.array([1, 1]) * SSN_data.wAvI[n] + SSN_data.wSDI[n], ':'
                              , color=SSN_data.Clr[4], linewidth=2)
 
@@ -665,7 +685,8 @@ def plotDistributionOfThresholdsMI(SSN_data,
                     ax1.set_xlabel('EMD for ' + SSN_data.NamObs)
                     ax1.text(0.5, 0.95,
                              'From ' + str(np.round(SSN_data.endPoints['OBS'][n, 0], decimals=2)) + '  to ' + str(
-                                 np.round(SSN_data.endPoints['OBS'][n + 1, 0], decimals=2)), horizontalalignment='center',
+                                 np.round(SSN_data.endPoints['OBS'][n + 1, 0], decimals=2)),
+                             horizontalalignment='center',
                              verticalalignment='center', transform=ax1.transAxes)
                     ax1.set_xlim(left=np.floor(np.min(SSN_data.bestTh[n][:, 2])),
                                  right=np.ceil(np.max(SSN_data.bestTh[n][:, 2])))
@@ -701,8 +722,10 @@ def plotIntervalScatterPlots(SSN_data,
 
     print('Creating and saving interval scatter-plots figure...', end="", flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/05_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Interval_Scatter_Plots.png'
+    figure_path = config.get_file_output_string('05', 'Interval_Scatter_Plots',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     frc = 0.8  # Fraction of the panel devoted to histograms
 
@@ -730,9 +753,10 @@ def plotIntervalScatterPlots(SSN_data,
             if n < SSN_data.vldIntr.shape[0]:
 
                 # Plot only if the period is valid and has overlap
-                if SSN_data.vldIntr[n] and np.sum(np.logical_and(SSN_data.REF_Dat['FRACYEAR'] >= SSN_data.endPoints['OBS'][n, 0],
-                                                             SSN_data.REF_Dat['FRACYEAR'] < SSN_data.endPoints['OBS'][
-                                                                         n + 1, 0])) > 0:
+                if SSN_data.vldIntr[n] and np.sum(
+                        np.logical_and(SSN_data.REF_Dat['FRACYEAR'] >= SSN_data.endPoints['OBS'][n, 0],
+                                       SSN_data.REF_Dat['FRACYEAR'] < SSN_data.endPoints['OBS'][
+                                                   n + 1, 0])) > 0:
                     grpsREFw = SSN_data.calRef[n]
                     grpsObsw = SSN_data.calObs[n]
 
@@ -751,10 +775,12 @@ def plotIntervalScatterPlots(SSN_data,
 
                     ax1.text(0.5, 0.95,
                              'From ' + str(np.round(SSN_data.endPoints['OBS'][n, 0], decimals=2)) + '  to ' + str(
-                                 np.round(SSN_data.endPoints['OBS'][n + 1, 0], decimals=2)), horizontalalignment='center',
+                                 np.round(SSN_data.endPoints['OBS'][n + 1, 0], decimals=2)),
+                             horizontalalignment='center',
                              verticalalignment='center', transform=ax1.transAxes)
                     ax1.text(0.5, 0.85, '$R^2$ = ' + str(np.round(SSN_data.rSqI[n], decimals=2)) + '  Mn.Res. = ' + str(
-                        np.round(SSN_data.mResI[n], decimals=2)), horizontalalignment='center', verticalalignment='center',
+                        np.round(SSN_data.mResI[n], decimals=2)), horizontalalignment='center',
+                             verticalalignment='center',
                              transform=ax1.transAxes)
 
                     # Axes properties
@@ -788,8 +814,10 @@ def plotMinEMD(SSN_data,
 
     print('Creating and saving minimum EMD figure...', end="", flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/06_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Min_EMD.png'
+    figure_path = config.get_file_output_string('06', 'Min_EMD',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     font = SSN_data.font
     plt.rc('font', **font)
@@ -860,7 +888,8 @@ def plotMinEMD(SSN_data,
                              y2=SSN_data.REF_Dat['FRACYEAR'] * 0 + np.min(y) * 10, where=pltMsk, color='w', zorder=10)
 
             # Plotting possible theshold
-            ax1.plot(np.array([np.min(x), np.max(x)]), np.array([1, 1]) * SSN_data.disThres * np.min(y), 'b:', linewidth=3)
+            ax1.plot(np.array([np.min(x), np.max(x)]), np.array([1, 1]) * SSN_data.disThres * np.min(y), 'b:',
+                     linewidth=3)
 
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
@@ -922,8 +951,10 @@ def plotSimultaneousFit(SSN_data,
 
     print('Creating and saving simultaneous fit figure...', end="", flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/07_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Simultaneous_Fit.png'
+    figure_path = config.get_file_output_string('07', 'Simultaneous_Fit',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     font = SSN_data.font
     plt.rc('font', **font)
@@ -970,18 +1001,24 @@ def plotSimultaneousFit(SSN_data,
             , 'FRACYEAR'].values.copy()
 
         # Plotting edges
-        ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11, linewidth=3,
+        ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
+                 linewidth=3,
                  color=SSN_data.Clr[5 - siInx])
-        ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), '-', zorder=11, linewidth=1,
+        ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), '-', zorder=11,
+                 linewidth=1,
                  color=SSN_data.Clr[5 - siInx])
-        ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11, linewidth=3,
+        ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
+                 linewidth=3,
                  color=SSN_data.Clr[5 - siInx])
 
-        ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11, linewidth=3,
+        ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
+                 linewidth=3,
                  color=SSN_data.Clr[5 - siInx])
-        ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), '-', zorder=11, linewidth=1,
+        ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), '-', zorder=11,
+                 linewidth=1,
                  color=SSN_data.Clr[5 - siInx])
-        ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11, linewidth=3,
+        ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
+                 linewidth=3,
                  color=SSN_data.Clr[5 - siInx])
 
     for i in range(0, SSN_data.nBest):
@@ -1014,7 +1051,7 @@ def plotSimultaneousFit(SSN_data,
 
         # Constructing alpha
         alph = 1 - (SSN_data.EMDComb[0, i] - np.min(SSN_data.EMDComb[0, :])) / (
-        np.max(SSN_data.EMDComb[0, :]) - np.min(SSN_data.EMDComb[0, :]))
+            np.max(SSN_data.EMDComb[0, :]) - np.min(SSN_data.EMDComb[0, :]))
 
         # Plotting Intervals
         ax1.plot(x, y, 'o:', zorder=11, linewidth=1, color=SSN_data.Clr[2], alpha=alph, markersize=(101 - i) / 8)
@@ -1030,7 +1067,8 @@ def plotSimultaneousFit(SSN_data,
     # Right Distribution
     ax3 = fig.add_axes(
         [ppadh + pxx / fszh * frc, ppadv + (pxy / fszv + ppadv2), pxx / fszh * (1 - frc), pxy / fszv])
-    ax3.hist(SSN_data.EMDComb[1, :], bins=np.arange(0, SSN_data.thN) * SSN_data.thI + SSN_data.thI / 2, color=SSN_data.Clr[2], alpha=.6,
+    ax3.hist(SSN_data.EMDComb[1, :], bins=np.arange(0, SSN_data.thN) * SSN_data.thI + SSN_data.thI / 2,
+             color=SSN_data.Clr[2], alpha=.6,
              orientation='horizontal', density=True);
     # ax3.plot(yOD, xOD, color=Clr[2], linewidth=3)
 
@@ -1068,8 +1106,10 @@ def plotDistributionOfThresholds(SSN_data,
 
     print('Creating and saving distribution of thresholds for different intervals figure...', end="", flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/08_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Distribution_of_Thresholds.png'
+    figure_path = config.get_file_output_string('08', 'Distribution_of_Thresholds',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     # Distribution Plots of threshold and distance
     frc = 0.8  # Fraction of the panel devoted to histograms
@@ -1113,7 +1153,8 @@ def plotDistributionOfThresholds(SSN_data,
 
     # Scatter Plot
     ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh * frc, pxy / fszv * frc], sharex=axd)
-    ax1.scatter(SSN_data.EMDComb[0, :], SSN_data.EMDComb[1, :], color="0.25", edgecolor="k", alpha=0.1, s=100, linewidths=2)
+    ax1.scatter(SSN_data.EMDComb[0, :], SSN_data.EMDComb[1, :], color="0.25", edgecolor="k", alpha=0.1, s=100,
+                linewidths=2)
 
     ax1.plot(np.array([np.floor(np.min(SSN_data.EMDComb[0, :])), np.ceil(np.max(SSN_data.EMDComb[0, :]))]),
              np.array([1, 1]) * SSN_data.wAv,
@@ -1166,8 +1207,10 @@ def plotSingleThresholdScatterPlot(SSN_data,
     print('Creating and saving scatterplot of overlap...', end="",
           flush=True)
 
-    figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/09_' + str(
-        SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Single_Threshold_ScatterPlot.png'
+    figure_path = config.get_file_output_string('09', 'Single_Threshold_ScatterPlot',
+                                                ssn_data=SSN_data,
+                                                adf_type=config.ADF_TYPE,
+                                                month_type=config.MONTH_TYPE)
 
     nph = 1  # Number of horizontal panels
     npv = 1  # Number of vertical panels
@@ -1256,8 +1299,10 @@ def plotMultiThresholdScatterPlot(SSN_data,
         print('Creating and saving scatterplot of overlap with different thresholds...', end="",
               flush=True)
 
-        figure_path = SSN_data.output_path + '/' + str(SSN_data.CalObs) + '_' + SSN_data.NamObs + '/10_' + str(
-            SSN_data.CalObs) + '_' + SSN_data.NamObs + '_Multi_Threshold_ScatterPlot.png'
+        figure_path = config.get_file_output_string('10', 'Multi_Threshold_ScatterPlot',
+                                                    ssn_data=SSN_data,
+                                                    adf_type=config.ADF_TYPE,
+                                                    month_type=config.MONTH_TYPE)
 
         nph = 1  # Number of horizontal panels
         npv = 1  # Number of vertical panels
@@ -1285,12 +1330,14 @@ def plotMultiThresholdScatterPlot(SSN_data,
         for n in range(0, SSN_data.cenPoints['OBS'].shape[0]):
 
             # Plot only if the period is valid and has overlap
-            if SSN_data.vldIntr[n] and np.sum(np.logical_and(SSN_data.REF_Dat['FRACYEAR'] >= SSN_data.endPoints['OBS'][n, 0],
-                                                         SSN_data.REF_Dat['FRACYEAR'] < SSN_data.endPoints['OBS'][
-                                                                     n + 1, 0])) > 0:
+            if SSN_data.vldIntr[n] and np.sum(
+                    np.logical_and(SSN_data.REF_Dat['FRACYEAR'] >= SSN_data.endPoints['OBS'][n, 0],
+                                   SSN_data.REF_Dat['FRACYEAR'] < SSN_data.endPoints['OBS'][
+                                               n + 1, 0])) > 0:
                 # Calculating number of groups in reference data for given threshold
-                grpsREFw = np.nansum(np.greater(SSN_data.REF_Dat.values[:, 3:SSN_data.REF_Dat.values.shape[1] - 3], SSN_data.wAv),
-                                     axis=1).astype(float)
+                grpsREFw = np.nansum(
+                    np.greater(SSN_data.REF_Dat.values[:, 3:SSN_data.REF_Dat.values.shape[1] - 3], SSN_data.wAv),
+                    axis=1).astype(float)
                 grpsREFw[np.isnan(SSN_data.REF_Dat['AREA1'])] = np.nan
 
                 # Selecting observer's interval

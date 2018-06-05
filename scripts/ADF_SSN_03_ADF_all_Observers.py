@@ -5,6 +5,18 @@ import numpy as np
 from SSN_ADF import ssnADF
 from SSN_Config import SSN_ADF_Config
 import SSN_ADF_Plotter
+import argparse
+
+parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
+parser.add_argument('-q',"--QDF", action='store_true')
+parser.add_argument('-m',"--month", action='store_true')
+args, leftovers = parser.parse_known_args()
+
+if args.QDF is not None:
+    SSN_ADF_Config.ADF_TYPE = "QDF"
+if args.month is not None:
+    SSN_ADF_Config.MONTH_TYPE = "FULL"
+
 
 plotSwitch = True
 output_path = 'TestFrag'
@@ -134,5 +146,5 @@ for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
 
         Y_vals.append(y_row)
 
-    writer = csv.writer(open('output/' + output_path + '/Observer_ADF.csv', 'w', newline=''))
+    writer = csv.writer(open('output/{}/{}Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)), 'w', newline=''))
     writer.writerows(Y_vals)

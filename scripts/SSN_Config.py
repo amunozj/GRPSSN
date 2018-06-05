@@ -34,3 +34,26 @@ class SSN_ADF_Config:
     PLOT_SINGLE_THRESH_SCATTER = True
     PLOT_MULTI_THRESH_SCATTER = True
 
+    @staticmethod
+    def get_file_prepend(adf_type, month_type):
+        if adf_type == "ADF":
+            prepend = "Q_"
+        else:
+            prepend = "A_"
+        if month_type == "X":
+            prepend += "M_"
+        else:
+            prepend += "O_"
+        return prepend
+
+    @staticmethod
+    def get_file_output_string(number, title, ssn_data, adf_type, month_type):
+        return '{}/{}_{}/{}{}_{}_{}_{}.png'.format(
+            ssn_data.output_path,
+            ssn_data.CalObs,
+            ssn_data.NamObs,
+            SSN_ADF_Config.get_file_prepend(adf_type, month_type),
+            number,
+            ssn_data.CalObs,
+            ssn_data.NamObs,
+            title)
