@@ -20,8 +20,8 @@ class SSN_ADF_Config:
     SKIP_OBS = [332]
 
     # ADF variables
-    ADF_TYPE = "QDF"  # 1 - QDF
-    MONTH_TYPE = "ACTIVE"  # ACTIVE
+    ADF_TYPE = "QDF"  # Set to 'QDF' to use 1-QDF calculation. Anything else will use ADF
+    MONTH_TYPE = "ACTIVE"  # Set to 'FULL' to use full month fraction calculation. Anything else will use Obs days
 
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
