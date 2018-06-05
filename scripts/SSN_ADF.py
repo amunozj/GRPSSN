@@ -11,6 +11,7 @@ import os.path
 
 from SSN_Input_Data import ssn_data
 import SSN_ADF_Plotter
+from SSN_Config import SSN_ADF_Config
 
 sys.path.insert(1, r'../functions')  # add to pythonpath
 from detect_peaks import detect_peaks
@@ -440,6 +441,10 @@ class ssnADF(ssn_data):
         ODObsI = []
         ODREFI = []
 
+        # Number of days with no groups
+        QDObsI = []
+        QDREFI = []
+
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
@@ -481,6 +486,10 @@ class ssnADF(ssn_data):
                 # Number of days with observations
                 ODObs = np.zeros((ssn_data.thN, cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
                 ODREF = np.zeros((ssn_data.thN, cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+
+                # Number of days with no groups
+                QDObs = np.zeros((ssn_data.thN, cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                QDREF = np.zeros((ssn_data.thN, cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
 
                 # Going through different thresholds
                 for TIdx in range(0, ssn_data.thN):
@@ -529,6 +538,12 @@ class ssnADF(ssn_data):
                             # REFERENCE
                             ODREF[TIdx, SIdx, :] = np.sum(np.isfinite(TgrpsREF), axis=1)
 
+                            # Number of days with no groups
+                            # OBSERVER
+                            QDObs[TIdx, SIdx, :] = np.sum(np.equal(TgrpsOb, 0), axis=1)
+                            # REFERENCE
+                            QDREF[TIdx, SIdx, :] = np.sum(np.equal(TgrpsREF, 0), axis=1)
+
             # If period is not valid append empty variavbles
             else:
                 print('INVALID Interval')
@@ -536,6 +551,8 @@ class ssnADF(ssn_data):
                 GDREF = []
                 ODObs = []
                 ODREF = []
+                QDObs = []
+                QDREF = []
 
             print(' ')
 
@@ -544,6 +561,8 @@ class ssnADF(ssn_data):
             GDREFI.append(GDREF)
             ODObsI.append(ODObs)
             ODREFI.append(ODREF)
+            QDObsI.append(QDObs)
+            QDREFI.append(QDREF)
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -560,6 +579,9 @@ class ssnADF(ssn_data):
         y = np.arange(0, ssn_data.MoLngt + 1)
         xx, yy = np.meshgrid(x, y)
         Dis = np.absolute(np.power(xx - yy, 1))
+
+
+
 
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
@@ -594,18 +616,38 @@ class ssnADF(ssn_data):
                         if np.any(ODObsI[siInx][TIdx, SIdx, :] != 0) and np.any(ODREFI[siInx][TIdx, SIdx, :] != 0):
                             # Calculating Earth Mover's Distance
 
-                            ADFObs, bins = np.histogram(np.divide(
-                                GDObsI[siInx][
-                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                                ODObsI[siInx][
-                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
+                            # Change denom depending on
+                            if SSN_ADF_Config.MONTH_TYPE == "FULL":
+                                ADF_Obs_denom = ssn_data.MoLngt
+                                ADF_REF_denom = ssn_data.MoLngt
+                            else:
+                                ADF_Obs_denom = ODObsI[siInx][
+                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+                                ADF_REF_denom = ODREFI[siInx][
+                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+
+                            # Change calculation depending on ADF/QDF flag
+                            if SSN_ADF_Config.ADF_TYPE == "QDF":
+                                ADF_Obs_numerator = QDObsI[siInx][
+                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+                                ADF_REF_numerator = QDREFI[siInx][
+                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+
+                                ADF_Obs_frac = 1.0 - np.divide(ADF_Obs_numerator, ADF_Obs_denom)
+                                ADF_REF_frac = 1.0 - np.divide(ADF_REF_numerator, ADF_REF_denom)
+                            else:
+                                ADF_Obs_numerator = GDObsI[siInx][
+                                    TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+                                ADF_REF_numerator = GDREFI[siInx][
+                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+                                ADF_Obs_frac = np.divide(ADF_Obs_numerator, ADF_Obs_denom)
+                                ADF_REF_frac = np.divide(ADF_REF_numerator, ADF_REF_denom)
+
+                            # Main ADF calculations
+                            ADFObs, bins = np.histogram(ADF_Obs_frac,
                                 bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
-                            ADFREF, bins = np.histogram(np.divide(
-                                GDREFI[siInx][
-                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                                ODREFI[siInx][
-                                    TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
+                            ADFREF, bins = np.histogram(ADF_REF_frac,
                                 bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
                             EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),

@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 class SSN_Data:
     """
     Blank class for managing SSN data.
@@ -17,8 +20,8 @@ class SSN_ADF_Config:
     SKIP_OBS = [332]
 
     # ADF variables
-    ADF_TYPE = "ADF"  # 1 - QDF
-    MONTH_TYPE = "FULL"  # ACTIVE
+    ADF_TYPE = "QDF"  # 1 - QDF
+    MONTH_TYPE = "ACTIVE"  # ACTIVE
 
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
