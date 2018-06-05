@@ -1,7 +1,7 @@
 import pandas as pd
-from SSN_Data import SSN_Data
+from SSN_Config import SSN_Data
 
-class ssn_cl(object):
+class ssn_data(object):
     """
     A class for managing SSN data and reference data
     """
