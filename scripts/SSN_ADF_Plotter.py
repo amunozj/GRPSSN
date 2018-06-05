@@ -5,7 +5,7 @@ from matplotlib import colors as clrs
 from pyemd import emd
 
 
-def _plotSearchWindows(SSN_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
+def plotSearchWindows(SSN_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
                        dpi=300,
                        pxx=4000,
                        pxy=1300,

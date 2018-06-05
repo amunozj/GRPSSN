@@ -9,13 +9,14 @@ from copy import copy
 from pyemd import emd
 import os.path
 
-import SSN_Class, SSN_Plotter
+from SSN_Input_Data import ssn_data
+import SSN_ADF_Plotter
 
 sys.path.insert(1, r'../functions')  # add to pythonpath
 from detect_peaks import detect_peaks
 
 
-class ssnADF_cl(SSN_Class.ssn_cl):
+class ssnADF(ssn_data):
     """
     A class for managing SSN data, reference data, and performing ADF calculations
     """
@@ -53,7 +54,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
             font = {'family': 'sans-serif', 'weight': 'normal', 'size': 21}
 
 
-        SSN_Class.ssn_cl.__init__(self, obs_data_path=obs_data_path,
+        ssn_data.__init__(self, obs_data_path=obs_data_path,
                                   obs_observer_path=obs_observer_path,
                                   font=font)
 
@@ -208,7 +209,7 @@ class ssnADF_cl(SSN_Class.ssn_cl):
         # --------------------------------------------------------------------------------------------------------------
 
         if plot:
-            SSN_Plotter._plotSearchWindows(self.ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max)
+            SSN_ADF_Plotter.plotSearchWindows(self.ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max)
 
         print('Done initializing data.', flush=True)
         print(' ', flush=True)

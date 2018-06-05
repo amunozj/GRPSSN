@@ -6,7 +6,7 @@ class SSN_Data:
     pass
 
 
-class SSN_Config:
+class SSN_ADF_Config:
     """
     Class to store static config variables
     """

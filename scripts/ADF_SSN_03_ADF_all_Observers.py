@@ -1,13 +1,16 @@
 import csv
+
 import numpy as np
-import SSN_ADF_Class, SSN_Plotter
-from SSN_Data import SSN_Config
+
+from SSN_ADF import ssnADF
+from SSN_Config import SSN_ADF_Config
+import SSN_ADF_Plotter
 
 plotSwitch = True
 output_path = 'TestFrag'
 
 # Read Data and plot reference search windows, minima and maxima
-ssn_adf = SSN_ADF_Class.ssnADF_cl(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
+ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
                                   silso_path='../input_data/SN_m_tot_V2.0.csv',
                                   obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
                                   obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
@@ -46,9 +49,9 @@ y_row = ['Observer',
 Y_vals.append(y_row)
 
 # Defining Observer
-for CalObs in range(SSN_Config.OBS_START_ID, SSN_Config.OBS_END_ID):
+for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
 
-    if CalObs in SSN_Config.SKIP_OBS:
+    if CalObs in SSN_ADF_Config.SKIP_OBS:
         continue
 
     print("######## Beginning run on observer {} ########\n".format(CalObs))
@@ -62,8 +65,8 @@ for CalObs in range(SSN_Config.OBS_START_ID, SSN_Config.OBS_END_ID):
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
     # Plot active vs. observed days
-    if plotSwitch and SSN_Config.PLOT_ACTIVE_OBSERVED:
-        SSN_Plotter.plotActiveVsObserved(ssn_data)
+    if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED:
+        SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
 
     # Continue only if observer has valid intervals
     if obs_valid:
@@ -73,16 +76,16 @@ for CalObs in range(SSN_Config.OBS_START_ID, SSN_Config.OBS_END_ID):
 
         if plotSwitch:
             # Plot active vs. observed days
-            if SSN_Config.PLOT_OPTIMAL_THRESH:
-                SSN_Plotter.plotOptimalThresholdWindow(ssn_data)
+            if SSN_ADF_Config.PLOT_OPTIMAL_THRESH:
+                SSN_ADF_Plotter.plotOptimalThresholdWindow(ssn_data)
 
             # Plot Distribution of active thresholds
-            if SSN_Config.PLOT_DIST_THRESH_MI:
-                SSN_Plotter.plotDistributionOfThresholdsMI(ssn_data)
+            if SSN_ADF_Config.PLOT_DIST_THRESH_MI:
+                SSN_ADF_Plotter.plotDistributionOfThresholdsMI(ssn_data)
 
             # If there is overlap between the observer and reference plot the y=x scatterplots
-            if SSN_Config.PLOT_INTERVAL_SCATTER and obs_ref_overlap and np.sum(ssn_data.vldIntr) > 1:
-                SSN_Plotter.plotIntervalScatterPlots(ssn_data)
+            if SSN_ADF_Config.PLOT_INTERVAL_SCATTER and obs_ref_overlap and np.sum(ssn_data.vldIntr) > 1:
+                SSN_ADF_Plotter.plotIntervalScatterPlots(ssn_data)
 
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         plot_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
@@ -95,23 +98,23 @@ for CalObs in range(SSN_Config.OBS_START_ID, SSN_Config.OBS_END_ID):
 
             if np.sum(ssn_data.vldIntr) > 1:
                 # Plotting minimum EMD figure
-                if SSN_Config.PLOT_MIN_EMD:
-                    SSN_Plotter.plotMinEMD(ssn_data)
+                if SSN_ADF_Config.PLOT_MIN_EMD:
+                    SSN_ADF_Plotter.plotMinEMD(ssn_data)
 
                 # Plot the result of simultaneous fit
-                if SSN_Config.PLOT_SIM_FIT:
-                    SSN_Plotter.plotSimultaneousFit(ssn_data)
+                if SSN_ADF_Config.PLOT_SIM_FIT:
+                    SSN_ADF_Plotter.plotSimultaneousFit(ssn_data)
 
                 # Plot the distribution of thresholds
-                if SSN_Config.PLOT_DIST_THRESH:
-                    SSN_Plotter.plotDistributionOfThresholds(ssn_data)
+                if SSN_ADF_Config.PLOT_DIST_THRESH:
+                    SSN_ADF_Plotter.plotDistributionOfThresholds(ssn_data)
 
             # If there is overlap between the observer and reference plot the y=x scatterplots
             if obs_ref_overlap:
-                if SSN_Config.PLOT_SINGLE_THRESH_SCATTER:
-                    SSN_Plotter.plotSingleThresholdScatterPlot(ssn_data)
-                if SSN_Config.PLOT_MULTI_THRESH_SCATTER:
-                    SSN_Plotter.plotMultiThresholdScatterPlot(ssn_data)
+                if SSN_ADF_Config.PLOT_SINGLE_THRESH_SCATTER:
+                    SSN_ADF_Plotter.plotSingleThresholdScatterPlot(ssn_data)
+                if SSN_ADF_Config.PLOT_MULTI_THRESH_SCATTER:
+                    SSN_ADF_Plotter.plotMultiThresholdScatterPlot(ssn_data)
 
         # Saving row
         y_row = [ssn_data.CalObs,
