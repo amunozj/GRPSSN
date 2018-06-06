@@ -601,7 +601,7 @@ class ssnADF(ssn_data):
                 else:
                     cadMaskI = ssn_data.decMask['INDEX']
 
-                    # Pre-allocating EMD matrix and associated coordinate matrices.  A large default distance valued is used
+                # Pre-allocating EMD matrix and associated coordinate matrices.  A large default distance valued is used
                 # to account for missing points
                 EMD = np.ones((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1])) * 1e16
                 EMDt = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
@@ -617,14 +617,17 @@ class ssnADF(ssn_data):
                             # Calculating Earth Mover's Distance
 
                             # Change denom depending on
-                            if SSN_ADF_Config.MONTH_TYPE == "FULL":
+                            if SSN_ADF_Config.MONTH_TYPE == "FULLM":
                                 ADF_Obs_denom = ssn_data.MoLngt
                                 ADF_REF_denom = ssn_data.MoLngt
-                            else:
+                            elif SSN_ADF_Config.MONTH_TYPE == "OBS":
                                 ADF_Obs_denom = ODObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
                                 ADF_REF_denom = ODREFI[siInx][
                                     TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
+                            else:
+                                raise ValueError(
+                                    'Invalid flag: Use \'OBS\' (or \'FULLM\') to use observed days (full month length) to determine ADF.')
 
                             # Change calculation depending on ADF/QDF flag
                             if SSN_ADF_Config.ADF_TYPE == "QDF":
@@ -635,13 +638,16 @@ class ssnADF(ssn_data):
 
                                 ADF_Obs_frac = 1.0 - np.divide(ADF_Obs_numerator, ADF_Obs_denom)
                                 ADF_REF_frac = 1.0 - np.divide(ADF_REF_numerator, ADF_REF_denom)
-                            else:
+                            elif SSN_ADF_Config.ADF_TYPE == "ADF":
                                 ADF_Obs_numerator = GDObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
                                 ADF_REF_numerator = GDREFI[siInx][
                                     TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
                                 ADF_Obs_frac = np.divide(ADF_Obs_numerator, ADF_Obs_denom)
                                 ADF_REF_frac = np.divide(ADF_REF_numerator, ADF_REF_denom)
+                            else:
+                                raise ValueError(
+                                    'Invalid flag: Use \'ADF\' (or \'QDF\') for active (1-quiet) day fraction.')
 
                             # Main ADF calculations
                             ADFObs, bins = np.histogram(ADF_Obs_frac,

@@ -11,15 +11,6 @@ class SSN_ADF_Config:
     Class to store static config variables
     """
 
-    # Observer ID range and who to skip
-    OBS_START_ID = 418
-    OBS_END_ID = 600
-    SKIP_OBS = [332, 356]
-
-    # ADF variables
-    ADF_TYPE = "QDF"  # Set to 'QDF' to use 1-QDF calculation. Anything else will use ADF
-    MONTH_TYPE = "ACTIVE"  # Set to 'FULL' to use full month fraction calculation. Anything else will use Obs days
-
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
     PLOT_ACTIVE_OBSERVED = True
@@ -34,13 +25,18 @@ class SSN_ADF_Config:
     @staticmethod
     def get_file_prepend(adf_type, month_type):
         if adf_type == "ADF":
+            prepend = "A_"
+        elif adf_type == "QDF":
             prepend = "Q_"
         else:
-            prepend = "A_"
-        if month_type == "X":
+            raise ValueError('Invalid flag: Use \'ADF\' (or \'QDF\') for active (1-quiet) day fraction.')
+
+        if month_type == "FULLM":
             prepend += "M_"
-        else:
+        elif month_type == "OBS":
             prepend += "O_"
+        else:
+            raise ValueError('Invalid flag: Use \'OBS\' (or \'FULLM\') to use observed days (full month length) to determine ADF.')
         return prepend
 
     @staticmethod

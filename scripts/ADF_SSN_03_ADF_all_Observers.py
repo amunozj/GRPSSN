@@ -12,14 +12,30 @@ parser.add_argument('-q',"--QDF", action='store_true')
 parser.add_argument('-m',"--month", action='store_true')
 args, leftovers = parser.parse_known_args()
 
+#################
+# CONFIGURATION #
+#################
+
+# Observer ID range and who to skip
+SSN_ADF_Config.OBS_START_ID = 412
+SSN_ADF_Config.OBS_END_ID = 600
+SSN_ADF_Config.SKIP_OBS = [332]
+
+# Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
 if args.QDF is not None:
-    SSN_ADF_Config.ADF_TYPE = "QDF"
+    SSN_ADF_Config.ADF_TYPE = "ADF"   # Set to 'ADF' (QDF) to use ADF (1-QDF) calculation.
+
+# Quantity to use in the denominator:  Oserved days or the full month
 if args.month is not None:
-    SSN_ADF_Config.MONTH_TYPE = "FULL"
+    SSN_ADF_Config.MONTH_TYPE = "FULLM" # Set to 'OBS' ('FULLM') to use observed days (full month length) to determine ADF
 
-
+# Flag to turn on saving of figures
 plotSwitch = True
+
+# Output Folder
 output_path = 'TestFrag'
+
+#################
 
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
