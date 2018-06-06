@@ -1,6 +1,3 @@
-from enum import Enum
-
-
 class SSN_Data:
     """
     Blank class for managing SSN data.
@@ -13,15 +10,6 @@ class SSN_ADF_Config:
     """
     Class to store static config variables
     """
-
-    # Observer ID range and who to skip
-    OBS_START_ID = []
-    OBS_END_ID = []
-    SKIP_OBS = []
-
-    # ADF variables
-    ADF_TYPE = ""  # Set to 'ADF' (QDF) to use ADF (1-QDF) calculation.
-    MONTH_TYPE = ""  # Set to 'OBS' ('FULLM') to use observed days (full month length) to determine ADF
 
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
