@@ -76,8 +76,9 @@ for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
                                         # Minimum proportion of days with observation for a "month" to be considered valid
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
+    # TODO: Remove obs_valid. SSN_data not being assigned before returning in SSN_ADF.py. Line 298~
     # Plot active vs. observed days
-    if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED:
+    if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED and obs_valid:
         SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
 
     # Continue only if observer has valid intervals

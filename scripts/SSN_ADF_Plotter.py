@@ -486,7 +486,6 @@ def plotOptimalThresholdWindow(SSN_data,
             # True Interval
             ax1.scatter(OpMat[0, 0], OpMat[0, 1], c='r', edgecolors='w', linewidths=2, s=200, zorder=11)
 
-            print(siInx, SSN_data.Clr)
             # Best 5 points
             for i in range(1, 5):
                 ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=150, zorder=11, alpha=0.5)
@@ -499,7 +498,7 @@ def plotOptimalThresholdWindow(SSN_data,
                     , SSN_data.obsPlt['Y'][
                         np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr),
                                        SSN_data.obsPlt['X'] < np.max(TObsFYr))],
-                    color=SSN_data.Clr[5 - siInx], linewidth=3
+                    color=SSN_data.Clr[5 % i], linewidth=3
                     , alpha=0.2)
 
             # Best 5-10 points
@@ -514,8 +513,9 @@ def plotOptimalThresholdWindow(SSN_data,
                     , SSN_data.obsPlt['Y'][
                         np.logical_and(SSN_data.obsPlt['X'] >= np.min(TObsFYr),
                                        SSN_data.obsPlt['X'] < np.max(TObsFYr))],
-                    color=SSN_data.Clr[5 - siInx], linewidth=3
+                    color=SSN_data.Clr[5 % i], linewidth=3
                     , alpha=0.2)
+
 
             # Best 10-15 points
             for i in range(10, 15):
@@ -535,30 +535,31 @@ def plotOptimalThresholdWindow(SSN_data,
             ax1.plot(np.array([1, 1]) * TObsFYr[obsMinInx], np.array([0, np.max(y)]), 'w--', linewidth=3)
 
         # Plotting edges
+        print(siInx, SSN_data.Clr)
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[np.mod(5 - siInx)])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), '-', zorder=11, linewidth=1,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
 
         # Axes properties
         ax1.set_ylabel('Area threshold (uHem)')
         ax1.set_xlim(left=np.min(SSN_data.REF_Dat['FRACYEAR']), right=np.max(SSN_data.REF_Dat['FRACYEAR']))
         ax1.set_ylim(bottom=0, top=np.max(y))
 
-        ax1.spines['bottom'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['bottom'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['bottom'].set_linewidth(3)
-        ax1.spines['top'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['top'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['top'].set_linewidth(3)
-        ax1.spines['right'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['right'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['right'].set_linewidth(3)
-        ax1.spines['left'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['left'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['left'].set_linewidth(3)
 
         # Adding title
@@ -893,29 +894,29 @@ def plotMinEMD(SSN_data,
 
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), '-', zorder=11, linewidth=1,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
 
         # Axes properties
         ax1.set_ylabel('Distribution Distance')
         ax1.set_xlim(left=np.min(SSN_data.REF_Dat['FRACYEAR']), right=np.max(SSN_data.REF_Dat['FRACYEAR']))
         ax1.set_ylim(bottom=0, top=np.min(y) * 5 + 1)
 
-        ax1.spines['bottom'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['bottom'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['bottom'].set_linewidth(3)
-        ax1.spines['top'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['top'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['top'].set_linewidth(3)
-        ax1.spines['right'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['right'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['right'].set_linewidth(3)
-        ax1.spines['left'].set_color(SSN_data.Clr[5 - siInx])
+        ax1.spines['left'].set_color(SSN_data.Clr[siInx % 6])
         ax1.spines['left'].set_linewidth(3)
 
         # Adding title
@@ -1003,23 +1004,23 @@ def plotSimultaneousFit(SSN_data,
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), '-', zorder=11,
                  linewidth=1,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), '-', zorder=11,
                  linewidth=1,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, SSN_data.thN * SSN_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=SSN_data.Clr[5 - siInx])
+                 color=SSN_data.Clr[siInx % 6])
 
     for i in range(0, SSN_data.nBest):
 

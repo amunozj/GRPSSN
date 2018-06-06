@@ -1,6 +1,3 @@
-from enum import Enum
-
-
 class SSN_Data:
     """
     Blank class for managing SSN data.
@@ -15,9 +12,9 @@ class SSN_ADF_Config:
     """
 
     # Observer ID range and who to skip
-    OBS_START_ID = 412
+    OBS_START_ID = 418
     OBS_END_ID = 600
-    SKIP_OBS = [332]
+    SKIP_OBS = [332, 356]
 
     # ADF variables
     ADF_TYPE = "QDF"  # Set to 'QDF' to use 1-QDF calculation. Anything else will use ADF
