@@ -9,7 +9,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
 parser.add_argument('-q',"--QDF", action='store_true')
+parser.add_argument('-a',"--ADF", action='store_true')
 parser.add_argument('-m',"--month", action='store_true')
+parser.add_argument('-o',"--obs", action='store_true')
 args, leftovers = parser.parse_known_args()
 
 #################
@@ -17,17 +19,25 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 412
+SSN_ADF_Config.OBS_START_ID = 356
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332]
 
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
 if args.QDF is not None:
-    SSN_ADF_Config.ADF_TYPE = "ADF"   # Set to 'ADF' (QDF) to use ADF (1-QDF) calculation.
+    SSN_ADF_Config.ADF_TYPE = "QDF"   # Set to 'QDF' to use 1-QDF calculation.
 
-# Quantity to use in the denominator:  Oserved days or the full month
+if args.ADF is not None:
+    SSN_ADF_Config.ADF_TYPE = "ADF"   # Set to 'ADF'  to use ADF calculation.
+
+
+# Quantity to use in the denominator:  Observed days or the full month
 if args.month is not None:
-    SSN_ADF_Config.MONTH_TYPE = "FULLM" # Set to 'OBS' ('FULLM') to use observed days (full month length) to determine ADF
+    SSN_ADF_Config.MONTH_TYPE = "FULLM"  # Set to 'FULLM' to use full month length to determine ADF
+
+if args.obs is not None:
+    SSN_ADF_Config.MONTH_TYPE = "OBS"  # Set to 'OBS' to use observed days to determine ADF
+
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -94,7 +104,7 @@ for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
 
     # TODO: Remove obs_valid. SSN_data not being assigned before returning in SSN_ADF.py. Line 298~
     # Plot active vs. observed days
-    if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED and obs_valid:
+    if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED:
         SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
 
     # Continue only if observer has valid intervals

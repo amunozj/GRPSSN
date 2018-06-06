@@ -11,6 +11,10 @@ class SSN_ADF_Config:
     Class to store static config variables
     """
 
+    # ADF/QDF and FULL/OBS default values
+    ADF_TYPE = "ADF"
+    MONTH_TYPE = "OBS"
+
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
     PLOT_ACTIVE_OBSERVED = True

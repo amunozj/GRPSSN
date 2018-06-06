@@ -247,6 +247,11 @@ class ssnADF(ssn_data):
         if ObsDat.shape[0] == 0:
             print('done. NO VALID INTERVALS IN OBSERVER', flush=True)
             print(' ', flush=True)
+            ssn_data.CalObs = CalObs
+            ssn_data.NamObs = NamObs
+            ssn_data.minObD = minObD
+            ssn_data.MoLngt = MoLngt
+            ssn_data.ObsDat = ObsDat
             return False
 
         # Finding missing days
@@ -298,6 +303,11 @@ class ssnADF(ssn_data):
         if yrOb.shape[0] == 0:
             print('done. NO VALID MONTHS IN OBSERVER', flush=True)
             print(' ', flush=True)
+            ssn_data.CalObs = CalObs
+            ssn_data.NamObs = NamObs
+            ssn_data.minObD = minObD
+            ssn_data.MoLngt = MoLngt
+            ssn_data.ObsDat = ObsDat
             return False
 
         grpsOb = grpsOb.reshape((-1, MoLngt))
