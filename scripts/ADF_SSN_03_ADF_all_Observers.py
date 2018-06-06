@@ -19,25 +19,27 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 356
+SSN_ADF_Config.OBS_START_ID = 332
 SSN_ADF_Config.OBS_END_ID = 600
-SSN_ADF_Config.SKIP_OBS = [332]
+SSN_ADF_Config.SKIP_OBS = []
 
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
-if args.QDF is not None:
+if args.QDF and args.ADF:
+    raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
+elif args.QDF:
     SSN_ADF_Config.ADF_TYPE = "QDF"   # Set to 'QDF' to use 1-QDF calculation.
 
-if args.ADF is not None:
+elif args.ADF:
     SSN_ADF_Config.ADF_TYPE = "ADF"   # Set to 'ADF'  to use ADF calculation.
 
 
 # Quantity to use in the denominator:  Observed days or the full month
-if args.month is not None:
+if args.month and args.obs:
+    raise ValueError('Invalid Flags: Can only use one FULLM/OBS flag at a time')
+elif args.month:
     SSN_ADF_Config.MONTH_TYPE = "FULLM"  # Set to 'FULLM' to use full month length to determine ADF
-
-if args.obs is not None:
+elif args.obs:
     SSN_ADF_Config.MONTH_TYPE = "OBS"  # Set to 'OBS' to use observed days to determine ADF
-
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -46,6 +48,8 @@ plotSwitch = True
 output_path = 'TestFrag'
 
 #################
+
+print("Starting script with ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE))
 
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
