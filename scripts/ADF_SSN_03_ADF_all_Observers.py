@@ -19,7 +19,7 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 332
+SSN_ADF_Config.OBS_START_ID = 318
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = []
 
@@ -106,7 +106,6 @@ for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
                                         # Minimum proportion of days with observation for a "month" to be considered valid
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
-    # TODO: Remove obs_valid. SSN_data not being assigned before returning in SSN_ADF.py. Line 298~
     # Plot active vs. observed days
     if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED:
         SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
