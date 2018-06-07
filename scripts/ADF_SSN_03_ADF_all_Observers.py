@@ -6,6 +6,7 @@ from SSN_ADF import ssnADF
 from SSN_Config import SSN_ADF_Config
 import SSN_ADF_Plotter
 import argparse
+from joblib import Parallel, delayed
 
 parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
 parser.add_argument('-q',"--QDF", action='store_true')
