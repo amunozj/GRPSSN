@@ -604,7 +604,7 @@ class ssnADF(ssn_data):
             # Perform analysis Only if the period is valid
             if ssn_data.vldIntr[siInx]:
 
-                print('Valid Interval')
+                print('[{}/{}] Valid Interval'.format(siInx+1, num_intervals))
 
                 # Defining mask based on the interval type (rise or decay)
                 if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
@@ -692,7 +692,7 @@ class ssnADF(ssn_data):
 
             # If period is not valid append empty variables
             else:
-                print('INVALID Interval')
+                print('[{}/{}] INVALID Interval'.format(siInx+1, num_intervals))
                 EMD = []
                 EMDt = []
                 EMDth = []
