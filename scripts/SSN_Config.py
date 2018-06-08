@@ -14,9 +14,6 @@ class SSN_ADF_Config:
     Class to store static config variables
     """
 
-    # ADF/QDF and FULL/OBS default values
-    ADF_TYPE = "QDF"
-    MONTH_TYPE = "FULLM"
 
     # MULTIPROCESSING
     # 1 --> do not use any parallel processing.
