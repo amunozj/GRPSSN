@@ -76,7 +76,7 @@ More information about the Jupyter notebook can be found here:
 
 ## Running the Scripts: ##
 
-When running the main script with parallel processing enabled, some system run into an issue with matplotlib, producing the following error:
+When running the scripts with parallel processing enabled, some system encounter the following error:
 
 ```
 The process has forked and you cannot use this CoreFoundation functionality safely. You MUST exec().
@@ -94,5 +94,5 @@ Find the line in this file where 'backend' is defined; it should look like this.
 ```
 backend      : TkAgg
 ```
-And comment out this line with #. This change sets the matplotlib backend to use the default non-interactive  version.
-Interactive versions of the matplotlib backend (like Tkinter based backend shown above) can cause issues with multiprocessing.
+Comment out this line with a leading '#'. This change sets the matplotlib backend to use the default non-interactive  version.
+Interactive versions of the matplotlib backend (like the Tkinter based backend shown above) can cause issues with multiprocessing.
