@@ -247,6 +247,11 @@ class ssnADF(ssn_data):
         if ObsDat.shape[0] == 0:
             print('done. NO VALID INTERVALS IN OBSERVER', flush=True)
             print(' ', flush=True)
+            ssn_data.CalObs = CalObs
+            ssn_data.NamObs = NamObs
+            ssn_data.minObD = minObD
+            ssn_data.MoLngt = MoLngt
+            ssn_data.ObsDat = ObsDat
             return False
 
         # Finding missing days
@@ -298,6 +303,11 @@ class ssnADF(ssn_data):
         if yrOb.shape[0] == 0:
             print('done. NO VALID MONTHS IN OBSERVER', flush=True)
             print(' ', flush=True)
+            ssn_data.CalObs = CalObs
+            ssn_data.NamObs = NamObs
+            ssn_data.minObD = minObD
+            ssn_data.MoLngt = MoLngt
+            ssn_data.ObsDat = ObsDat
             return False
 
         grpsOb = grpsOb.reshape((-1, MoLngt))
@@ -446,7 +456,8 @@ class ssnADF(ssn_data):
         QDREFI = []
 
         # Going through different sub-intervals
-        for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+        num_intervals = ssn_data.cenPoints['OBS'].shape[0]
+        for siInx in range(0, num_intervals):
 
             print('Center:', np.round(ssn_data.cenPoints['OBS'][siInx, 0], 2), 'Edges:',
                   np.round(ssn_data.endPoints['OBS'][siInx, 0], 2),
@@ -455,7 +466,7 @@ class ssnADF(ssn_data):
             # Perform analysis Only if the period is valid
             if ssn_data.vldIntr[siInx]:
 
-                print('Valid Interval')
+                print('[{}/{}] Valid Interval'.format(siInx+1, num_intervals))
 
                 # Defining mask based on the interval type (rise or decay)
                 if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
@@ -546,7 +557,7 @@ class ssnADF(ssn_data):
 
             # If period is not valid append empty variavbles
             else:
-                print('INVALID Interval')
+                print('[{}/{}] INVALID Interval'.format(siInx+1, num_intervals))
                 GDObs = []
                 GDREF = []
                 ODObs = []
