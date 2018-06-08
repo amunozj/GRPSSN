@@ -8,10 +8,10 @@ from multiprocessing import Pool
 import os
 
 parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
-parser.add_argument('-Q',"--QDF", help="Run using QDF calculation", action='store_true')
-parser.add_argument('-A',"--ADF", help="Run using ADF calculation", action='store_true')
-parser.add_argument('-M',"--month", help="Run using full month length in ADF calculation", action='store_true')
-parser.add_argument('-O',"--obs", help="Run using total observed days in ADF calculation", action='store_true')
+parser.add_argument('-Q', "--QDF", help="Run using QDF calculation", action='store_true')
+parser.add_argument('-A', "--ADF", help="Run using ADF calculation", action='store_true')
+parser.add_argument('-M', "--month", help="Run using full month length in ADF calculation", action='store_true')
+parser.add_argument('-O', "--obs", help="Run using total observed days in ADF calculation", action='store_true')
 parser.add_argument("-t", "--threads", help="Number of threads to use in multiprocessing", type=int)
 parser.add_argument("--start-id", help="ID of the observer to start at", type=int)
 parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
@@ -39,7 +39,7 @@ plotSwitch = True
 output_path = 'TestFrag'
 
 ###################
-#PARSING ARGUMENTS#
+# PARSING ARGUMENTS#
 ###################
 # Arguments will over-ride the options set above
 
@@ -48,10 +48,9 @@ output_path = 'TestFrag'
 if args.QDF and args.ADF:
     raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
 elif args.QDF:
-    SSN_ADF_Config.ADF_TYPE = "QDF"   # Set to 'QDF' to use 1-QDF calculation.
+    SSN_ADF_Config.ADF_TYPE = "QDF"  # Set to 'QDF' to use 1-QDF calculation.
 elif args.ADF:
-    SSN_ADF_Config.ADF_TYPE = "ADF"   # Set to 'ADF'  to use ADF calculation.
-
+    SSN_ADF_Config.ADF_TYPE = "ADF"  # Set to 'ADF'  to use ADF calculation.
 
 # Quantity to use in the denominator:  Observed days or the full month
 if args.month and args.obs:
@@ -71,32 +70,30 @@ if args.start_id is not None:
 if args.end_id is not None:
     SSN_ADF_Config.OBS_END_ID = args.end_id
 
-
-
 # Flag to turn on saving of figures
 plotSwitch = True
 
-
 #################
-#STARTING SCRIPT#
+# STARTING SCRIPT#
 #################
 
-print("Starting script with ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE))
+print(
+    "Starting script with ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE))
 
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
-                                  silso_path='../input_data/SN_m_tot_V2.0.csv',
-                                  obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
-                                  obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
-                                  output_path='output/' + output_path,
-                                  font={'family': 'sans-serif',
-                                        'weight': 'normal',
-                                        'size': 21},
-                                  dt=14,  # Temporal Stride in days
-                                  phTol=2,  # Cycle phase tolerance in years
-                                  thN=100,  # Number of thresholds including 0
-                                  thI=1,  # Threshold increments
-                                  plot=plotSwitch)
+                 silso_path='../input_data/SN_m_tot_V2.0.csv',
+                 obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
+                 obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
+                 output_path='output/' + output_path,
+                 font={'family': 'sans-serif',
+                       'weight': 'normal',
+                       'size': 21},
+                 dt=14,  # Temporal Stride in days
+                 phTol=2,  # Cycle phase tolerance in years
+                 thN=100,  # Number of thresholds including 0
+                 thI=1,  # Threshold increments
+                 plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
 ssn_data = ssn_adf.ssn_data
@@ -124,7 +121,7 @@ Y_vals.append(y_row)
 
 
 # Defining Observer
-#for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
+# for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
 def run_obs(CalObs):
     if CalObs in SSN_ADF_Config.SKIP_OBS:
         return
@@ -209,8 +206,10 @@ def run_obs(CalObs):
 
         Y_vals.append(y_row)
 
-    writer = csv.writer(open('output/{}/{}Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)), 'w', newline=''))
+    writer = csv.writer(open('output/{}/{}Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
+        SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)), 'w', newline=''))
     writer.writerows(Y_vals)
+
 
 if __name__ == '__main__':
 
@@ -222,32 +221,35 @@ if __name__ == '__main__':
             for dname in os.listdir(out_dir):
                 if dname.startswith('{}_'.format(ob)):
                     for file in os.listdir(os.path.join(out_dir, dname)):
-                        if file.startswith(SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)):
+                        if file.startswith(
+                                SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)):
                             SSN_ADF_Config.SKIP_OBS.append(ob)
-                            print("\nSkipping observer {}: Found plots with current flags\n"
-                                  "Change the SKIP_OBSERVERS_WITH_PLOTS config flag to remove this behavior\n".format(ob))
                             break
+        print("\nSkipping observers who have plot(s) labeled with the current flags ({} / {}):\n{}\n"
+              "Change the SKIP_OBSERVERS_WITH_PLOTS config flag to remove this behavior\n".format(
+            SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE,SSN_ADF_Config.SKIP_OBS))
 
     if SSN_ADF_Config.PROCESSES == 1:
         for i in obs_range:
             run_obs(i)
     elif SSN_ADF_Config.PROCESSES == -1:
         try:
-            pool = Pool()                         # Create a multiprocessing Pool
+            pool = Pool()  # Create a multiprocessing Pool
             pool.map(run_obs, obs_range)  # process all observer iterable with pool
-        finally: # To make sure processes are closed in the end, even if errors happen
+        finally:  # To make sure processes are closed in the end, even if errors happen
             pool.close()
             pool.join()
     else:
         if SSN_ADF_Config.PROCESSES < -1 or SSN_ADF_Config.PROCESSES == 0:
-            raise ValueError("Invalid processes number ({}). Please set to a valid number.".format(SSN_ADF_Config.PROCESSES))
+            raise ValueError(
+                "Invalid processes number ({}). Please set to a valid number.".format(SSN_ADF_Config.PROCESSES))
         if SSN_ADF_Config.PROCESSES > os.cpu_count():
             raise ValueError("Processes number higher than CPU count. "
                              "You tried to initiate {} processes, while only having {} CPU's.".format(
-                             SSN_ADF_Config.PROCESSES,os.cpu_count()))
+                SSN_ADF_Config.PROCESSES, os.cpu_count()))
         try:
-            pool = Pool(processes=SSN_ADF_Config.PROCESSES)                         # Create a multiprocessing Pool
+            pool = Pool(processes=SSN_ADF_Config.PROCESSES)  # Create a multiprocessing Pool
             pool.map(run_obs, obs_range)  # process all observer iterable with pool
-        finally: # To make sure processes are closed in the end, even if errors happen
+        finally:  # To make sure processes are closed in the end, even if errors happen
             pool.close()
             pool.join()
