@@ -20,6 +20,9 @@ class SSN_ADF_Config:
                 # -1 --  use all cores on machine.
                 # Otherwise -- defines number of cores to use.
 
+    # Choose to overwrite observers with plots already created, or skip these observers
+    OVERWRITE_OBSERVERS = False
+
 
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
