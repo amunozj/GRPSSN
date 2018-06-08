@@ -14,8 +14,8 @@ import SSN_ADF_Plotter
 from SSN_Config import SSN_ADF_Config
 
 
-dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
-sys.path.insert(1, dir)  # add to pythonpath
+parent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
+sys.path.insert(1, parent_dir)  # add to pythonpath
 from detect_peaks import detect_peaks
 
 
@@ -437,7 +437,6 @@ class ssnADF(ssn_data):
 
             return True
 
-    # TODO: Flags as parameters (ADF flag + month duration flag)
     def ADFscanningWindowEMD(self,
                              ssn_data,
                              nBest=50):
