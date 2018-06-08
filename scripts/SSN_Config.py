@@ -11,6 +11,11 @@ class SSN_ADF_Config:
     Class to store static config variables
     """
 
+    # MULTI THREADING
+    PROCESSES = 1 # 1 -- do not use any parallel processing.
+                # -1 --  use all cores on machine.
+                # Otherwise -- defines number of cores to use.
+
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
     PLOT_ACTIVE_OBSERVED = True

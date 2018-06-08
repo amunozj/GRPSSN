@@ -1,5 +1,6 @@
 import pandas as pd
 from SSN_Config import SSN_Data
+import os
 
 class ssn_data(object):
     """
@@ -26,6 +27,11 @@ class ssn_data(object):
         print('Reading Observer data...', end="", flush=True)
 
         self.ssn_data = SSN_Data()
+
+        # Use relative file paths even when running script from other directory
+        dirname = os.path.dirname(__file__)
+        obs_data_path = os.path.join(dirname, obs_data_path)
+        obs_observer_path = os.path.join(dirname, obs_observer_path)
 
         GN_Dat = pd.read_csv(obs_data_path, quotechar='"', encoding='utf-8', header=15)
 

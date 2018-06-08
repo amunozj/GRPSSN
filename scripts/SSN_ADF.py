@@ -13,7 +13,9 @@ from SSN_Input_Data import ssn_data
 import SSN_ADF_Plotter
 from SSN_Config import SSN_ADF_Config
 
-sys.path.insert(1, r'../functions')  # add to pythonpath
+
+dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
+sys.path.insert(1, dir)  # add to pythonpath
 from detect_peaks import detect_peaks
 
 
@@ -55,9 +57,19 @@ class ssnADF(ssn_data):
             font = {'family': 'sans-serif', 'weight': 'normal', 'size': 21}
 
 
+        # Use relative file paths even when running script from other directory
+        dirname = os.path.dirname(__file__)
+        ref_data_path = os.path.join(dirname, ref_data_path)
+        silso_path = os.path.join(dirname, silso_path)
+        obs_data_path = os.path.join(dirname, obs_data_path)
+        obs_observer_path = os.path.join(dirname, obs_observer_path)
+        output_path = os.path.join(dirname, output_path)
+
         ssn_data.__init__(self, obs_data_path=obs_data_path,
                                   obs_observer_path=obs_observer_path,
                                   font=font)
+
+
 
         # Create output folder
         if not os.path.exists(output_path):
@@ -604,7 +616,7 @@ class ssnADF(ssn_data):
             # Perform analysis Only if the period is valid
             if ssn_data.vldIntr[siInx]:
 
-                print('Valid Interval')
+                print('[{}/{}] Valid Interval'.format(siInx+1, num_intervals))
 
                 # Defining mask based on the interval type (rise or decay)
                 if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
@@ -692,7 +704,7 @@ class ssnADF(ssn_data):
 
             # If period is not valid append empty variables
             else:
-                print('INVALID Interval')
+                print('[{}/{}] INVALID Interval'.format(siInx+1, num_intervals))
                 EMD = []
                 EMDt = []
                 EMDth = []

@@ -73,3 +73,26 @@ Click on the notebook you want to open.
 More information about the Jupyter notebook can be found here:
 
 * [Jupyter notebook documentation](https://jupyter-notebook.readthedocs.io/en/latest/index.html)
+
+## Running the Scripts: ##
+
+When running the scripts with parallel processing enabled, some system encounter the following error:
+
+```
+The process has forked and you cannot use this CoreFoundation functionality safely. You MUST exec().
+Break on __THE_PROCESS_HAS_FORKED_AND_YOU_CANNOT_USE_THIS_COREFOUNDATION_FUNCTIONALITY___YOU_MUST_EXEC__() to debug.
+```
+
+To fix this issue, find your _matplotlibrc_ file by going into the python environment you are using and running the commands:
+```python
+>>> import matplotlib
+>>> matplotlib.matplotlib_fname()
+'/home/foo/.config/matplotlib/matplotlibrc' # This output shows where your matplotlibrc file is located
+```
+
+Find the line in this file where 'backend' is defined; it should look like this.
+```
+backend      : TkAgg
+```
+Comment out this line with a leading '#'. This change sets the matplotlib backend to use the default non-interactive  version.
+Interactive versions of the matplotlib backend (like the Tkinter based backend shown above) can cause issues with multiprocessing.
