@@ -1,18 +1,17 @@
 import csv
-
 import numpy as np
-
 from SSN_ADF import ssnADF
 from SSN_Config import SSN_ADF_Config
 import SSN_ADF_Plotter
 import argparse
-from joblib import Parallel, delayed
+from multiprocessing import Pool
 
 parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
 parser.add_argument('-q',"--QDF", action='store_true')
 parser.add_argument('-a',"--ADF", action='store_true')
 parser.add_argument('-m',"--month", action='store_true')
 parser.add_argument('-o',"--obs", action='store_true')
+parser.add_argument("-t", "--threads", help="Number of threads to use in multiprocessing", type=int)
 args, leftovers = parser.parse_known_args()
 
 #################
@@ -22,7 +21,7 @@ args, leftovers = parser.parse_known_args()
 # Observer ID range and who to skip
 SSN_ADF_Config.OBS_START_ID = 318
 SSN_ADF_Config.OBS_END_ID = 600
-SSN_ADF_Config.SKIP_OBS = []
+SSN_ADF_Config.SKIP_OBS = [332]
 
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
 if args.QDF and args.ADF:
@@ -41,6 +40,11 @@ elif args.month:
     SSN_ADF_Config.MONTH_TYPE = "FULLM"  # Set to 'FULLM' to use full month length to determine ADF
 elif args.obs:
     SSN_ADF_Config.MONTH_TYPE = "OBS"  # Set to 'OBS' to use observed days to determine ADF
+
+# Set number of threads
+if args.threads is not None:
+    SSN_ADF_Config.THREADS = args.threads
+
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -91,11 +95,12 @@ y_row = ['Observer',
 
 Y_vals.append(y_row)
 
-# Defining Observer
-for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
 
+# Defining Observer
+#for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
+def run_obs(CalObs):
     if CalObs in SSN_ADF_Config.SKIP_OBS:
-        continue
+        return
 
     print("######## Beginning run on observer {} ########\n".format(CalObs))
 
@@ -179,3 +184,22 @@ for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
 
     writer = csv.writer(open('output/{}/{}Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)), 'w', newline=''))
     writer.writerows(Y_vals)
+
+if __name__ == '__main__':
+    if SSN_ADF_Config.THREADS == 1:
+        for i in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
+            run_obs(i)
+    elif SSN_ADF_Config.THREADS == -1:
+        try:
+            pool = Pool()                         # Create a multiprocessing Pool
+            pool.map(run_obs, range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID))  # process all observer iterable with pool
+        finally: # To make sure processes are closed in the end, even if errors happen
+            pool.close()
+            pool.join()
+    else:
+        try:
+            pool = Pool(processes=SSN_ADF_Config.THREADS)                         # Create a multiprocessing Pool
+            pool.map(run_obs, range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID))  # process all observer iterable with pool
+        finally: # To make sure processes are closed in the end, even if errors happen
+            pool.close()
+            pool.join()

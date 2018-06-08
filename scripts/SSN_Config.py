@@ -12,8 +12,14 @@ class SSN_ADF_Config:
     """
 
     # ADF/QDF and FULL/OBS default values
-    ADF_TYPE = "ADF"
-    MONTH_TYPE = "OBS"
+    ADF_TYPE = "QDF"
+    MONTH_TYPE = "FULLM"
+
+    # MULTI THREADING
+    THREADS = 1 # 1 -- do not use any parallel processing.
+                # -1 --  use all cores on machine.
+                # Otherwise -- number of cores to use.
+
 
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True

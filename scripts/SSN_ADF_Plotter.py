@@ -537,7 +537,7 @@ def plotOptimalThresholdWindow(SSN_data,
         # Plotting edges
         print(siInx, SSN_data.Clr)
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=SSN_data.Clr[np.mod(5 - siInx)])
+                 color=SSN_data.Clr[siInx % 6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
                  color=SSN_data.Clr[siInx % 6])
 
