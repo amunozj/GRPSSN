@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors as clrs
 from pyemd import emd
 from SSN_Config import SSN_ADF_Config as config
+import os
 
 
 def plotSearchWindows(SSN_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
@@ -119,6 +120,12 @@ def plotActiveVsObserved(SSN_data,
                                                 ssn_data=SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path).format(figure_path))
+        return
 
     # Selecting the maximum integer amount of "months" out of the original data
     grpsOb = SSN_data.ObsDat['GROUPS'].values
@@ -298,6 +305,12 @@ def plotOptimalThresholdWindow(SSN_data,
                                                 ssn_data=SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path).format(figure_path))
+        return
 
     print('Creating and saving optimal threshold figure...', end="", flush=True)
 
@@ -516,7 +529,6 @@ def plotOptimalThresholdWindow(SSN_data,
                     color=SSN_data.Clr[5 % i], linewidth=3
                     , alpha=0.2)
 
-
             # Best 10-15 points
             for i in range(10, 15):
                 ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=50, zorder=11, alpha=0.5)
@@ -603,6 +615,12 @@ def plotDistributionOfThresholdsMI(SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
 
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path).format(figure_path))
+        return
+
     frc = 0.8  # Fraction of the panel devoted to histograms
 
     nph = 3  # Number of horizontal panels
@@ -670,16 +688,16 @@ def plotDistributionOfThresholdsMI(SSN_data,
 
                     ax1.plot(np.array(
                         [np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
-                             np.array([1, 1]) * SSN_data.wAvI[n], '--'
-                             , color=SSN_data.Clr[4], linewidth=3)
+                        np.array([1, 1]) * SSN_data.wAvI[n], '--'
+                        , color=SSN_data.Clr[4], linewidth=3)
                     ax1.plot(np.array(
                         [np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
-                             np.array([1, 1]) * SSN_data.wAvI[n] - SSN_data.wSDI[n], ':'
-                             , color=SSN_data.Clr[4], linewidth=2)
+                        np.array([1, 1]) * SSN_data.wAvI[n] - SSN_data.wSDI[n], ':'
+                        , color=SSN_data.Clr[4], linewidth=2)
                     ax1.plot(np.array(
                         [np.floor(np.min(SSN_data.bestTh[n][:, 2])), np.ceil(np.max(SSN_data.bestTh[n][:, 2]))]),
-                             np.array([1, 1]) * SSN_data.wAvI[n] + SSN_data.wSDI[n], ':'
-                             , color=SSN_data.Clr[4], linewidth=2)
+                        np.array([1, 1]) * SSN_data.wAvI[n] + SSN_data.wSDI[n], ':'
+                        , color=SSN_data.Clr[4], linewidth=2)
 
                     # Axes properties
                     ax1.set_ylabel('Area threshold (uHem)')
@@ -727,6 +745,12 @@ def plotIntervalScatterPlots(SSN_data,
                                                 ssn_data=SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path).format(figure_path))
+        return
 
     frc = 0.8  # Fraction of the panel devoted to histograms
 
@@ -819,6 +843,12 @@ def plotMinEMD(SSN_data,
                                                 ssn_data=SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path))
+        return
 
     font = SSN_data.font
     plt.rc('font', **font)
@@ -956,6 +986,12 @@ def plotSimultaneousFit(SSN_data,
                                                 ssn_data=SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path))
+        return
 
     font = SSN_data.font
     plt.rc('font', **font)
@@ -1112,6 +1148,12 @@ def plotDistributionOfThresholds(SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
 
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path))
+        return
+
     # Distribution Plots of threshold and distance
     frc = 0.8  # Fraction of the panel devoted to histograms
 
@@ -1213,6 +1255,12 @@ def plotSingleThresholdScatterPlot(SSN_data,
                                                 adf_type=config.ADF_TYPE,
                                                 month_type=config.MONTH_TYPE)
 
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "Figure at {} already exists. Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(
+                figure_path))
+        return
+
     nph = 1  # Number of horizontal panels
     npv = 1  # Number of vertical panels
 
@@ -1304,6 +1352,12 @@ def plotMultiThresholdScatterPlot(SSN_data,
                                                     ssn_data=SSN_data,
                                                     adf_type=config.ADF_TYPE,
                                                     month_type=config.MONTH_TYPE)
+
+        if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+            print(
+                "Figure at {} already exists."
+                " Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots".format(figure_path))
+            return
 
         nph = 1  # Number of horizontal panels
         npv = 1  # Number of vertical panels

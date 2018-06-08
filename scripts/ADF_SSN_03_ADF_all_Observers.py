@@ -8,10 +8,10 @@ from multiprocessing import Pool
 import os
 
 parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
-parser.add_argument('-q',"--QDF", action='store_true')
-parser.add_argument('-a',"--ADF", action='store_true')
-parser.add_argument('-m',"--month", action='store_true')
-parser.add_argument('-o',"--obs", action='store_true')
+parser.add_argument('-Q',"--QDF", help="Run using QDF calculation", action='store_true')
+parser.add_argument('-A',"--ADF", help="Run using ADF calculation", action='store_true')
+parser.add_argument('-M',"--month", help="Run using full month length in ADF calculation", action='store_true')
+parser.add_argument('-O',"--obs", help="Run using total observed days in ADF calculation", action='store_true')
 parser.add_argument("-t", "--threads", help="Number of threads to use in multiprocessing", type=int)
 parser.add_argument("--start-id", help="ID of the observer to start at", type=int)
 parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
@@ -122,12 +122,12 @@ def run_obs(CalObs):
                                         # Minimum proportion of days with observation for a "month" to be considered valid
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
-    # Plot active vs. observed days
-    if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED and obs_valid:
-        SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
-
     # Continue only if observer has valid intervals
     if obs_valid:
+
+        # Plot active vs. observed days
+        if plotSwitch and SSN_ADF_Config.PLOT_ACTIVE_OBSERVED:
+            SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
 
         # Calculating the Earth's Mover Distance using sliding windows for different intervals
         obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data, nBest=50)  # Number of top best matches to keep
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
     obs_range = range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID)
 
-    if not SSN_ADF_Config.OVERWRITE_OBSERVERS:
+    if SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS:
         out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'TestFrag')
         for ob in obs_range:
             for dname in os.listdir(out_dir):
@@ -208,8 +208,6 @@ if __name__ == '__main__':
                         if file.startswith(SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)):
                             SSN_ADF_Config.SKIP_OBS.append(ob)
                             break
-
-    print(SSN_ADF_Config.SKIP_OBS)
 
     if SSN_ADF_Config.PROCESSES == 1:
         for i in obs_range:
