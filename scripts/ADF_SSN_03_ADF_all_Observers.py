@@ -26,12 +26,29 @@ SSN_ADF_Config.OBS_START_ID = 318
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332]
 
+# Quantity to use in the numerator of the ADF:  Active days "ADF" or 1-quiet days "QDF"
+SSN_ADF_Config.ADF_TYPE = "ADF"
+
+# Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM"
+SSN_ADF_Config.MONTH_TYPE = "OBS"
+
+# Flag to turn on saving of figures
+plotSwitch = True
+
+# Output Folder
+output_path = 'TestFrag'
+
+###################
+#PARSING ARGUMENTS#
+###################
+# Arguments will over-ride the options set above
+
+
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
 if args.QDF and args.ADF:
     raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
 elif args.QDF:
     SSN_ADF_Config.ADF_TYPE = "QDF"   # Set to 'QDF' to use 1-QDF calculation.
-
 elif args.ADF:
     SSN_ADF_Config.ADF_TYPE = "ADF"   # Set to 'ADF'  to use ADF calculation.
 
@@ -59,9 +76,9 @@ if args.end_id is not None:
 # Flag to turn on saving of figures
 plotSwitch = True
 
-# Output Folder
-output_path = 'TestFrag'
 
+#################
+#STARTING SCRIPT#
 #################
 
 print("Starting script with ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE))

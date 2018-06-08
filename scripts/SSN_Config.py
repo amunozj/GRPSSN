@@ -11,15 +11,10 @@ class SSN_ADF_Config:
     Class to store static config variables
     """
 
-    # ADF/QDF and FULL/OBS default values
-    ADF_TYPE = "QDF"
-    MONTH_TYPE = "FULLM"
-
     # MULTI THREADING
     PROCESSES = 1 # 1 -- do not use any parallel processing.
                 # -1 --  use all cores on machine.
                 # Otherwise -- defines number of cores to use.
-
 
     # Plotting config varibales
     PLOT_OPTIMAL_THRESH = True
