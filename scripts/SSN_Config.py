@@ -14,7 +14,6 @@ class SSN_ADF_Config:
     Class to store static config variables
     """
 
-
     # MULTIPROCESSING
     # 1 --> do not use any parallel processing.
     # -1 -->  use all cores on machine.
