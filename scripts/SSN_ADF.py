@@ -15,7 +15,6 @@ from SSN_Config import SSN_ADF_Config
 
 
 dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
-print(dir)
 sys.path.insert(1, dir)  # add to pythonpath
 from detect_peaks import detect_peaks
 
