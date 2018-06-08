@@ -27,10 +27,10 @@ SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF" or 1-quiet days "QDF"
-SSN_ADF_Config.ADF_TYPE = "ADF"
+SSN_ADF_Config.ADF_TYPE = "QDF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM"
-SSN_ADF_Config.MONTH_TYPE = "OBS"
+SSN_ADF_Config.MONTH_TYPE = "FULLM"
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -224,6 +224,8 @@ if __name__ == '__main__':
                     for file in os.listdir(os.path.join(out_dir, dname)):
                         if file.startswith(SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)):
                             SSN_ADF_Config.SKIP_OBS.append(ob)
+                            print("\nSkipping observer {}: Found plots with current flags\n"
+                                  "Change the SKIP_OBSERVERS_WITH_PLOTS config flag to remove this behavior\n".format(ob))
                             break
 
     if SSN_ADF_Config.PROCESSES == 1:

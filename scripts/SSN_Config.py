@@ -18,7 +18,7 @@ class SSN_ADF_Config:
     # 1 --> do not use any parallel processing.
     # -1 -->  use all cores on machine.
     # Other --> defines number of cores to use
-    PROCESSES = 1
+    PROCESSES = 2
 
     # OVERWRITING AND SKIPPING PLOTS
     # Setting both flags to false will recreate and overwrite all plots for all observers
@@ -30,7 +30,7 @@ class SSN_ADF_Config:
     # Skips processing observer data making the process much faster
     # However, if a plot that should have been made previously is missing it will not be made when this flag is enabled
     # More dangerous than SKIP_PRESENT_PLOTS, but good when confident that existing observers were completely processed
-    SKIP_OBSERVERS_WITH_PLOTS = False
+    SKIP_OBSERVERS_WITH_PLOTS = True
 
     # Plotting config variables
     PLOT_OPTIMAL_THRESH = True
