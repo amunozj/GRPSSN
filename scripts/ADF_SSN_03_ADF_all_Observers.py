@@ -5,6 +5,7 @@ from SSN_Config import SSN_ADF_Config
 import SSN_ADF_Plotter
 import argparse
 from multiprocessing import Pool
+import os
 
 parser = argparse.ArgumentParser(description="Specify arguments for SSN/ADF config")
 parser.add_argument('-q',"--QDF", action='store_true')
@@ -43,7 +44,7 @@ elif args.obs:
 
 # Set number of threads
 if args.threads is not None:
-    SSN_ADF_Config.THREADS = args.threads
+    SSN_ADF_Config.PROCESSES = args.threads
 
 
 # Flag to turn on saving of figures
@@ -186,10 +187,10 @@ def run_obs(CalObs):
     writer.writerows(Y_vals)
 
 if __name__ == '__main__':
-    if SSN_ADF_Config.THREADS == 1:
+    if SSN_ADF_Config.PROCESSES == 1:
         for i in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
             run_obs(i)
-    elif SSN_ADF_Config.THREADS == -1:
+    elif SSN_ADF_Config.PROCESSES == -1:
         try:
             pool = Pool()                         # Create a multiprocessing Pool
             pool.map(run_obs, range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID))  # process all observer iterable with pool
@@ -197,8 +198,14 @@ if __name__ == '__main__':
             pool.close()
             pool.join()
     else:
+        if SSN_ADF_Config.PROCESSES < -1 or SSN_ADF_Config.PROCESSES == 0:
+            raise ValueError("Invalid processes number ({}). Please set to a valid number.".format(SSN_ADF_Config.PROCESSES))
+        if SSN_ADF_Config.PROCESSES > os.cpu_count():
+            raise ValueError("Processes number higher than CPU count. "
+                             "You tried to initiate {} processes, while only having {} CPU's.".format(
+                             SSN_ADF_Config.PROCESSES,os.cpu_count()))
         try:
-            pool = Pool(processes=SSN_ADF_Config.THREADS)                         # Create a multiprocessing Pool
+            pool = Pool(processes=SSN_ADF_Config.PROCESSES)                         # Create a multiprocessing Pool
             pool.map(run_obs, range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID))  # process all observer iterable with pool
         finally: # To make sure processes are closed in the end, even if errors happen
             pool.close()

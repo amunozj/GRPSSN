@@ -16,9 +16,9 @@ class SSN_ADF_Config:
     MONTH_TYPE = "FULLM"
 
     # MULTI THREADING
-    THREADS = 1 # 1 -- do not use any parallel processing.
+    PROCESSES = 1 # 1 -- do not use any parallel processing.
                 # -1 --  use all cores on machine.
-                # Otherwise -- number of cores to use.
+                # Otherwise -- defines number of cores to use.
 
 
     # Plotting config varibales
