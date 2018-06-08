@@ -13,6 +13,8 @@ parser.add_argument('-a',"--ADF", action='store_true')
 parser.add_argument('-m',"--month", action='store_true')
 parser.add_argument('-o',"--obs", action='store_true')
 parser.add_argument("-t", "--threads", help="Number of threads to use in multiprocessing", type=int)
+parser.add_argument("--start-id", help="ID of the observer to start at", type=int)
+parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
 args, leftovers = parser.parse_known_args()
 
 #################
@@ -45,6 +47,13 @@ elif args.obs:
 # Set number of threads
 if args.threads is not None:
     SSN_ADF_Config.PROCESSES = args.threads
+
+# Set start and end ID of observer loop through command line
+if args.start_id is not None:
+    SSN_ADF_Config.OBS_START_ID = args.start_id
+if args.end_id is not None:
+    SSN_ADF_Config.OBS_END_ID = args.end_id
+
 
 
 # Flag to turn on saving of figures
