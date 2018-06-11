@@ -15,6 +15,8 @@ parser.add_argument('-O', "--obs", help="Run using total observed days in ADF ca
 parser.add_argument("-t", "--threads", help="Number of threads to use in multiprocessing", type=int)
 parser.add_argument("--start-id", help="ID of the observer to start at", type=int)
 parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
+parser.add_argument("--skip-observers", help="Ignore observers who have a plot present "
+                                             "(see SKIP_OBSERVERS_WITH_PLOTS in config)", action='store_true')
 args, leftovers = parser.parse_known_args()
 
 #################
@@ -43,7 +45,6 @@ output_path = 'TestFrag'
 ###################
 # Arguments will over-ride the options set above
 
-
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
 if args.QDF and args.ADF:
     raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
@@ -70,8 +71,9 @@ if args.start_id is not None:
 if args.end_id is not None:
     SSN_ADF_Config.OBS_END_ID = args.end_id
 
-# Flag to turn on saving of figures
-plotSwitch = True
+if args.skip_observers:
+    SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS = args.skip_observers
+
 
 #################
 # STARTING SCRIPT#
