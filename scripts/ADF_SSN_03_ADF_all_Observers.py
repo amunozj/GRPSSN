@@ -36,7 +36,7 @@ SSN_ADF_Config.MONTH_TYPE = "FULLM"
 plotSwitch = True
 
 # Output Folder
-output_path = 'TestFrag'
+output_path = 'Run-2018-6-8'
 
 ###################
 # PARSING ARGUMENTS#
@@ -104,18 +104,18 @@ Y_vals = []
 # Naming Columns
 y_row = ['Observer',
          'Station',
-         'AvThreshold',
-         'SDThreshold',
-         'R2',
-         'Avg.Res',
-         'AvThresholdS',
-         'SDThresholdS',
-         'R2S',
-         'Avg.Res.S',
-         'R2DT',
-         'Avg.ResDT',
-         'R2OO',
-         'Avg.ResOO']
+         'AvThreshold',     # Weighted threshold average based on the nBest matches for all simultaneous fits
+         'SDThreshold',     # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+         'R2',              # R square of the y=x line using a common threshold
+         'Avg.Res',         # Mean residual of the y=x line using a common threshold
+         'AvThresholdS',    # Weighted threshold average based on the nBest matches for different intervals
+         'SDThresholdS',    # Weighted threshold standard deviation based on the nBest matches for different intervals
+         'R2S',             # R square of the y=x line for each separate interval
+         'Avg.Res.S',       # Mean residual of the y=x line for each separate interval
+         'R2DT',            # R square of the y=x line using the average threshold for each interval
+         'Avg.ResDT',       # Mean residual of the y=x line using the average threshold for each interval
+         'R2OO',            # R square of the y=x line using a common threshold, but only the valid intervals
+         'Avg.ResOO']       # Mean residual of the y=x line using a common threshold, but only the valid intervals
 
 Y_vals.append(y_row)
 
@@ -191,18 +191,18 @@ def run_obs(CalObs):
         # Saving row
         y_row = [ssn_data.CalObs,
                  ssn_data.NamObs,
-                 ssn_data.wAv,
-                 ssn_data.wSD,
-                 ssn_data.rSq,
-                 ssn_data.mRes,
-                 ssn_data.wAvI,
-                 ssn_data.wSDI,
-                 ssn_data.rSqI,
-                 ssn_data.mResI,
-                 ssn_data.rSqDT,
-                 ssn_data.mResDT,
-                 ssn_data.rSqOO,
-                 ssn_data.mResOO]
+                 ssn_data.wAv,      # Weighted threshold average based on the nBest matches for all simultaneous fits
+                 ssn_data.wSD,      # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+                 ssn_data.rSq,      # R square of the y=x line using a common threshold
+                 ssn_data.mRes,     # Mean residual of the y=x line using a common threshold
+                 ssn_data.wAvI,     # Weighted threshold average based on the nBest matches for different intervals
+                 ssn_data.wSDI,     # Weighted threshold standard deviation based on the nBest matches for different intervals
+                 ssn_data.rSqI,     # R square of the y=x line for each separate interval
+                 ssn_data.mResI,    # Mean residual of the y=x line for each separate interval
+                 ssn_data.rSqDT,    # R square of the y=x line using the average threshold for each interval
+                 ssn_data.mResDT,   # Mean residual of the y=x line using the average threshold for each interval
+                 ssn_data.rSqOO,    # R square of the y=x line using a common threshold, but only the valid intervals
+                 ssn_data.mResOO]   # Mean residual of the y=x line using a common threshold, but only the valid intervals
 
         Y_vals.append(y_row)
 
@@ -216,7 +216,7 @@ if __name__ == '__main__':
     obs_range = range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID)
 
     if SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS:
-        out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', 'TestFrag')
+        out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', output_path)
         for ob in obs_range:
             for dname in os.listdir(out_dir):
                 if dname.startswith('{}_'.format(ob)):
