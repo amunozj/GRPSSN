@@ -15,6 +15,8 @@ parser.add_argument('-O', "--obs", help="Run using total observed days in ADF ca
 parser.add_argument("-t", "--threads", help="Number of threads to use in multiprocessing", type=int)
 parser.add_argument("--start-id", help="ID of the observer to start at", type=int)
 parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
+parser.add_argument("--skip-observers", help="Ignore observers who have a plot present "
+                                             "(see SKIP_OBSERVERS_WITH_PLOTS in config)", action='store_true')
 args, leftovers = parser.parse_known_args()
 
 #################
@@ -43,7 +45,6 @@ output_path = 'Run-2018-6-8'
 ###################
 # Arguments will over-ride the options set above
 
-
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
 if args.QDF and args.ADF:
     raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
@@ -70,8 +71,9 @@ if args.start_id is not None:
 if args.end_id is not None:
     SSN_ADF_Config.OBS_END_ID = args.end_id
 
-# Flag to turn on saving of figures
-plotSwitch = True
+# Flag to skip over already processed observers (see config file for more detail)
+if args.skip_observers:
+    SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS = args.skip_observers
 
 #################
 # STARTING SCRIPT#
@@ -126,7 +128,7 @@ def run_obs(CalObs):
     if CalObs in SSN_ADF_Config.SKIP_OBS:
         return
 
-    print("######## Beginning run on observer {} ########\n".format(CalObs))
+    print("######## Starting run on observer {} ########\n".format(CalObs))
 
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata
@@ -215,6 +217,8 @@ if __name__ == '__main__':
 
     obs_range = range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID)
 
+    # If SKIP_OBSERVERS_WITH_PLOTS is set, for each observer find matching directory
+    # If there is a file with the same flags as currently set, add this observer to list of observers to skip
     if SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS:
         out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', output_path)
         for ob in obs_range:
@@ -227,23 +231,24 @@ if __name__ == '__main__':
                             break
         print("\nSkipping observers who have plot(s) labeled with the current flags ({} / {}):\n{}\n"
               "Change the SKIP_OBSERVERS_WITH_PLOTS config flag to remove this behavior\n".format(
-            SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE,SSN_ADF_Config.SKIP_OBS))
+            SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE, SSN_ADF_Config.SKIP_OBS))
 
     if SSN_ADF_Config.PROCESSES == 1:
         for i in obs_range:
             run_obs(i)
     elif SSN_ADF_Config.PROCESSES == -1:
         try:
-            pool = Pool()  # Create a multiprocessing Pool
+            pool = Pool()  # Create a multiprocessing Pool with all available cores
             pool.map(run_obs, obs_range)  # process all observer iterable with pool
         finally:  # To make sure processes are closed in the end, even if errors happen
             pool.close()
             pool.join()
     else:
+        # Safety checks for process number
         if SSN_ADF_Config.PROCESSES < -1 or SSN_ADF_Config.PROCESSES == 0:
             raise ValueError(
                 "Invalid processes number ({}). Please set to a valid number.".format(SSN_ADF_Config.PROCESSES))
-        if SSN_ADF_Config.PROCESSES > os.cpu_count():
+        elif SSN_ADF_Config.PROCESSES > os.cpu_count():
             raise ValueError("Processes number higher than CPU count. "
                              "You tried to initiate {} processes, while only having {} CPU's.".format(
                 SSN_ADF_Config.PROCESSES, os.cpu_count()))

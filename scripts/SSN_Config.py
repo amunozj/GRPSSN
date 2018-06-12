@@ -18,7 +18,7 @@ class SSN_ADF_Config:
     # 1 --> do not use any parallel processing.
     # -1 -->  use all cores on machine.
     # Other --> defines number of cores to use
-    PROCESSES = 2
+    PROCESSES = 1
 
     # OVERWRITING AND SKIPPING PLOTS
     # Setting both flags to false will recreate and overwrite all plots for all observers
