@@ -17,6 +17,9 @@ parser.add_argument("--start-id", help="ID of the observer to start at", type=in
 parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
 parser.add_argument("--skip-observers", help="Ignore observers who have a plot present "
                                              "(see SKIP_OBSERVERS_WITH_PLOTS in config)", action='store_true')
+parser.add_argument("--suppress-warnings", help="Suppress all numpy related warnings (use with caution)"
+                                             , action='store_true')
+
 args, leftovers = parser.parse_known_args()
 
 #################
@@ -75,6 +78,13 @@ if args.end_id is not None:
 if args.skip_observers:
     SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS = args.skip_observers
 
+# Suppress numpy warning messages
+if args.suppress_warnings:
+    SSN_ADF_Config.SUPPRESS_NP_WARNINGS = args.suppress_warnings
+
+if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
+    np.warnings.filterwarnings('ignore')
+
 #################
 # STARTING SCRIPT#
 #################
@@ -117,22 +127,30 @@ y_row = ['Observer',
          'R2DT',            # R square of the y=x line using the average threshold for each interval
          'Avg.ResDT',       # Mean residual of the y=x line using the average threshold for each interval
          'R2OO',            # R square of the y=x line using a common threshold, but only the valid intervals
-         'Avg.ResOO']       # Mean residual of the y=x line using a common threshold, but only the valid intervals
+         'Avg.ResOO',       # Mean residual of the y=x line using a common threshold, but only the valid intervals
+         'QDays',           ####### NEW DATA STARTS HERE #######
+         'ADays',
+         'NADays',
+         'TDays',
+         'QAFrac',
+         'ObsPerMonth',
+         'RiseCount',
+         'DecCount'
+         ]
 
 Y_vals.append(y_row)
 
 
-# Defining Observer
-# for CalObs in range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID):
-def run_obs(CalObs):
-    if CalObs in SSN_ADF_Config.SKIP_OBS:
+# Start pipeline for an individual observer
+def run_obs(CalObsID):
+    if CalObsID in SSN_ADF_Config.SKIP_OBS:
         return
 
-    print("######## Starting run on observer {} ########\n".format(CalObs))
+    print("######## Starting run on observer {} ########\n".format(CalObsID))
 
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata
-                                        CalObs=CalObs,  # Observer identifier denoting observer to be processed
+                                        CalObs=CalObsID,  # Observer identifier denoting observer to be processed
                                         MoLngt=30,  # Duration of the interval ("month") used to calculate the ADF
                                         minObD=0.33,
                                         # Minimum proportion of days with observation for a "month" to be considered valid
@@ -203,8 +221,17 @@ def run_obs(CalObs):
                  ssn_data.mResI,    # Mean residual of the y=x line for each separate interval
                  ssn_data.rSqDT,    # R square of the y=x line using the average threshold for each interval
                  ssn_data.mResDT,   # Mean residual of the y=x line using the average threshold for each interval
-                 ssn_data.rSqOO,    # R square of the y=x line using a common threshold, but only the valid intervals
-                 ssn_data.mResOO]   # Mean residual of the y=x line using a common threshold, but only the valid intervals
+                 ssn_data.rSqOO,    # R square of the y=x line using a common threshold, but only valid intervals
+                 ssn_data.mResOO,   # Mean residual of the y=x line using a common threshold, but only valid intervals
+                 ssn_data.QDays,    ####### NEW DATA STARTS HERE #######
+                 ssn_data.ADays,
+                 ssn_data.NADays,
+                 ssn_data.TDays,
+                 ssn_data.QAFrac,
+                 ssn_data.ObsPerMonth,
+                 ssn_data.RiseCount,
+                 ssn_data.DecCount
+                 ]
 
         Y_vals.append(y_row)
 
@@ -235,7 +262,7 @@ if __name__ == '__main__':
 
     if SSN_ADF_Config.PROCESSES == 1:
         for i in obs_range:
-            run_obs(i)
+            run_obs(i) # Start process normally
     elif SSN_ADF_Config.PROCESSES == -1:
         try:
             pool = Pool()  # Create a multiprocessing Pool with all available cores
