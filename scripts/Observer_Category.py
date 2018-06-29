@@ -10,7 +10,7 @@ matplotlib.use('MacOSX')
 import matplotlib.pyplot as plt
 
 
-outfile = 'observer_categories.csv'
+outfile = 'output/observer_categories.csv'
 
 input_dir = '~/Desktop/Run-2018-6-8'
 flag_files = {'AO': '{}/{}Observer_ADF.csv'.format(input_dir, config.get_file_prepend('ADF', 'OBS')),
