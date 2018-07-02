@@ -450,8 +450,8 @@ class ssnADF(ssn_data):
         else:
             ssn_data.InvMoStreak = 0
 
-        ssn_data.ObsStartDate = yrOb[0]
-        ssn_data.ObsTotLength = yrOb[-1] - yrOb[0]
+        ssn_data.ObsStartDate = yrOb[0][0]
+        ssn_data.ObsTotLength = yrOb[-1][-1] - yrOb[0][0]
 
         self.ssn_data = ssn_data
 
