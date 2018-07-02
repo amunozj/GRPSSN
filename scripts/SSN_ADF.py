@@ -444,7 +444,11 @@ class ssnADF(ssn_data):
         ssn_data.InvInts = np.sum(np.logical_not(vldIntr))  # Number of invalid intervals in observer
 
         ssn_data.InvMonths = np.sum(np.logical_not(vMonths))
-        ssn_data.InvMoStreak = max([sum(1 for _ in g) for k, g in groupby(vMonths) if not k])
+        strks = [sum(1 for _ in g) for k, g in groupby(vMonths) if not k]
+        if strks:
+            ssn_data.InvMoStreak = max(strks)
+        else:
+            ssn_data.InvMoStreak = 0
 
         ssn_data.ObsStartDate = yrOb[0]
         ssn_data.ObsTotLength = yrOb[-1] - yrOb[0]
