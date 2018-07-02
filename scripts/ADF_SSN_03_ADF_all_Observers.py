@@ -18,7 +18,7 @@ parser.add_argument("--end-id", help="ID of the observer to end at", type=int)
 parser.add_argument("--skip-observers", help="Ignore observers who have a plot present "
                                              "(see SKIP_OBSERVERS_WITH_PLOTS in config)", action='store_true')
 parser.add_argument("--suppress-warnings", help="Suppress all numpy related warnings (use with caution)"
-                                             , action='store_true')
+                    , action='store_true')
 
 args, leftovers = parser.parse_known_args()
 
@@ -42,6 +42,10 @@ plotSwitch = True
 
 # Output Folder
 output_path = 'Run-2018-6-8'
+
+# Output CSV file path
+output_csv_file = 'output/{}/{}Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
+    SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE))
 
 ###################
 # PARSING ARGUMENTS#
@@ -110,40 +114,34 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
 # Stores SSN metadata set in a SSN_ADF_Class
 ssn_data = ssn_adf.ssn_data
 
-# Creating Variable to save csv
-Y_vals = []
-
 # Naming Columns
-y_row = ['Observer',
-         'Station',
-         'AvThreshold',     # Weighted threshold average based on the nBest matches for all simultaneous fits
-         'SDThreshold',     # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
-         'R2',              # R square of the y=x line using a common threshold
-         'Avg.Res',         # Mean residual of the y=x line using a common threshold
-         'AvThresholdS',    # Weighted threshold average based on the nBest matches for different intervals
-         'SDThresholdS',    # Weighted threshold standard deviation based on the nBest matches for different intervals
-         'R2S',             # R square of the y=x line for each separate interval
-         'Avg.Res.S',       # Mean residual of the y=x line for each separate interval
-         'R2DT',            # R square of the y=x line using the average threshold for each interval
-         'Avg.ResDT',       # Mean residual of the y=x line using the average threshold for each interval
-         'R2OO',            # R square of the y=x line using a common threshold, but only the valid intervals
-         'Avg.ResOO',       # Mean residual of the y=x line using a common threshold, but only the valid intervals
-         'QDays',           ####### NEW DATA STARTS HERE #######
-         'ADays',
-         'NADays',
-         'TDays',
-         'QAFrac',
-         'ObsPerMonth',
-         'RiseCount',
-         'DecCount',
-         'InvInts',
-         'InvMonths',
-         'InvMoStreak',
-         'ObsStartDate',
-         'ObsTotLength'
-         ]
-
-Y_vals.append(y_row)
+header = ['Observer',
+          'Station',
+          'AvThreshold',    # Weighted threshold average based on the nBest matches for all simultaneous fits
+          'SDThreshold',    # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+          'R2',             # R square of the y=x line using a common threshold
+          'Avg.Res',        # Mean residual of the y=x line using a common threshold
+          'AvThresholdS',   # Weighted threshold average based on the nBest matches for different intervals
+          'SDThresholdS',   # Weighted threshold standard deviation based on the nBest matches for different intervals
+          'R2S',            # R square of the y=x line for each separate interval
+          'Avg.Res.S',      # Mean residual of the y=x line for each separate interval
+          'R2DT',           # R square of the y=x line using the average threshold for each interval
+          'Avg.ResDT',      # Mean residual of the y=x line using the average threshold for each interval
+          'R2OO',           # R square of the y=x line using a common threshold, but only the valid intervals
+          'Avg.ResOO',      # Mean residual of the y=x line using a common threshold, but only the valid intervals
+          'QDays',          ####### NEW DATA STARTS HERE #######
+          'ADays',
+          'NADays',
+          'TDays',
+          'QAFrac',
+          'ObsPerMonth',
+          'RiseCount',
+          'DecCount',
+          'InvInts',
+          'InvMonths',
+          'InvMoStreak',
+          'ObsStartDate',
+          'ObsTotLength']
 
 
 # Start pipeline for an individual observer
@@ -216,19 +214,19 @@ def run_obs(CalObsID):
         # Saving row
         y_row = [ssn_data.CalObs,
                  ssn_data.NamObs,
-                 ssn_data.wAv,      # Weighted threshold average based on the nBest matches for all simultaneous fits
-                 ssn_data.wSD,      # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
-                 ssn_data.rSq,      # R square of the y=x line using a common threshold
-                 ssn_data.mRes,     # Mean residual of the y=x line using a common threshold
-                 ssn_data.wAvI,     # Weighted threshold average based on the nBest matches for different intervals
-                 ssn_data.wSDI,     # Weighted threshold standard deviation based on the nBest matches for different intervals
-                 ssn_data.rSqI,     # R square of the y=x line for each separate interval
-                 ssn_data.mResI,    # Mean residual of the y=x line for each separate interval
-                 ssn_data.rSqDT,    # R square of the y=x line using the average threshold for each interval
-                 ssn_data.mResDT,   # Mean residual of the y=x line using the average threshold for each interval
-                 ssn_data.rSqOO,    # R square of the y=x line using a common threshold, but only valid intervals
-                 ssn_data.mResOO,   # Mean residual of the y=x line using a common threshold, but only valid intervals
-                 ssn_data.QDays,    ####### NEW DATA STARTS HERE #######
+                 ssn_data.wAv,     # Weighted threshold average based on the nBest matches for all simultaneous fits
+                 ssn_data.wSD,     # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+                 ssn_data.rSq,     # R square of the y=x line using a common threshold
+                 ssn_data.mRes,    # Mean residual of the y=x line using a common threshold
+                 ssn_data.wAvI,    # Weighted threshold average based on the nBest matches for different intervals
+                 ssn_data.wSDI,    # Weighted threshold standard deviation based on the nBest matches for different intervals
+                 ssn_data.rSqI,    # R square of the y=x line for each separate interval
+                 ssn_data.mResI,   # Mean residual of the y=x line for each separate interval
+                 ssn_data.rSqDT,   # R square of the y=x line using the average threshold for each interval
+                 ssn_data.mResDT,  # Mean residual of the y=x line using the average threshold for each interval
+                 ssn_data.rSqOO,   # R square of the y=x line using a common threshold, but only valid intervals
+                 ssn_data.mResOO,  # Mean residual of the y=x line using a common threshold, but only valid intervals
+                 ssn_data.QDays,   ####### NEW DATA STARTS HERE #######
                  ssn_data.ADays,
                  ssn_data.NADays,
                  ssn_data.TDays,
@@ -241,57 +239,64 @@ def run_obs(CalObsID):
                  ssn_data.InvMoStreak,
                  ssn_data.ObsStartDate,
                  ssn_data.ObsTotLength
+
                  ]
 
-        Y_vals.append(y_row)
-
-    writer = csv.writer(open('output/{}/{}Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
-        SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)), 'w', newline=''))
-    writer.writerows(Y_vals)
+        # Write new row to file
+        writer.writerow(y_row)
+        f.flush()
 
 
 if __name__ == '__main__':
 
-    obs_range = range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID)
+    # Handle writing data output
+    with open(output_csv_file, 'w', newline='') as f:
 
-    # If SKIP_OBSERVERS_WITH_PLOTS is set, for each observer find matching directory
-    # If there is a file with the same flags as currently set, add this observer to list of observers to skip
-    if SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS:
-        out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', output_path)
-        for ob in obs_range:
-            for dname in os.listdir(out_dir):
-                if dname.startswith('{}_'.format(ob)):
-                    for file in os.listdir(os.path.join(out_dir, dname)):
-                        if file.startswith(
-                                SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE)):
-                            SSN_ADF_Config.SKIP_OBS.append(ob)
-                            break
-        print("\nSkipping observers who have plot(s) labeled with the current flags ({} / {}):\n{}\n"
-              "Change the SKIP_OBSERVERS_WITH_PLOTS config flag to remove this behavior\n".format(
-            SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE, SSN_ADF_Config.SKIP_OBS))
+        writer = csv.writer(f)
+        writer.writerow(header)
+        f.flush()
 
-    if SSN_ADF_Config.PROCESSES == 1:
-        for i in obs_range:
-            run_obs(i) # Start process normally
-    elif SSN_ADF_Config.PROCESSES == -1:
-        try:
-            pool = Pool()  # Create a multiprocessing Pool with all available cores
-            pool.map(run_obs, obs_range)  # process all observer iterable with pool
-        finally:  # To make sure processes are closed in the end, even if errors happen
-            pool.close()
-            pool.join()
-    else:
-        # Safety checks for process number
-        if SSN_ADF_Config.PROCESSES < -1 or SSN_ADF_Config.PROCESSES == 0:
-            raise ValueError(
-                "Invalid processes number ({}). Please set to a valid number.".format(SSN_ADF_Config.PROCESSES))
-        elif SSN_ADF_Config.PROCESSES > os.cpu_count():
-            raise ValueError("Processes number higher than CPU count. "
-                             "You tried to initiate {} processes, while only having {} CPU's.".format(
-                SSN_ADF_Config.PROCESSES, os.cpu_count()))
-        try:
-            pool = Pool(processes=SSN_ADF_Config.PROCESSES)  # Create a multiprocessing Pool
-            pool.map(run_obs, obs_range)  # process all observer iterable with pool
-        finally:  # To make sure processes are closed in the end, even if errors happen
-            pool.close()
-            pool.join()
+        obs_range = range(SSN_ADF_Config.OBS_START_ID, SSN_ADF_Config.OBS_END_ID)
+
+        # If SKIP_OBSERVERS_WITH_PLOTS is set, for each observer find matching directory
+        # If there is a file with the same flags as currently set, add this observer to list of observers to skip
+        if SSN_ADF_Config.SKIP_OBSERVERS_WITH_PLOTS:
+            out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', output_path)
+            for ob in obs_range:
+                for dname in os.listdir(out_dir):
+                    if dname.startswith('{}_'.format(ob)):
+                        for file in os.listdir(os.path.join(out_dir, dname)):
+                            if file.startswith(
+                                    SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.ADF_TYPE,
+                                                                    SSN_ADF_Config.MONTH_TYPE)):
+                                SSN_ADF_Config.SKIP_OBS.append(ob)
+                                break
+            print("\nSkipping observers who have plot(s) labeled with the current flags ({} / {}):\n{}\n"
+                  "Change the SKIP_OBSERVERS_WITH_PLOTS config flag to remove this behavior\n".format(
+                SSN_ADF_Config.ADF_TYPE, SSN_ADF_Config.MONTH_TYPE, SSN_ADF_Config.SKIP_OBS))
+
+        if SSN_ADF_Config.PROCESSES == 1:
+            for i in obs_range:
+                run_obs(i)  # Start process normally
+        elif SSN_ADF_Config.PROCESSES == -1:
+            try:
+                pool = Pool()  # Create a multiprocessing Pool with all available cores
+                pool.map(run_obs, obs_range)  # process all observer iterable with pool
+            finally:  # To make sure processes are closed in the end, even if errors happen
+                pool.close()
+                pool.join()
+        else:
+            # Safety checks for process number
+            if SSN_ADF_Config.PROCESSES < -1 or SSN_ADF_Config.PROCESSES == 0:
+                raise ValueError(
+                    "Invalid processes number ({}). Please set to a valid number.".format(SSN_ADF_Config.PROCESSES))
+            elif SSN_ADF_Config.PROCESSES > os.cpu_count():
+                raise ValueError("Processes number higher than CPU count. "
+                                 "You tried to initiate {} processes, while only having {} CPU's.".format(
+                    SSN_ADF_Config.PROCESSES, os.cpu_count()))
+            try:
+                pool = Pool(processes=SSN_ADF_Config.PROCESSES)  # Create a multiprocessing Pool
+                pool.map(run_obs, obs_range)  # process all observer iterable with pool
+            finally:  # To make sure processes are closed in the end, even if errors happen
+                pool.close()
+                pool.join()
