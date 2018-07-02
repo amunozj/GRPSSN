@@ -434,9 +434,9 @@ class ssnADF(ssn_data):
         ssn_data.ADays = n_act  # Total number of Active days
         ssn_data.NADays = n_na  # Total unobserved days in data
         ssn_data.TDays = n_tot  # Total days accounted for in data
-        ssn_data.QAFrac = n_qui / n_act  # Fraction of quiet to active days
+        ssn_data.QAFrac = round(n_qui / n_act, 3)  # Fraction of quiet to active days
 
-        ssn_data.ObsPerMonth = (n_act + n_qui) / yrOb.shape[0]  # Average number of days observed per month
+        ssn_data.ObsPerMonth = round((n_act + n_qui) / yrOb.shape[0], 3)  # Average number of days observed per month
 
         ssn_data.RiseCount = len([x for x in cenPoints if x[1] == 1.0])
         ssn_data.DecCount = len([x for x in cenPoints if x[1] == -1.0])
