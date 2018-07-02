@@ -8,6 +8,7 @@ import scipy as sp
 from copy import copy
 from pyemd import emd
 import os.path
+from itertools import groupby
 
 from SSN_Input_Data import ssn_data
 import SSN_ADF_Plotter
@@ -16,6 +17,7 @@ from SSN_Config import SSN_ADF_Config
 parent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
 sys.path.insert(1, parent_dir)  # add to pythonpath
 from detect_peaks import detect_peaks
+
 
 
 class ssnADF(ssn_data):
@@ -381,6 +383,7 @@ class ssnADF(ssn_data):
             # Reshaping into "months"
             TgrpsOb = TgrpsOb.reshape((-1, MoLngt))
 
+
             # Number of days with observations
             ODObs = np.sum(np.isfinite(TgrpsOb), axis=1)
 
@@ -398,8 +401,14 @@ class ssnADF(ssn_data):
 
         print(str(np.sum(vldIntr)) + '/' + str(vldIntr.shape[0]) + ' valid intervals')
 
-        # Storing variables in object-----------------------------------------------------------------------------------
+        # Find valid months
+        vMonths = []
+        for m in grpsOb:
+            l = len(m)
+            m = [0 if np.isnan(y) else 1 for y in m]
+            vMonths.append(True if (np.sum(m) / l > minObD) else False)
 
+        # Storing variables in object-----------------------------------------------------------------------------------
 
         ssn_data.CalObs = CalObs  # Observer identifier denoting observer to be processed
         ssn_data.NamObs = NamObs  # Name of observer
@@ -431,8 +440,14 @@ class ssnADF(ssn_data):
 
         ssn_data.RiseCount = len([x for x in cenPoints if x[1] == 1.0])
         ssn_data.DecCount = len([x for x in cenPoints if x[1] == -1.0])
-        print(ssn_data.RiseCount, ssn_data.DecCount)
 
+        ssn_data.InvInts = np.sum(np.logical_not(vldIntr))  # Number of invalid intervals in observer
+
+        ssn_data.InvMonths = np.sum(np.logical_not(vMonths))
+        ssn_data.InvMoStreak = max([sum(1 for _ in g) for k, g in groupby(vMonths) if not k])
+
+        ssn_data.ObsStartDate = yrOb[0]
+        ssn_data.ObsTotLength = yrOb[-1] - yrOb[0]
 
         self.ssn_data = ssn_data
 

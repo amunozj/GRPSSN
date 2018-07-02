@@ -135,7 +135,12 @@ y_row = ['Observer',
          'QAFrac',
          'ObsPerMonth',
          'RiseCount',
-         'DecCount'
+         'DecCount',
+         'InvInts',
+         'InvMonths',
+         'InvMoStreak',
+         'ObsStartDate',
+         'ObsTotLength'
          ]
 
 Y_vals.append(y_row)
@@ -230,7 +235,12 @@ def run_obs(CalObsID):
                  ssn_data.QAFrac,
                  ssn_data.ObsPerMonth,
                  ssn_data.RiseCount,
-                 ssn_data.DecCount
+                 ssn_data.DecCount,
+                 ssn_data.InvInts,
+                 ssn_data.InvMonths,
+                 ssn_data.InvMoStreak,
+                 ssn_data.ObsStartDate,
+                 ssn_data.ObsTotLength
                  ]
 
         Y_vals.append(y_row)
