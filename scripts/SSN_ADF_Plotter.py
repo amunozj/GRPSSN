@@ -123,7 +123,7 @@ def plotActiveVsObserved(SSN_data,
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
-            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
+            "\nFigure at {} already exists.\n Change the SKIP_PRESENT_PLOTS config flag to overwrite existing plots\n".format(
                 figure_path).format(figure_path))
         return
 
