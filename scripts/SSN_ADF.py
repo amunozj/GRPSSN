@@ -19,7 +19,6 @@ sys.path.insert(1, parent_dir)  # add to pythonpath
 from detect_peaks import detect_peaks
 
 
-
 class ssnADF(ssn_data):
     """
     A class for managing SSN data, reference data, and performing ADF calculations
@@ -357,6 +356,7 @@ class ssnADF(ssn_data):
         # Identification of Min-Max Max-Min intervals with enough valid "months"
         vldIntr = np.zeros(cenPoints.shape[0], dtype=bool)
 
+
         for siInx in range(0, cenPoints.shape[0]):
 
             # Redefining endpoints if interval is partial
@@ -382,7 +382,6 @@ class ssnADF(ssn_data):
 
             # Reshaping into "months"
             TgrpsOb = TgrpsOb.reshape((-1, MoLngt))
-
 
             # Number of days with observations
             ODObs = np.sum(np.isfinite(TgrpsOb), axis=1)
@@ -444,9 +443,9 @@ class ssnADF(ssn_data):
         ssn_data.InvInts = np.sum(np.logical_not(vldIntr))  # Number of invalid intervals in observer
 
         ssn_data.InvMonths = np.sum(np.logical_not(vMonths))
-        strks = [sum(1 for _ in g) for k, g in groupby(vMonths) if not k]
-        if strks:
-            ssn_data.InvMoStreak = max(strks)
+        moStrk = [sum(1 for _ in g) for k, g in groupby(vMonths) if not k]
+        if moStrk:
+            ssn_data.InvMoStreak = max(moStrk)  # Highest number of invalid months in a row (biggest gap)
         else:
             ssn_data.InvMoStreak = 0
 
@@ -500,6 +499,10 @@ class ssnADF(ssn_data):
         QDObsI = []
         QDREFI = []
 
+        # Number of days rising or declining
+        rise_count = 0
+        dec_count = 0
+
         # Going through different sub-intervals
         num_intervals = ssn_data.cenPoints['OBS'].shape[0]
         for siInx in range(0, num_intervals):
@@ -524,6 +527,17 @@ class ssnADF(ssn_data):
                     np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
                                    ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
                     , 'GROUPS'].values.copy()
+
+                # Selecting the maximum integer amount of "months" out of the original data
+                TgrpsOb = TObsDat[0:np.int(TObsDat.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
+                TgrpsOb = TgrpsOb.reshape((-1, ssn_data.MoLngt))
+                TgrpsOb = np.logical_not(np.isnan(TgrpsOb))
+                for m in TgrpsOb:
+                    if np.sum(m) / ssn_data.MoLngt >= ssn_data.minObD:
+                        if ssn_data.cenPoints['OBS'][siInx, 1] == 1.0:
+                            rise_count += 1
+                        elif ssn_data.cenPoints['OBS'][siInx, 1] == -1.0:
+                            dec_count += 1
 
                 TObsFYr = ssn_data.ObsDat.loc[
                     np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
@@ -911,6 +925,9 @@ class ssnADF(ssn_data):
         ssn_data.mResI = mResI  # Mean residual of the y=x line for each separate interval
         ssn_data.rSqDT = rSqDT  # R square of the y=x line using the average threshold for each interval
         ssn_data.mResDT = mResDT  # Mean residual of the y=x line using the average threshold for each interval
+
+        ssn_data.RiseMonths = rise_count  # Number of months in rising phase
+        ssn_data.DecMonths = dec_count  # Number of months in declining phase
 
         self.ssn_data = ssn_data
         # --------------------------------------------------------------------------------------------------------------
