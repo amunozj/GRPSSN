@@ -8,11 +8,11 @@ import scipy as sp
 from copy import copy
 from pyemd import emd
 import os.path
+from itertools import groupby
 
 from SSN_Input_Data import ssn_data
 import SSN_ADF_Plotter
 from SSN_Config import SSN_ADF_Config
-
 
 parent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
 sys.path.insert(1, parent_dir)  # add to pythonpath
@@ -56,7 +56,6 @@ class ssnADF(ssn_data):
         if font is None:
             font = {'family': 'sans-serif', 'weight': 'normal', 'size': 21}
 
-
         # Use relative file paths even when running script from other directory
         dirname = os.path.dirname(__file__)
         ref_data_path = os.path.join(dirname, ref_data_path)
@@ -66,10 +65,8 @@ class ssnADF(ssn_data):
         output_path = os.path.join(dirname, output_path)
 
         ssn_data.__init__(self, obs_data_path=obs_data_path,
-                                  obs_observer_path=obs_observer_path,
-                                  font=font)
-
-
+                          obs_observer_path=obs_observer_path,
+                          font=font)
 
         # Create output folder
         if not os.path.exists(output_path):
@@ -111,7 +108,6 @@ class ssnADF(ssn_data):
         SILSO_Sn = pd.read_csv(silso_path, quotechar='"', encoding='utf-8', header=0)
 
         # Smoothing
-
         swin = 8  # Smoothing window in months
         window = signal.gaussian(M=swin * 6, std=swin)
         window /= window.sum()
@@ -211,8 +207,8 @@ class ssnADF(ssn_data):
 
         self.ssn_data.REF_Dat = REF_Dat  # Reference data with individual group areas each day
 
-        self.ssn_data.risMask = risMask  # Mask indicating the code where to place the search window during raising phases
-        self.ssn_data.decMask = decMask  # Mask indicating the code where to place the search window during raising phases
+        self.ssn_data.risMask = risMask  # Mask indicating where to place the search window during raising phases
+        self.ssn_data.decMask = decMask  # Mask indicating where to place the search window during declining phases
 
         self.ssn_data.endPoints = {
             'SILSO': endPointsS}  # Variable that stores the boundaries of each rising and decaying phase
@@ -282,9 +278,8 @@ class ssnADF(ssn_data):
         fractyear = np.array(list(map(lambda year, month, day: year + (datetime.date(year, month, day).toordinal()
                                                                        - datetime.date(year, 1, 1).toordinal())
                                                                       / (datetime.date(year + 1, 1, 1).toordinal()
-                                                                         - datetime.date(year, 1, 1).toordinal()), year,
-                                      month,
-                                      day)))
+                                                                         - datetime.date(year, 1, 1).toordinal()),
+                                      year, month, day)))
 
         NoObs = pd.DataFrame(np.column_stack((year, month, day, ObsInt[MisDays], station, observer, groups, fractyear)),
                              columns=ObsDat.columns.values)
@@ -361,6 +356,7 @@ class ssnADF(ssn_data):
         # Identification of Min-Max Max-Min intervals with enough valid "months"
         vldIntr = np.zeros(cenPoints.shape[0], dtype=bool)
 
+
         for siInx in range(0, cenPoints.shape[0]):
 
             # Redefining endpoints if interval is partial
@@ -404,8 +400,14 @@ class ssnADF(ssn_data):
 
         print(str(np.sum(vldIntr)) + '/' + str(vldIntr.shape[0]) + ' valid intervals')
 
-        # Storing variables in object-----------------------------------------------------------------------------------
+        # Find valid months
+        vMonths = []
+        for m in grpsOb:
+            l = len(m)
+            m = [0 if np.isnan(y) else 1 for y in m]
+            vMonths.append(True if (np.sum(m) / l > minObD) else False)
 
+        # Storing variables in object-----------------------------------------------------------------------------------
 
         ssn_data.CalObs = CalObs  # Observer identifier denoting observer to be processed
         ssn_data.NamObs = NamObs  # Name of observer
@@ -416,8 +418,39 @@ class ssnADF(ssn_data):
         ssn_data.endPoints['OBS'] = endPoints  # Variable that stores the boundaries of each rising and decaying phase
         ssn_data.cenPoints['OBS'] = cenPoints  # Variable that stores the centers of each rising and decaying phase
 
-        ssn_data.vldIntr = vldIntr  # Variable indicating whether each rising or decaying interval has enough data to be valid
-        ssn_data.obsPlt = obsPlt  # Variable with the oserver average groups for plotting
+        ssn_data.vldIntr = vldIntr  # Stores whether each rising or decaying interval has enough data to be valid
+        ssn_data.obsPlt = obsPlt  # Variable with the observer average groups for plotting
+
+        # NEW MACHINE LEARNING PARAMETERS
+        ssn_data.NumMonths = yrOb.shape[0]  # NUMBER OF MONTHS OBSERVED
+        ssn_data.ODobs = ODObs  # NUMBER OF DAYS WITH OBSERVATIONS
+
+        n_qui = ObsDat.loc[ObsDat.GROUPS == 0.0].shape[0]
+        n_act = np.isfinite(ObsDat.loc[ObsDat.GROUPS > 0.0]).shape[0]
+        n_na = ObsDat.loc[np.isnan(ObsDat.GROUPS)].shape[0]
+        n_tot = ObsDat.shape[0]
+        ssn_data.QDays = n_qui  # Total number of Quiet days
+        ssn_data.ADays = n_act  # Total number of Active days
+        ssn_data.NADays = n_na  # Total unobserved days in data
+        ssn_data.TDays = n_tot  # Total days accounted for in data
+        ssn_data.QAFrac = round(n_qui / n_act, 3)  # Fraction of quiet to active days
+
+        ssn_data.ObsPerMonth = round((n_act + n_qui) / yrOb.shape[0], 3)  # Average number of days observed per month
+
+        ssn_data.RiseCount = len([x for x in cenPoints if x[1] == 1.0])
+        ssn_data.DecCount = len([x for x in cenPoints if x[1] == -1.0])
+
+        ssn_data.InvInts = np.sum(np.logical_not(vldIntr))  # Number of invalid intervals in observer
+
+        ssn_data.InvMonths = np.sum(np.logical_not(vMonths))
+        moStrk = [sum(1 for _ in g) for k, g in groupby(vMonths) if not k]
+        if moStrk:
+            ssn_data.InvMoStreak = max(moStrk)  # Highest number of invalid months in a row (biggest gap)
+        else:
+            ssn_data.InvMoStreak = 0
+
+        ssn_data.ObsStartDate = ObsDat['ORDINAL'].data[0]
+        ssn_data.ObsTotLength = ObsDat['ORDINAL'].data[-1] - ObsDat['ORDINAL'].data[0]
 
         self.ssn_data = ssn_data
 
@@ -466,6 +499,10 @@ class ssnADF(ssn_data):
         QDObsI = []
         QDREFI = []
 
+        # Number of days rising or declining
+        rise_count = 0
+        dec_count = 0
+
         # Going through different sub-intervals
         num_intervals = ssn_data.cenPoints['OBS'].shape[0]
         for siInx in range(0, num_intervals):
@@ -477,7 +514,7 @@ class ssnADF(ssn_data):
             # Perform analysis Only if the period is valid
             if ssn_data.vldIntr[siInx]:
 
-                print('[{}/{}] Valid Interval'.format(siInx+1, num_intervals))
+                print('[{}/{}] Valid Interval'.format(siInx + 1, num_intervals))
 
                 # Defining mask based on the interval type (rise or decay)
                 if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
@@ -490,6 +527,17 @@ class ssnADF(ssn_data):
                     np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
                                    ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
                     , 'GROUPS'].values.copy()
+
+                # Selecting the maximum integer amount of "months" out of the original data
+                TgrpsOb = TObsDat[0:np.int(TObsDat.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
+                TgrpsOb = TgrpsOb.reshape((-1, ssn_data.MoLngt))
+                TgrpsOb = np.logical_not(np.isnan(TgrpsOb))
+                for m in TgrpsOb:
+                    if np.sum(m) / ssn_data.MoLngt >= ssn_data.minObD:
+                        if ssn_data.cenPoints['OBS'][siInx, 1] == 1.0:
+                            rise_count += 1
+                        elif ssn_data.cenPoints['OBS'][siInx, 1] == -1.0:
+                            dec_count += 1
 
                 TObsFYr = ssn_data.ObsDat.loc[
                     np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
@@ -568,7 +616,7 @@ class ssnADF(ssn_data):
 
             # If period is not valid append empty variavbles
             else:
-                print('[{}/{}] INVALID Interval'.format(siInx+1, num_intervals))
+                print('[{}/{}] INVALID Interval'.format(siInx + 1, num_intervals))
                 GDObs = []
                 GDREF = []
                 ODObs = []
@@ -602,9 +650,6 @@ class ssnADF(ssn_data):
         xx, yy = np.meshgrid(x, y)
         Dis = np.absolute(np.power(xx - yy, 1))
 
-
-
-
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
@@ -615,7 +660,7 @@ class ssnADF(ssn_data):
             # Perform analysis Only if the period is valid
             if ssn_data.vldIntr[siInx]:
 
-                print('[{}/{}] Valid Interval'.format(siInx+1, num_intervals))
+                print('[{}/{}] Valid Interval'.format(siInx + 1, num_intervals))
 
                 # Defining mask based on the interval type (rise or decay)
                 if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
@@ -673,10 +718,16 @@ class ssnADF(ssn_data):
 
                             # Main ADF calculations
                             ADFObs, bins = np.histogram(ADF_Obs_frac,
-                                bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
+                                                        bins=(
+                                                                 np.arange(0,
+                                                                           ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
+                                                        density=True)
 
                             ADFREF, bins = np.histogram(ADF_REF_frac,
-                                bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
+                                                        bins=(
+                                                                 np.arange(0,
+                                                                           ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
+                                                        density=True)
 
                             EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
                                                   Dis.astype(np.float64))
@@ -703,7 +754,7 @@ class ssnADF(ssn_data):
 
             # If period is not valid append empty variables
             else:
-                print('[{}/{}] INVALID Interval'.format(siInx+1, num_intervals))
+                print('[{}/{}] INVALID Interval'.format(siInx + 1, num_intervals))
                 EMD = []
                 EMDt = []
                 EMDth = []
@@ -874,6 +925,9 @@ class ssnADF(ssn_data):
         ssn_data.mResI = mResI  # Mean residual of the y=x line for each separate interval
         ssn_data.rSqDT = rSqDT  # R square of the y=x line using the average threshold for each interval
         ssn_data.mResDT = mResDT  # Mean residual of the y=x line using the average threshold for each interval
+
+        ssn_data.RiseMonths = rise_count  # Number of months in rising phase
+        ssn_data.DecMonths = dec_count  # Number of months in declining phase
 
         self.ssn_data = ssn_data
         # --------------------------------------------------------------------------------------------------------------

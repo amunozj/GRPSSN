@@ -43,6 +43,9 @@ class SSN_ADF_Config:
     PLOT_SINGLE_THRESH_SCATTER = True
     PLOT_MULTI_THRESH_SCATTER = True
 
+    # Suppress numpy warnings for cleaner console output
+    SUPPRESS_NP_WARNINGS = False
+
     @staticmethod
     def get_file_prepend(adf_type, month_type):
         """
