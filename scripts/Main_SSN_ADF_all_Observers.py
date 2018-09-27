@@ -29,9 +29,9 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 356
+SSN_ADF_Config.OBS_START_ID = 386
 SSN_ADF_Config.OBS_END_ID = 600
-SSN_ADF_Config.SKIP_OBS = [332]
+SSN_ADF_Config.SKIP_OBS = [332, 385]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF", or dynamic ADF "DYN"
 SSN_ADF_Config.NUM_TYPE = "ADF"
@@ -137,9 +137,12 @@ header = ['Observer',
           'ObsStartDate',  # Starting date
           'ObsTotLength']  # Days between starting and ending dates
 
-with open(output_csv_file, 'w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(header)
+
+if not os.path.exists(output_csv_file):
+
+    with open(output_csv_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
 
 
 # Read Data and plot reference search windows, minima and maxima
