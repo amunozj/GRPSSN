@@ -294,6 +294,10 @@ class ssnADF(ssn_data):
         # Sorting according to date
         ObsDat = ObsDat.sort_values('ORDINAL').reset_index(drop=True)
 
+        # Removing repeated days
+        u, indices = np.unique(ObsDat['ORDINAL'], return_index=True)
+        ObsDat = ObsDat.iloc[indices,:].reset_index(drop=True)
+
         print('Calculating variables for plotting observer...', flush=True)
 
         # Selecting the maximum integer amount of "months" out of the original data
@@ -864,12 +868,11 @@ class ssnADF(ssn_data):
 
                 # Weighted Standard Deviation
                 if config.NBEST == 1:
-                    print(siInx, wSDI)
-                    wSDI[siInx] = np.nan
+                     wSDI[siInx] = np.nan
                 else:
                     wSDI[siInx] = np.sqrt(np.sum(np.multiply(alph, np.power(bestTh[siInx][:, 1] - wAvI[siInx], 2))) / np.sum(alph))
 
-                if np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                if np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] > ssn_data.endPoints['OBS'][siInx, 0],
                                          ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])) > 0:
 
                     # Activate the overlap switch
@@ -897,6 +900,8 @@ class ssnADF(ssn_data):
 
                     # Storing maximum value of groups for plotting
                     maxNPlt = np.max([np.nanmax(grpsREFw), np.nanmax(grpsObsw), maxNPlt])
+
+                    print(grpsREFw.shape, grpsObsw.shape)
 
                     # Removing NaNs
                     grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
