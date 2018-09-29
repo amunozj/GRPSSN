@@ -29,15 +29,15 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 386
+SSN_ADF_Config.OBS_START_ID = 412
 SSN_ADF_Config.OBS_END_ID = 600
-SSN_ADF_Config.SKIP_OBS = [332, 385]
+SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF", or dynamic ADF "DYN"
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM"
-SSN_ADF_Config.DEN_TYPE = "FULLM"
+SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -154,9 +154,9 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  font={'family': 'sans-serif',
                        'weight': 'normal',
                        'size': 21},
-                 dt=14,  # Temporal Stride in days
+                 dt=30,  # Temporal Stride in days
                  phTol=2,  # Cycle phase tolerance in years
-                 thN=100,  # Number of thresholds including 0
+                 thN=50,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
                  plot=plotSwitch)
 
