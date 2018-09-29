@@ -12,7 +12,7 @@ from itertools import groupby
 
 from SSN_Input_Data import ssn_data
 import SSN_ADF_Plotter
-from SSN_Config import SSN_ADF_Config
+from SSN_Config import SSN_ADF_Config as config
 
 parent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'functions')
 sys.path.insert(1, parent_dir)  # add to pythonpath
@@ -294,6 +294,10 @@ class ssnADF(ssn_data):
         # Sorting according to date
         ObsDat = ObsDat.sort_values('ORDINAL').reset_index(drop=True)
 
+        # Removing repeated days
+        u, indices = np.unique(ObsDat['ORDINAL'], return_index=True)
+        ObsDat = ObsDat.iloc[indices,:].reset_index(drop=True)
+
         print('Calculating variables for plotting observer...', flush=True)
 
         # Selecting the maximum integer amount of "months" out of the original data
@@ -306,8 +310,8 @@ class ssnADF(ssn_data):
         # Reshaping
         yrOb = yrOb.reshape((-1, MoLngt))
 
-        # If no data for observer exit
-        if yrOb.shape[0] == 0:
+        # If no data for observer or only counts of one or two groups exit
+        if (yrOb.shape[0] == 0) or np.max(ObsDat['GROUPS'].values) < 3:
             print('done. NO VALID MONTHS IN OBSERVER', flush=True)
             print(' ', flush=True)
             ssn_data.CalObs = CalObs
@@ -428,21 +432,19 @@ class ssnADF(ssn_data):
         n_qui = ObsDat.loc[ObsDat.GROUPS == 0.0].shape[0]
         n_act = np.isfinite(ObsDat.loc[ObsDat.GROUPS > 0.0]).shape[0]
         n_na = ObsDat.loc[np.isnan(ObsDat.GROUPS)].shape[0]
-        n_tot = ObsDat.shape[0]
         ssn_data.QDays = n_qui  # Total number of Quiet days
         ssn_data.ADays = n_act  # Total number of Active days
-        ssn_data.NADays = n_na  # Total unobserved days in data
-        ssn_data.TDays = n_tot  # Total days accounted for in data
+        ssn_data.NADays = n_na  # Total number of missing days in data
         ssn_data.QAFrac = round(n_qui / n_act, 3)  # Fraction of quiet to active days
 
         ssn_data.ObsPerMonth = round((n_act + n_qui) / yrOb.shape[0], 3)  # Average number of days observed per month
 
-        ssn_data.RiseCount = len([x for x in cenPoints if x[1] == 1.0])
-        ssn_data.DecCount = len([x for x in cenPoints if x[1] == -1.0])
+        ssn_data.RiseCount = len([x for x in cenPoints if x[1] == 1.0])  # Number of intervals in rising phases
+        ssn_data.DecCount = len([x for x in cenPoints if x[1] == -1.0])  # Number of intervals in declining phases
 
-        ssn_data.InvInts = np.sum(np.logical_not(vldIntr))  # Number of invalid intervals in observer
+        ssn_data.InvCount = np.sum(np.logical_not(vldIntr))  # Number of invalid intervals in observer
 
-        ssn_data.InvMonths = np.sum(np.logical_not(vMonths))
+        ssn_data.InvMonths = np.sum(np.logical_not(vMonths)) # Number of invalid months in observer
         moStrk = [sum(1 for _ in g) for k, g in groupby(vMonths) if not k]
         if moStrk:
             ssn_data.InvMoStreak = max(moStrk)  # Highest number of invalid months in a row (biggest gap)
@@ -470,17 +472,64 @@ class ssnADF(ssn_data):
 
             return True
 
+    def _Calculate_R2M_MRes_MRRes(self,
+                                 calObsT,
+                                 calRefT,
+                                 centers,
+                                 edges):
+
+        """
+        Function that calculates the R^2 and mean residuals using the medians of binned data.
+
+        :param calObsT: Number of groups per day for the calibrated observer
+        :param MaxIter: Number of groups per day for the reference, these are meant to match
+        one by one the same dates of the calibrated observer and to be already thresholded
+        :param centers: Centers of the bins used in the calibration
+        :param edges: Edges of the bins used in the calibration
+        """
+
+        # Applying Sqrt + 1
+        if config.SQRT_2DHIS:
+            calRefT = np.sqrt(calRefT + 1)
+            calObsT = np.sqrt(calObsT + 1)
+
+        # Calculating Median for bins
+        Ymedian = centers * np.nan
+        for i in range(0, centers.shape[0]):
+            ypoints = calRefT[np.logical_and(calObsT >= edges[i], calObsT <= edges[i + 1])]
+            if ypoints.shape[0] > 0:
+                Ymedian[i] = np.nanmedian(ypoints)
+
+        # Calculating quantities for assessment
+        y = Ymedian
+        x = centers
+
+        x = x[np.isfinite(y)]
+        y = y[np.isfinite(y)]
+
+        # R squared
+        yMean = np.mean(y)
+        SStot = np.sum(np.power(y - yMean, 2))
+        SSreg = np.sum(np.power(y - x, 2))
+        rSq = (1 - SSreg / SStot)
+
+        # Mean Residual
+        mRes = np.mean(y - x)
+        mRRes = np.mean(np.divide(y[x > 0] - x[x > 0], x[x > 0]))
+
+        return {'rSq': rSq,
+                'mRes': mRes,
+                'mRRes': mRRes}
+
     def ADFscanningWindowEMD(self,
-                             ssn_data,
-                             nBest=50):
+                             ssn_data):
 
         """
         Function that preps the search windows and calculates the EMD for each separate rising and decaying interval
         comparing the observer and the reference
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
-        :param ssn_data: SSN_data class object storing SSN metadata
-        :param nBest: Number of top best matches to keep
+        :param ssn_data: ssn_data class object storing SSN metadata
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """
 
@@ -569,6 +618,7 @@ class ssnADF(ssn_data):
                         np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3],
                                    TIdx * ssn_data.thI),
                         axis=1).astype(float)
+
                     grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
 
                     # Going through different shifts
@@ -593,8 +643,10 @@ class ssnADF(ssn_data):
                             # Imprinting missing days
                             # OBSERVER
                             TgrpsOb[np.isnan(TgrpsREF)] = np.nan
+                            TgrpsREF[np.isnan(TgrpsREF)] = np.nan
                             # REFERENCE
                             TgrpsREF[np.isnan(TgrpsOb)] = np.nan
+                            TgrpsOb[np.isnan(TgrpsOb)] = np.nan
 
                             # Number of days with groups
                             # OBSERVER
@@ -684,10 +736,10 @@ class ssnADF(ssn_data):
                             # Calculating Earth Mover's Distance
 
                             # Change denom depending on
-                            if SSN_ADF_Config.MONTH_TYPE == "FULLM":
+                            if config.DEN_TYPE == "FULLM":
                                 ADF_Obs_denom = ssn_data.MoLngt
                                 ADF_REF_denom = ssn_data.MoLngt
-                            elif SSN_ADF_Config.MONTH_TYPE == "OBS":
+                            elif config.DEN_TYPE == "OBS":
                                 ADF_Obs_denom = ODObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
                                 ADF_REF_denom = ODREFI[siInx][
@@ -697,15 +749,15 @@ class ssnADF(ssn_data):
                                     'Invalid flag: Use \'OBS\' (or \'FULLM\') to use observed days (full month length) to determine ADF.')
 
                             # Change calculation depending on ADF/QDF flag
-                            if SSN_ADF_Config.ADF_TYPE == "QDF":
-                                ADF_Obs_numerator = QDObsI[siInx][
+                            if config.NUM_TYPE == "QDF":
+                                ADF_Obs_numerator = ssn_data.MoLngt - QDObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
-                                ADF_REF_numerator = QDREFI[siInx][
+                                ADF_REF_numerator = ssn_data.MoLngt - QDREFI[siInx][
                                     TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
 
-                                ADF_Obs_frac = 1.0 - np.divide(ADF_Obs_numerator, ADF_Obs_denom)
-                                ADF_REF_frac = 1.0 - np.divide(ADF_REF_numerator, ADF_REF_denom)
-                            elif SSN_ADF_Config.ADF_TYPE == "ADF":
+                                ADF_Obs_frac = np.divide(ADF_Obs_numerator, ADF_Obs_denom)
+                                ADF_REF_frac = np.divide(ADF_REF_numerator, ADF_REF_denom)
+                            elif config.NUM_TYPE == "ADF":
                                 ADF_Obs_numerator = GDObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
                                 ADF_REF_numerator = GDREFI[siInx][
@@ -776,16 +828,15 @@ class ssnADF(ssn_data):
         calRef = []
         calObs = []
 
-        # Creating storing dictionaries to store fit properties
-        rSqI = []
-        mResI = []
-
         # Switch indicating that there is overlap between reference and observer
         obsRefOvrlp = False
 
         # Variables to store the mean threshold and its standard deviation
-        wAvI = ssn_data.vldIntr.copy() * 0
+        wAvI = ssn_data.vldIntr.copy() * 0.0
         wSDI = wAvI.copy()
+
+        # Calculating maximum for plotting, medians, and standard deviations
+        maxNPlt = 0
 
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
@@ -803,23 +854,25 @@ class ssnADF(ssn_data):
                 OpMat = np.squeeze(OpMat[I, :])
 
                 # Adding best points
-                bestTh.append(OpMat[0:nBest - 1, :])
+                bestTh.append(OpMat[0:config.NBEST, :])
 
-                # Constructing weights
-                alph = 1 - (bestTh[siInx][:, 2] - np.min(bestTh[siInx][:, 2])) / (
-                    np.max(bestTh[siInx][:, 2]) - np.min(bestTh[siInx][:, 2]))
+                if config.NBEST == 1:
+                    wAvI[siInx] = bestTh[siInx][0, 1]
+                    wSDI[siInx] = np.nan
+                else:
+                    # Constructing weights
+                    alph = 1 - (bestTh[siInx][:, 2] - np.min(bestTh[siInx][:, 2])) / (
+                        np.max(bestTh[siInx][:, 2]) - np.min(bestTh[siInx][:, 2]))
 
-                if np.isnan(np.sum(alph)):
-                    alph = bestTh[siInx][:, 2] * 0 + 1
+                    if np.isnan(np.sum(alph)):
+                        alph = bestTh[siInx][:, 2] * 0 + 1
 
-                # Weighted average
-                wAvI[siInx] = np.sum(np.multiply(alph, bestTh[siInx][:, 1])) / np.sum(alph)
+                    # Weighted average
+                    wAvI[siInx] = np.sum(np.multiply(alph, bestTh[siInx][:, 1])) / np.sum(alph)
+                    wSDI[siInx] = np.sqrt(np.sum(np.multiply(alph, np.power(bestTh[siInx][:, 1] - wAvI[siInx], 2))) / np.sum(alph))
 
-                # Weighted Standard Deviation
-                wSDI[siInx] = np.sqrt(
-                    np.sum(np.multiply(alph, np.power(bestTh[siInx][:, 1] - wAvI[siInx], 2))) / np.sum(alph))
 
-                if np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                if np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] > ssn_data.endPoints['OBS'][siInx, 0],
                                          ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])) > 0:
 
                     # Activate the overlap switch
@@ -845,6 +898,9 @@ class ssnADF(ssn_data):
                     grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, TObsOrd)]
                     grpsObsw = TObsDat[np.in1d(TObsOrd, ssn_data.REF_Dat['ORDINAL'].values)]
 
+                    # Storing maximum value of groups for plotting
+                    maxNPlt = np.max([np.nanmax(grpsREFw), np.nanmax(grpsObsw), maxNPlt])
+
                     # Removing NaNs
                     grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
                     grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
@@ -852,53 +908,85 @@ class ssnADF(ssn_data):
                     grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
                     grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
 
-                    # Calculating goodness of fit of Y=X
-
-                    # R squared
-                    yMean = np.mean(grpsREFw)
-                    SStot = np.sum(np.power(grpsREFw - yMean, 2))
-                    SSreg = np.sum(np.power(grpsREFw - grpsObsw, 2))
-                    rSq = 1 - SSreg / SStot
-
-                    # Mean Residual
-                    mRes = np.mean(grpsREFw - grpsObsw)
-
                     calRef.append(grpsREFw)
                     calObs.append(grpsObsw)
-                    rSqI.append(rSq)
-                    mResI.append(mRes)
 
                 else:
                     calRef.append([])
                     calObs.append([])
-                    rSqI.append([])
-                    mResI.append([])
 
             # If period not valid store an empty array
             else:
                 bestTh.append([])
                 calRef.append([])
                 calObs.append([])
+
+        # Creating storing dictionaries to store fit properties
+        rSqI = []
+        mResI = []
+        mRResI = []
+
+        # Number of bins to use
+        Nbins = maxNPlt
+
+        # Edges and Centers
+        edges = np.arange(0, np.ceil(maxNPlt) + np.round(maxNPlt * 0.25), (np.ceil(maxNPlt)) / Nbins) - (
+            np.ceil(maxNPlt)) / Nbins / 2
+        centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
+
+        # Applying Sqrt + 1
+        if config.SQRT_2DHIS:
+            maxNT = np.sqrt(maxNPlt)
+
+            # Edges and Centers
+            edges = np.arange(1, np.ceil(maxNT) * 1.05, (np.ceil(maxNT)) / Nbins) - (np.ceil(maxNT)) / Nbins / 2
+            centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
+
+
+        for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+            # Analyze period only if valid
+            if ssn_data.vldIntr[siInx]:
+
+                # Calculate goodness of fit if overlap is true
+                if obsRefOvrlp:
+
+                    calRefT = calRef[siInx].copy()
+                    calObsT = calObs[siInx].copy()
+
+                    metricsDic = self._Calculate_R2M_MRes_MRRes(calObsT, calRefT, centers, edges)
+
+                    rSqI.append(metricsDic['rSq'])
+                    mResI.append(metricsDic['mRes'])
+                    mRResI.append(metricsDic['mRRes'])
+
+                else:
+                    rSqI.append([])
+                    mResI.append([])
+                    mRResI.append([])
+
+            # If period not valid store an empty array
+            else:
                 rSqI.append([])
                 mResI.append([])
+                mRResI.append([])
 
         rSqDT = np.nan
         mResDT = np.nan
+        mRResDT = np.nan
 
-        # Only if there is at leas one interval that is valid
+        # Only if there is only one interval that is valid
         if len(calRef) > 0:
-            # Calculating r square and mean residual using different thresholds for different intervals
-            tcalRef = np.concatenate(calRef, axis=0)
-            tcalObs = np.concatenate(calObs, axis=0)
 
-            # R squared
-            yMean = np.mean(tcalRef)
-            SStot = np.sum(np.power(tcalRef - yMean, 2))
-            SSreg = np.sum(np.power(tcalRef - tcalObs, 2))
-            rSqDT = 1 - SSreg / SStot
+            calRefT = np.concatenate(calRef, axis=0)
+            calObsT = np.concatenate(calObs, axis=0)
 
-            # Mean Residual
-            mResDT = np.mean(tcalRef - tcalObs)
+            metricsDic = self._Calculate_R2M_MRes_MRRes(calObsT, calRefT, centers, edges)
+
+            rSqDT = metricsDic['rSq']
+            mResDT = metricsDic['mRes']
+            mRResDT = metricsDic['mRRes']
+
 
         # Storing variables in object-----------------------------------------------------------------------------------
 
@@ -913,21 +1001,63 @@ class ssnADF(ssn_data):
 
         ssn_data.Dis = Dis  # Distance matrix used to calcualte the EMD
 
-        ssn_data.nBest = nBest  # Number of top best matches to keep
         ssn_data.bestTh = bestTh  # Variable that stores the nBest matches for each interval
         ssn_data.wAvI = wAvI  # Weighted threshold average based on the nBest matches for different intervals
         ssn_data.wSDI = wSDI  # Weighted threshold standard deviation based on the nBest matches for different intervals
 
+
         ssn_data.calRef = calRef  # Thresholded number of groups for reference that overlap with observer
         ssn_data.calObs = calObs  # Number of groups for observer that overlap with reference
 
+        ssn_data.maxNPlt = maxNPlt # Maximum value of groups for plotting and calculation of standard deviations
+        ssn_data.centers = centers # Centers of the bins used to plot and calculate r square
+        ssn_data.edges = edges # Centers of the bins used to plot and calculate r square
+
         ssn_data.rSqI = rSqI  # R square of the y=x line for each separate interval
         ssn_data.mResI = mResI  # Mean residual of the y=x line for each separate interval
+        ssn_data.mRResI = mRResI  # Mean relative residual of the y=x line for each separate interval
+
         ssn_data.rSqDT = rSqDT  # R square of the y=x line using the average threshold for each interval
         ssn_data.mResDT = mResDT  # Mean residual of the y=x line using the average threshold for each interval
+        ssn_data.mRResDT = mRResDT  # Mean relative residual of the y=x line using the average threshold for each interval
 
         ssn_data.RiseMonths = rise_count  # Number of months in rising phase
         ssn_data.DecMonths = dec_count  # Number of months in declining phase
+
+        # Set the simultaneous threshold to the values for the valid interval if there is only one interval
+        if len(calRef) == 1:
+            ssn_data.wAv = wAvI[ssn_data.vldIntr][0]
+            ssn_data.wSD = wSDI[ssn_data.vldIntr][0]
+            ssn_data.rSqOO = rSqDT
+            ssn_data.mResOO = mResDT
+            ssn_data.mRResOO = mRResDT
+
+             # Determine which threshold to use
+            Th = ssn_data.wAvI[ssn_data.vldIntr][0]
+
+            # Calculating number of groups in reference data for given threshold
+            grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], Th),
+                                 axis=1).astype(float)
+            grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+
+            # Selecting the days of overlap with calibrated observer
+            grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values)]
+            grpsObsw = ssn_data.ObsDat.loc[
+                np.in1d(ssn_data.ObsDat['ORDINAL'].values, ssn_data.REF_Dat['ORDINAL'].values), 'GROUPS'].values
+
+            # Removing NaNs
+            grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
+            grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
+
+            grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
+            grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
+
+            metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, centers, edges)
+
+            ssn_data.rSq = metricsDic['rSq']
+            ssn_data.mRes = metricsDic['mRes']
+            ssn_data.mRRes = metricsDic['mRRes']
+
 
         self.ssn_data = ssn_data
         # --------------------------------------------------------------------------------------------------------------
@@ -975,6 +1105,8 @@ class ssnADF(ssn_data):
                 indices_list[index] = min_values[index]
         return False
 
+
+
     def ADFsimultaneousEMD(self,
                            ssn_data,
                            disThres=1.25,
@@ -999,12 +1131,6 @@ class ssnADF(ssn_data):
 
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
-
-            # Defining mask based on the interval type (rise or decay)
-            if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
-                cadMaskI = ssn_data.risMask['INDEX']
-            else:
-                cadMaskI = ssn_data.decMask['INDEX']
 
             # Plot only if period is valid
             if ssn_data.vldIntr[siInx]:
@@ -1039,16 +1165,20 @@ class ssnADF(ssn_data):
 
             ssn_data.rSq = np.nan  # R square of the y=x line using a common threshold
             ssn_data.mRes = np.nan  # Mean residual of the y=x line using a common threshold
+            ssn_data.mRRes = np.nan  # Mean relative residual of the y=x line using a common threshold
 
             ssn_data.rSqOO = np.nan  # R square of the y=x line using a common threshold, but only the valid intervals
             ssn_data.mResOO = np.nan  # Mean residual of the y=x line using a common threshold, but only the valid intervals
+            ssn_data.mRResOO = np.nan  # Mean relative residual of the y=x line using a common threshold, but only the valid intervals
 
             return False
 
         print('Optimize EMD by varying shifts, but using the same threshold...', flush=True)
 
         # Allocating variable to store top matches
-        EMDComb = np.ones((ssn_data.cenPoints['OBS'].shape[0] + 2, ssn_data.nBest)) * 10000
+        EMDComb = np.ones((ssn_data.cenPoints['OBS'].shape[0] + 2, config.NBEST)) * 10000
+
+        print('EMDComb',EMDComb.shape)
 
         # Identify first valid index
         fstVldIn = ssn_data.vldIntr.nonzero()[0][0]
@@ -1130,8 +1260,6 @@ class ssnADF(ssn_data):
 
                 if np.any(EMDComb[0, :] > tmpEMD):
 
-                    # Determining index for insertion
-                    insInx = ssn_data.nBest - np.sum(EMDComb[0, :] >= tmpEMD)
 
                     # Initializing array to be inserted
                     insArr = [tmpEMD, TIdx]
@@ -1149,28 +1277,34 @@ class ssnADF(ssn_data):
                     # Convert to numpy array
                     insArr = np.array(insArr)
 
+                    # Determining index for insertion
+                    insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
+
                     # Insert values
                     EMDComb = np.insert(EMDComb, insInx, insArr, axis=1)
 
                     # Remove last element
-                    EMDComb = EMDComb[:, 0:ssn_data.nBest]
+                    EMDComb = EMDComb[:, 0:config.NBEST]
 
         print('done.', flush=True)
         print(' ', flush=True)
 
         print('Calculating average threshold and its standard deviation...', end="", flush=True)
 
-        # Constructing weights
-        alph = 1 - (EMDComb[0, :] - np.min(EMDComb[0, :])) / (np.max(EMDComb[0, :]) - np.min(EMDComb[0, :]))
 
-        if np.isnan(np.sum(alph)):
-            alph = EMDComb[0, :] * 0 + 1
+        if config.NBEST == 1:
+            wAv = EMDComb[1, 0]
+            wSD = np.nan
+        else:
+            # Constructing weights
+            alph = 1 - (EMDComb[0, :] - np.min(EMDComb[0, :])) / (np.max(EMDComb[0, :]) - np.min(EMDComb[0, :]))
 
-        # Weighted average
-        wAv = np.sum(np.multiply(alph, EMDComb[1, :])) / np.sum(alph)
+            if np.isnan(np.sum(alph)):
+                alph = EMDComb[0, :] * 0 + 1
 
-        # Weighted Standard Deviation
-        wSD = np.sqrt(np.sum(np.multiply(alph, np.power(EMDComb[1, :] - wAv, 2))) / np.sum(alph))
+            # Weighted average
+            wAv = np.sum(np.multiply(alph, EMDComb[1, :])) / np.sum(alph)
+            wSD = np.sqrt(np.sum(np.multiply(alph, np.power(EMDComb[1, :] - wAv, 2))) / np.sum(alph))
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -1200,15 +1334,11 @@ class ssnADF(ssn_data):
             grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
 
             # Calculating goodness of fit of Y=X
+            metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
 
-            # R squared
-            yMean = np.mean(grpsREFw)
-            SStot = np.sum(np.power(grpsREFw - yMean, 2))
-            SSreg = np.sum(np.power(grpsREFw - grpsObsw, 2))
-            rSq = 1 - SSreg / SStot
-
-            # Mean Residual
-            mRes = np.mean(grpsREFw - grpsObsw)
+            rSq = metricsDic['rSq']
+            mRes = metricsDic['mRes']
+            mRRes = metricsDic['mRRes']
 
             # Calculate R^2 and residual using only valid periods
             calRefN = np.array([0])
@@ -1253,14 +1383,13 @@ class ssnADF(ssn_data):
 
             # Calculating goodness of fit of Y=X
 
-            # R squared
-            yMean = np.mean(calRefN)
-            SStot = np.sum(np.power(calRefN - yMean, 2))
-            SSreg = np.sum(np.power(calRefN - calObsN, 2))
-            rSqOO = 1 - SSreg / SStot
+            # Calculating goodness of fit of Y=X
+            metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
 
-            # Mean Residual
-            mResOO = np.mean(calRefN - calObsN)
+            rSqOO = metricsDic['rSq']
+            mResOO = metricsDic['mRes']
+            mRResOO = metricsDic['mRRes']
+
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -1275,9 +1404,11 @@ class ssnADF(ssn_data):
 
         ssn_data.rSq = rSq  # R square of the y=x line using a common threshold
         ssn_data.mRes = mRes  # Mean residual of the y=x line using a common threshold
+        ssn_data.mRRes = mRRes  # Mean relative residual of the y=x line using a common threshold
 
         ssn_data.rSqOO = rSqOO  # R square of the y=x line using a common threshold, but only the valid intervals
         ssn_data.mResOO = mResOO  # Mean residual of the y=x line using a common threshold, but only the valid intervals
+        ssn_data.mRResOO = mRResOO  # Mean relative residual of the y=x line using a common threshold, but only the valid intervals
 
         # --------------------------------------------------------------------------------------------------------------
 
