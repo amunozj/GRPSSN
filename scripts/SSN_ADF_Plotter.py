@@ -498,45 +498,63 @@ def plotOptimalThresholdWindow(ssn_data,
                            vmax=6 * np.min(ssn_data.EMDD[siInx]))
 
             # True Interval
-            ax1.scatter(OpMat[0, 0], OpMat[0, 1], c='r', edgecolors='w', linewidths=2, s=200, zorder=11)
+            ax1.scatter(OpMat[0, 0], OpMat[0, 1], c='r', edgecolors='w', linewidths=2, s=250, zorder=11)
+
+            # Best point
+            ax1.scatter(OpMat[1, 0], OpMat[1, 1], c='w', linewidths=2, s=200, zorder=11, alpha=0.75)
+            ax2.plot(
+                ssn_data.obsPlt['X'][
+                    np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
+                                   ssn_data.obsPlt['X'] < np.max(TObsFYr))] -
+                ssn_data.cenPoints['OBS'][siInx, 0] +
+                OpMat[1, 0]
+                , ssn_data.obsPlt['Y'][
+                    np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
+                                   ssn_data.obsPlt['X'] < np.max(TObsFYr))],
+                color=ssn_data.Clr[5 % 1], linewidth=3
+                , alpha=0.2)
 
             # Best 5 points
-            for i in range(1, 5):
-                ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=150, zorder=11, alpha=0.5)
-                ax2.plot(
-                    ssn_data.obsPlt['X'][
-                        np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
-                                       ssn_data.obsPlt['X'] < np.max(TObsFYr))] -
-                    ssn_data.cenPoints['OBS'][siInx, 0] +
-                    OpMat[i, 0]
-                    , ssn_data.obsPlt['Y'][
-                        np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
-                                       ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                    color=ssn_data.Clr[5 % i], linewidth=3
-                    , alpha=0.2)
+            if config.NBEST >= 5:
+                for i in range(1, 6):
+                    ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=150, zorder=11, alpha=0.5)
+                    ax2.plot(
+                        ssn_data.obsPlt['X'][
+                            np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
+                                           ssn_data.obsPlt['X'] < np.max(TObsFYr))] -
+                        ssn_data.cenPoints['OBS'][siInx, 0] +
+                        OpMat[i, 0]
+                        , ssn_data.obsPlt['Y'][
+                            np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
+                                           ssn_data.obsPlt['X'] < np.max(TObsFYr))],
+                        color=ssn_data.Clr[5 % i], linewidth=3
+                        , alpha=0.2)
 
             # Best 5-10 points
-            for i in range(5, 10):
-                ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=100, zorder=11, alpha=0.5)
-                ax2.plot(
-                    ssn_data.obsPlt['X'][
-                        np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
-                                       ssn_data.obsPlt['X'] < np.max(TObsFYr))] -
-                    ssn_data.cenPoints['OBS'][siInx, 0] +
-                    OpMat[i, 0]
-                    , ssn_data.obsPlt['Y'][
-                        np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
-                                       ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                    color=ssn_data.Clr[5 % i], linewidth=3
-                    , alpha=0.2)
+            if config.NBEST >= 10:
+                for i in range(6, 11):
+                    ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=100, zorder=11, alpha=0.5)
+                    ax2.plot(
+                        ssn_data.obsPlt['X'][
+                            np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
+                                           ssn_data.obsPlt['X'] < np.max(TObsFYr))] -
+                        ssn_data.cenPoints['OBS'][siInx, 0] +
+                        OpMat[i, 0]
+                        , ssn_data.obsPlt['Y'][
+                            np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
+                                           ssn_data.obsPlt['X'] < np.max(TObsFYr))],
+                        color=ssn_data.Clr[5 % i], linewidth=3
+                        , alpha=0.2)
 
             # Best 10-15 points
-            for i in range(10, 15):
-                ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=50, zorder=11, alpha=0.5)
+            if config.NBEST >= 15:
+                for i in range(11, 16):
+                    ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=50, zorder=11, alpha=0.5)
 
             # Best 15-20 points
-            for i in range(15, 100):
-                ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=1, zorder=11, alpha=0.5)
+            if config.NBEST >= 15:
+                for i in range(16, 26):
+                    ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=1, zorder=11, alpha=0.5)
 
             # Masking Gaps
             pltMsk = np.logical_not(cadMask)
@@ -1163,9 +1181,14 @@ def plotSimultaneousFit(ssn_data,
                     # Creating matching threshold vector
         y = x * 0 + ssn_data.EMDComb[1, i]
 
-        # Constructing alpha
-        alph = 1 - (ssn_data.EMDComb[0, i] - np.min(ssn_data.EMDComb[0, :])) / (
-            np.max(ssn_data.EMDComb[0, :]) - np.min(ssn_data.EMDComb[0, :]))
+        # Only plot if using more than one theshold
+        if config.NBEST == 1:
+            alph = 1
+        else:
+            # Constructing alpha
+            alph = np.clip(
+                1.1 - (ssn_data.EMDComb[0, i] - np.min(ssn_data.EMDComb[0, :])) / (
+                        np.max(ssn_data.EMDComb[0, :]) - np.min(ssn_data.EMDComb[0, :])), 0, 1)
 
         # Plotting Intervals
         ax1.plot(x, y, 'o:', zorder=11, linewidth=1, color=ssn_data.Clr[2], alpha=alph, markersize=(101 - i) / 8)
@@ -1178,17 +1201,19 @@ def plotSimultaneousFit(ssn_data,
     ax1.text(0.5, 1.01, 'Best Simultaneous Fits for ' + ssn_data.NamObs, horizontalalignment='center',
              transform=ax1.transAxes);
 
-    # Right Distribution
-    ax3 = fig.add_axes(
-        [ppadh + pxx / fszh * frc, ppadv + (pxy / fszv + ppadv2), pxx / fszh * (1 - frc), pxy / fszv])
-    ax3.hist(ssn_data.EMDComb[1, :], bins=np.arange(0, ssn_data.thN) * ssn_data.thI + ssn_data.thI / 2,
-             color=ssn_data.Clr[2], alpha=.6,
-             orientation='horizontal', density=True);
-    # ax3.plot(yOD, xOD, color=Clr[2], linewidth=3)
+    if config.NBEST > 1:
 
-    # # Axes properties
-    ax3.set_ylim(bottom=0, top=ssn_data.thN * ssn_data.thI)
-    ax3.set_axis_off()
+        # Right Distribution
+        ax3 = fig.add_axes(
+            [ppadh + pxx / fszh * frc, ppadv + (pxy / fszv + ppadv2), pxx / fszh * (1 - frc), pxy / fszv])
+        ax3.hist(ssn_data.EMDComb[1, :], bins=np.arange(0, ssn_data.thN) * ssn_data.thI + ssn_data.thI / 2,
+                 color=ssn_data.Clr[2], alpha=.6,
+                 orientation='horizontal', density=True);
+        # ax3.plot(yOD, xOD, color=Clr[2], linewidth=3)
+
+        # # Axes properties
+        ax3.set_ylim(bottom=0, top=ssn_data.thN * ssn_data.thI)
+        ax3.set_axis_off()
 
     fig.savefig(figure_path, bbox_inches='tight')
 
@@ -1355,10 +1380,7 @@ def plotSingleThresholdScatterPlot(ssn_data,
     fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
 
     # Determine which threshold to use
-    if np.sum(ssn_data.vldIntr) > 1:
-        Th = ssn_data.wAv
-    else:
-        Th = ssn_data.wAvI[ssn_data.vldIntr][0]
+    Th = ssn_data.wAv
 
     # Calculating number of groups in reference data for given threshold
     grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], Th),

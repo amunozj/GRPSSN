@@ -310,8 +310,8 @@ class ssnADF(ssn_data):
         # Reshaping
         yrOb = yrOb.reshape((-1, MoLngt))
 
-        # If no data for observer exit
-        if yrOb.shape[0] == 0:
+        # If no data for observer or only counts of one or two groups exit
+        if (yrOb.shape[0] == 0) or np.max(ObsDat['GROUPS'].values) < 3:
             print('done. NO VALID MONTHS IN OBSERVER', flush=True)
             print(' ', flush=True)
             ssn_data.CalObs = CalObs
@@ -618,6 +618,7 @@ class ssnADF(ssn_data):
                         np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3],
                                    TIdx * ssn_data.thI),
                         axis=1).astype(float)
+
                     grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
 
                     # Going through different shifts
@@ -642,8 +643,10 @@ class ssnADF(ssn_data):
                             # Imprinting missing days
                             # OBSERVER
                             TgrpsOb[np.isnan(TgrpsREF)] = np.nan
+                            TgrpsREF[np.isnan(TgrpsREF)] = np.nan
                             # REFERENCE
                             TgrpsREF[np.isnan(TgrpsOb)] = np.nan
+                            TgrpsOb[np.isnan(TgrpsOb)] = np.nan
 
                             # Number of days with groups
                             # OBSERVER
@@ -747,13 +750,13 @@ class ssnADF(ssn_data):
 
                             # Change calculation depending on ADF/QDF flag
                             if config.NUM_TYPE == "QDF":
-                                ADF_Obs_numerator = QDObsI[siInx][
+                                ADF_Obs_numerator = ssn_data.MoLngt - QDObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
-                                ADF_REF_numerator = QDREFI[siInx][
+                                ADF_REF_numerator = ssn_data.MoLngt - QDREFI[siInx][
                                     TIdx, SIdx, ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
 
-                                ADF_Obs_frac = 1.0 - np.divide(ADF_Obs_numerator, ADF_Obs_denom)
-                                ADF_REF_frac = 1.0 - np.divide(ADF_REF_numerator, ADF_REF_denom)
+                                ADF_Obs_frac = np.divide(ADF_Obs_numerator, ADF_Obs_denom)
+                                ADF_REF_frac = np.divide(ADF_REF_numerator, ADF_REF_denom)
                             elif config.NUM_TYPE == "ADF":
                                 ADF_Obs_numerator = GDObsI[siInx][
                                     TIdx, SIdx, ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]
@@ -854,23 +857,20 @@ class ssnADF(ssn_data):
                 bestTh.append(OpMat[0:config.NBEST, :])
 
                 if config.NBEST == 1:
-                    alph = bestTh[siInx][:, 2] * 0 + 1
+                    wAvI[siInx] = bestTh[siInx][0, 1]
+                    wSDI[siInx] = np.nan
                 else:
                     # Constructing weights
                     alph = 1 - (bestTh[siInx][:, 2] - np.min(bestTh[siInx][:, 2])) / (
                         np.max(bestTh[siInx][:, 2]) - np.min(bestTh[siInx][:, 2]))
 
-                if np.isnan(np.sum(alph)):
-                    alph = bestTh[siInx][:, 2] * 0 + 1
+                    if np.isnan(np.sum(alph)):
+                        alph = bestTh[siInx][:, 2] * 0 + 1
 
-                # Weighted average
-                wAvI[siInx] = np.sum(np.multiply(alph, bestTh[siInx][:, 1])) / np.sum(alph)
-
-                # Weighted Standard Deviation
-                if config.NBEST == 1:
-                     wSDI[siInx] = np.nan
-                else:
+                    # Weighted average
+                    wAvI[siInx] = np.sum(np.multiply(alph, bestTh[siInx][:, 1])) / np.sum(alph)
                     wSDI[siInx] = np.sqrt(np.sum(np.multiply(alph, np.power(bestTh[siInx][:, 1] - wAvI[siInx], 2))) / np.sum(alph))
+
 
                 if np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] > ssn_data.endPoints['OBS'][siInx, 0],
                                          ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])) > 0:
@@ -900,8 +900,6 @@ class ssnADF(ssn_data):
 
                     # Storing maximum value of groups for plotting
                     maxNPlt = np.max([np.nanmax(grpsREFw), np.nanmax(grpsObsw), maxNPlt])
-
-                    print(grpsREFw.shape, grpsObsw.shape)
 
                     # Removing NaNs
                     grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
@@ -1134,12 +1132,6 @@ class ssnADF(ssn_data):
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
-            # Defining mask based on the interval type (rise or decay)
-            if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
-                cadMaskI = ssn_data.risMask['INDEX']
-            else:
-                cadMaskI = ssn_data.decMask['INDEX']
-
             # Plot only if period is valid
             if ssn_data.vldIntr[siInx]:
 
@@ -1173,9 +1165,11 @@ class ssnADF(ssn_data):
 
             ssn_data.rSq = np.nan  # R square of the y=x line using a common threshold
             ssn_data.mRes = np.nan  # Mean residual of the y=x line using a common threshold
+            ssn_data.mRRes = np.nan  # Mean relative residual of the y=x line using a common threshold
 
             ssn_data.rSqOO = np.nan  # R square of the y=x line using a common threshold, but only the valid intervals
             ssn_data.mResOO = np.nan  # Mean residual of the y=x line using a common threshold, but only the valid intervals
+            ssn_data.mRResOO = np.nan  # Mean relative residual of the y=x line using a common threshold, but only the valid intervals
 
             return False
 
@@ -1283,12 +1277,6 @@ class ssnADF(ssn_data):
                     # Convert to numpy array
                     insArr = np.array(insArr)
 
-                    # if config.NBEST == 1:
-                    #
-                    #     EMDComb = insArr
-                    #
-                    # else:
-
                     # Determining index for insertion
                     insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
 
@@ -1305,21 +1293,17 @@ class ssnADF(ssn_data):
 
 
         if config.NBEST == 1:
-            alph = EMDComb[0, :] * 0 + 1
+            wAv = EMDComb[1, 0]
+            wSD = np.nan
         else:
             # Constructing weights
             alph = 1 - (EMDComb[0, :] - np.min(EMDComb[0, :])) / (np.max(EMDComb[0, :]) - np.min(EMDComb[0, :]))
 
-        if np.isnan(np.sum(alph)):
-            alph = EMDComb[0, :] * 0 + 1
+            if np.isnan(np.sum(alph)):
+                alph = EMDComb[0, :] * 0 + 1
 
-        # Weighted average
-        wAv = np.sum(np.multiply(alph, EMDComb[1, :])) / np.sum(alph)
-
-        # Weighted Standard Deviation
-        if config.NBEST == 1:
-            wSD = np.nan
-        else:
+            # Weighted average
+            wAv = np.sum(np.multiply(alph, EMDComb[1, :])) / np.sum(alph)
             wSD = np.sqrt(np.sum(np.multiply(alph, np.power(EMDComb[1, :] - wAv, 2))) / np.sum(alph))
 
         print('done.', flush=True)
