@@ -29,21 +29,22 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 356
-SSN_ADF_Config.OBS_END_ID = 600
+SSN_ADF_Config.OBS_START_ID = 592 #318 #356
+SSN_ADF_Config.OBS_END_ID = 593 #600
 SSN_ADF_Config.SKIP_OBS = [332]
 
-# Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF", or dynamic ADF "DYN"
+# Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
-# Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM"
-SSN_ADF_Config.DEN_TYPE = "FULLM"
+# Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
+SSN_ADF_Config.DEN_TYPE = "DTh"
 
 # Flag to turn on saving of figures
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-9-20'
+output_path = 'Run-2018-9-28'
+
 
 ###################
 # PARSING ARGUMENTS#
@@ -137,29 +138,32 @@ header = ['Observer',
           'ObsStartDate',  # Starting date
           'ObsTotLength']  # Days between starting and ending dates
 
-with open(output_csv_file, 'w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(header)
-
-
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
                  silso_path='../input_data/SN_m_tot_V2.0.csv',
+                 silso_path_daily='../input_data/SN_d_tot_V2.0.csv',
                  obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
                  obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
                  output_path='output/' + output_path,
                  font={'family': 'sans-serif',
                        'weight': 'normal',
-                       'size': 21},
-                 dt=14,  # Temporal Stride in days
+                       'size': 21}, 
+                 dt=30,  # Temporal Stride in days
                  phTol=2,  # Cycle phase tolerance in years
-                 thN=100,  # Number of thresholds including 0
+                 thN=50,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
                  plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
 ssn_data = ssn_adf.ssn_data
 
+
+if not os.path.exists(output_csv_file):
+
+    with open(output_csv_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        
 
 
 
@@ -191,7 +195,15 @@ def run_obs(CalObsID):
             # Plot active vs. observed days
             if SSN_ADF_Config.PLOT_OPTIMAL_THRESH:
                 SSN_ADF_Plotter.plotOptimalThresholdWindow(ssn_data)
-
+                
+            # Plot SN vs. ADF
+            if SSN_ADF_Config.PLOT_SN_ADF:
+                SSN_ADF_Plotter.plotHistSnADF(ssn_data)
+                
+            # Plot SN vs AL
+            if SSN_ADF_Config.PLOT_SN_AL:
+                SSN_ADF_Plotter.plotFitAl(ssn_data)
+                
             # Plot Distribution of active thresholds
             if SSN_ADF_Config.PLOT_DIST_THRESH_MI and config.NBEST > 1:
                 SSN_ADF_Plotter.plotDistributionOfThresholdsMI(ssn_data)
