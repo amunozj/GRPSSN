@@ -1166,7 +1166,7 @@ def plotDistributionOfThresholdsMI(ssn_data,
     print(' ', flush=True)
 
 
-def _plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
+def plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
 
     """
 
@@ -1198,13 +1198,13 @@ def _plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
     # Calculating Quantities for plot and plot centers in Y
     Ymedian = ssn_data.centers * np.nan
     for i in range(0, ssn_data.centers.shape[0]):
-        ypoints = calRefT[np.logical_and(calObsT >= ssn_data.edges[i], calObsT <= ssn_data.edges[i + 1])]
+        ypoints = calRefT[np.logical_and(calObsT >= ssn_data.edges[i], calObsT < ssn_data.edges[i + 1])]
         if ypoints.shape[0] > 0:
             Ymedian[i] = np.nanmedian(ypoints)
             pecentilesy = np.abs(np.percentile(ypoints, np.array([15, 85]), interpolation='linear') - Ymedian[i])
 
             xpoints = calObsT[np.logical_and(calRefT >= (Ymedian[i] - (np.ceil(maxN)) / Nbins / 2),
-                                             calRefT <= (Ymedian[i] + (np.ceil(maxN)) / Nbins / 2))]
+                                             calRefT < (Ymedian[i] + (np.ceil(maxN)) / Nbins / 2))]
 
             if xpoints.shape[0] > 0:
                 pecentilesx = np.abs(np.percentile(xpoints, np.array([15, 85]), interpolation='linear') - ssn_data.centers[i])
@@ -1327,7 +1327,7 @@ def plotIntervalScatterPlots(ssn_data,
                         [ppadh + i * (pxx / fszh + ppadh2), ppadv + j * (pxy / fszv + ppadv2), pxx / fszh * frc,
                          pxy / fszv * frc], label='b' + str(n))
 
-                    _plotHistSqrtSSN(ssn_data, ax1, grpsREFw, grpsObsw, np.round(ssn_data.wAvI[n], decimals=1))
+                    plotHistSqrtSSN(ssn_data, ax1, grpsREFw, grpsObsw, np.round(ssn_data.wAvI[n], decimals=1))
 
                     ax1.text(0.5, 0.87,
                              'From ' + str(np.round(ssn_data.endPoints['OBS'][n, 0], decimals=2)) + '  to ' + str(
@@ -1833,7 +1833,7 @@ def plotSingleThresholdScatterPlot(ssn_data,
     # Average group number
     ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])
 
-    _plotHistSqrtSSN(ssn_data, ax1, grpsREFw, grpsObsw, np.round(Th, decimals=1))
+    plotHistSqrtSSN(ssn_data, ax1, grpsREFw, grpsObsw, np.round(Th, decimals=1))
 
     ax1.set_title('Single threshold - All days of overlap')
 
@@ -1888,9 +1888,6 @@ def plotMultiThresholdScatterPlot(ssn_data,
         nph = 1  # Number of horizontal panels
         npv = 1  # Number of vertical panels
 
-        nph = 1  # Number of horizontal panels
-        npv = 1  # Number of vertical panels
-
         # Figure sizes in pixels
         fszv = (npv * pxy + 2 * padv + (npv - 1) * padv2)  # Vertical size of figure in inches
         fszh = (nph * pxx + 2 * padh + (nph - 1) * padh2)  # Horizontal size of figure in inches
@@ -1907,6 +1904,8 @@ def plotMultiThresholdScatterPlot(ssn_data,
         # Calculate R^2 and residual using only valid periods
         calRefN = np.array([0])
         calObsN = np.array([0])
+
+
 
         for n in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
@@ -1948,12 +1947,12 @@ def plotMultiThresholdScatterPlot(ssn_data,
 
         ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv], label='b1')
 
-        _plotHistSqrtSSN(ssn_data, ax1, calObsN, calRefN, np.round(ssn_data.wAv, decimals=1))
+        plotHistSqrtSSN(ssn_data, ax1, calRefN, calObsN, np.round(ssn_data.wAv, decimals=1))
 
         # Average group number
         ax2 = fig.add_axes([ppadh + (pxx / fszh + ppadh2), ppadv, pxx / fszh, pxy / fszv], label='b2')
 
-        _plotHistSqrtSSN(ssn_data, ax2, tcalObs, tcalRef, 'Variable')
+        plotHistSqrtSSN(ssn_data, ax2, tcalRef, tcalObs, 'Variable')
 
         fig.savefig(figure_path, bbox_inches='tight')
 

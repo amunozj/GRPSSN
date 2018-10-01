@@ -150,7 +150,7 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                        'size': 21}, 
                  dt=30,  # Temporal Stride in days
                  phTol=2,  # Cycle phase tolerance in years
-                 thN=50,  # Number of thresholds including 0
+                 thN=60,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
                  plot=plotSwitch)
 
@@ -216,7 +216,7 @@ def run_obs(CalObsID):
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         if np.sum(ssn_data.vldIntr) > 1:
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
-                                                  disThres=1.20,
+                                                  disThres=1.5,
                                                   # Threshold above which we will ignore timeshifts in simultaneous fit
                                                   MaxIter=1000)
                                                   # Maximum number of iterations above which we skip simultaneous fit
