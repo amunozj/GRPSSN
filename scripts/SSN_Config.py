@@ -45,6 +45,8 @@ class SSN_ADF_Config:
     SKIP_OBSERVERS_WITH_PLOTS = False
 
     # Plotting config variables
+    PLOT_SN_ADF = True
+    PLOT_SN_AL = True
     PLOT_OPTIMAL_THRESH = True
     PLOT_ACTIVE_OBSERVED = True
     PLOT_DIST_THRESH_MI = True
@@ -93,7 +95,7 @@ class SSN_ADF_Config:
         return prepend
 
     @staticmethod
-    def get_file_output_string(number, title, ssn_data, num_type, den_type):
+    def get_file_output_string(number, title, ssn_data, num_type, den_type, pctllow, pctlhigh):
         """
         :param number: Plot type identifier
         :param title: Plot title
@@ -109,3 +111,4 @@ class SSN_ADF_Config:
                                                        ssn_data.CalObs,
                                                        ssn_data.NamObs,
                                                        title))
+    
