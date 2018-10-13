@@ -29,7 +29,7 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 412
+SSN_ADF_Config.OBS_START_ID = 336
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 
@@ -154,9 +154,9 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  font={'family': 'sans-serif',
                        'weight': 'normal',
                        'size': 21},
-                 dt=5,  # Temporal Stride in days
+                 dt=10,  # Temporal Stride in days
                  phTol=2,  # Cycle phase tolerance in years
-                 thN=60,  # Number of thresholds including 0
+                 thN=100,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
                  plot=plotSwitch)
 
@@ -176,7 +176,7 @@ def run_obs(CalObsID):
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata
                                         CalObs=CalObsID,  # Observer identifier denoting observer to be processed
-                                        MoLngt=30,  # Duration of the interval ("month") used to calculate the ADF
+                                        MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                                         minObD=0.33,# Minimum proportion of days with observation for a "month" to be considered valid
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
@@ -188,7 +188,8 @@ def run_obs(CalObsID):
             SSN_ADF_Plotter.plotActiveVsObserved(ssn_data)
 
         # Calculating the Earth's Mover Distance using sliding windows for different intervals
-        obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data)  # Number of top best matches to keep
+        obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data,
+                                                       Dis_Pow = 2)  # Power index used to define the distance matrix for EMD calculation
 
         if plotSwitch:
             # Plot active vs. observed days
@@ -203,13 +204,17 @@ def run_obs(CalObsID):
             if SSN_ADF_Config.PLOT_INTERVAL_SCATTER and obs_ref_overlap:
                 SSN_ADF_Plotter.plotIntervalScatterPlots(ssn_data)
 
+            # Plot optimal distributions for each threshold
+            if SSN_ADF_Config.PLOT_INTERVAL_DISTRIBUTION:
+                SSN_ADF_Plotter.plotIntervalDistributions(ssn_data)
+
 
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         if np.sum(ssn_data.vldIntr) > 1:
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
-                                                  disThres=1.5,
+                                                  disThres=3,
                                                   # Threshold above which we will ignore timeshifts in simultaneous fit
-                                                  MaxIter=1000)
+                                                  MaxIter=2000)
                                                   # Maximum number of iterations above which we skip simultaneous fit
 
         if plotSwitch:
@@ -234,6 +239,9 @@ def run_obs(CalObsID):
             if obs_ref_overlap:
                 if SSN_ADF_Config.PLOT_SINGLE_THRESH_SCATTER:
                     SSN_ADF_Plotter.plotSingleThresholdScatterPlot(ssn_data)
+
+                if SSN_ADF_Config.PLOT_SMOOTHED_SERIES:
+                    SSN_ADF_Plotter.plotSmoothedSeries(ssn_data)
 
 
         # Saving row

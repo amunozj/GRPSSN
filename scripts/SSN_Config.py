@@ -49,11 +49,13 @@ class SSN_ADF_Config:
     PLOT_ACTIVE_OBSERVED = True
     PLOT_DIST_THRESH_MI = True
     PLOT_INTERVAL_SCATTER = True
+    PLOT_INTERVAL_DISTRIBUTION = True
     PLOT_MIN_EMD = True
     PLOT_SIM_FIT = True
     PLOT_DIST_THRESH = True
     PLOT_SINGLE_THRESH_SCATTER = True
     PLOT_MULTI_THRESH_SCATTER = True
+    PLOT_SMOOTHED_SERIES = True
 
     # Suppress numpy warnings for cleaner console output
     SUPPRESS_NP_WARNINGS = False
