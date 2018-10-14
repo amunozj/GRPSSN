@@ -29,8 +29,8 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 592 #318 #356
-SSN_ADF_Config.OBS_END_ID = 593 #600
+SSN_ADF_Config.OBS_START_ID = 476 #318 #356
+SSN_ADF_Config.OBS_END_ID = 477 #600
 SSN_ADF_Config.SKIP_OBS = [332]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
@@ -43,7 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-9-28'
+output_path = 'Run-2018-10-14'
 
 
 ###################
@@ -147,10 +147,10 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  output_path='output/' + output_path,
                  font={'family': 'sans-serif',
                        'weight': 'normal',
-                       'size': 21}, 
-                 dt=30,  # Temporal Stride in days
+                       'size': 21},
+                 dt=10,  # Temporal Stride in days
                  phTol=2,  # Cycle phase tolerance in years
-                 thN=60,  # Number of thresholds including 0
+                 thN=100,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
                  plot=plotSwitch)
 
@@ -177,7 +177,7 @@ def run_obs(CalObsID):
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata
                                         CalObs=CalObsID,  # Observer identifier denoting observer to be processed
-                                        MoLngt=30,  # Duration of the interval ("month") used to calculate the ADF
+                                        MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                                         minObD=0.33,# Minimum proportion of days with observation for a "month" to be considered valid
                                         vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
 
@@ -197,11 +197,11 @@ def run_obs(CalObsID):
                 SSN_ADF_Plotter.plotOptimalThresholdWindow(ssn_data)
                 
             # Plot SN vs. ADF
-            if SSN_ADF_Config.PLOT_SN_ADF:
+            if SSN_ADF_Config.PLOT_SN_ADF and SSN_ADF_Config.DEN_TYPE  == "DTh":
                 SSN_ADF_Plotter.plotHistSnADF(ssn_data)
                 
             # Plot SN vs AL
-            if SSN_ADF_Config.PLOT_SN_AL:
+            if SSN_ADF_Config.PLOT_SN_AL and SSN_ADF_Config.DEN_TYPE  == "DTh":
                 SSN_ADF_Plotter.plotFitAl(ssn_data)
                 
             # Plot Distribution of active thresholds
@@ -218,7 +218,7 @@ def run_obs(CalObsID):
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
                                                   disThres=1.5,
                                                   # Threshold above which we will ignore timeshifts in simultaneous fit
-                                                  MaxIter=1000)
+                                                  MaxIter=100000)
                                                   # Maximum number of iterations above which we skip simultaneous fit
 
         if plotSwitch:

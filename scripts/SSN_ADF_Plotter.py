@@ -331,8 +331,8 @@ def plotHistSnADF(ssn_data,
 
     print('Creating and saving SN vs ADF figure...', end="", flush=True)
 
-    thN = 10  # Number of thresholds to plot
-    thS = 10  # Threshold increment
+    thN = 21  # Number of thresholds to plot
+    thS = 5  # Threshold increment
 
     # creating matrix to define thresholds
     TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
@@ -542,8 +542,8 @@ def plotFitAl(ssn_data,
 
     print('Creating and saving SN vs AL figure...', end="", flush=True)
 
-    thN = 10  # Number of thresholds to plot
-    thS = 10  # Threshold increment
+    thN = 21  # Number of thresholds to plot
+    thS = 5  # Threshold increment
     
     # fit for low solar activity
     xlow = np.arange(0,thN)*thS
@@ -673,6 +673,9 @@ def plotOptimalThresholdWindow(ssn_data,
 
     # EMD Pcolor
     plt.viridis()
+    
+    # Creating Storing dictionaries to store best thresholds
+    bestTh = []
 
     # Going through different sub-intervals
     for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
@@ -705,18 +708,17 @@ def plotOptimalThresholdWindow(ssn_data,
             np.logical_and(ssn_data.ObsDat['FRACYEAR']>=ssn_data.endPoints['OBS'][siInx, 0],
                            ssn_data.ObsDat['FRACYEAR']<ssn_data.endPoints['OBS'][siInx+1, 0])
                              ,'AVGSNd'].values.copy()
-
-        # Find index of minimum inside sub-interval
-        minYear = np.min(np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]))
-        obsMinInx = (np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]) == minYear).nonzero()[0][0]
-
-        # Calculating mesh for plotting
-        x = ssn_data.REF_Dat['FRACYEAR'].values[cadMaskI]
-        y = np.arange(0, ssn_data.thN) * ssn_data.thI
-        xx, yy = np.meshgrid(x, y)
-
         # Plot Matrix Only if the period is valid
         if ssn_data.vldIntr[siInx]:
+            
+            # Find index of minimum inside sub-interval
+            minYear = np.min(np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]))
+            obsMinInx = (np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]) == minYear).nonzero()[0][0]
+
+            # Calculating mesh for plotting
+            x = ssn_data.REF_Dat['FRACYEAR'].values[cadMaskI]
+            y = np.arange(0, ssn_data.thN) * ssn_data.thI
+            xx, yy = np.meshgrid(x, y)
 
             # Creating matrix for sorting and find the best combinations of threshold and shift
             OpMat = np.concatenate(
@@ -772,6 +774,8 @@ def plotOptimalThresholdWindow(ssn_data,
 
                         # Selecting the maximum integer amount of "months" out of the original data
                         TgrpsOb = TObsDat[0:np.int(TObsDat.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
+                        
+                        TObsSNd = TObsSNd[0:np.int(TObsDat.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
 
                         # Selecting reference window of matching size to observer sub-interval;
                         TgrpsREF = grpsREFw[Idx1:Idx2].copy()
@@ -781,6 +785,7 @@ def plotOptimalThresholdWindow(ssn_data,
                         TgrpsREF = TgrpsREF.reshape((-1, ssn_data.MoLngt))
                         
                         TObsSNd = TObsSNd.reshape((-1,ssn_data.MoLngt)) 
+                        TSNdREF = TSNdREF.reshape((-1,ssn_data.MoLngt))
 
                         # Imprinting missing days
                         # OBSERVER
@@ -809,91 +814,165 @@ def plotOptimalThresholdWindow(ssn_data,
                         # Monthly sunspot number
                         SNdObsT = np.mean(TObsSNd,axis=1)                   
                         SNdREFT = np.mean(TSNdREF,axis=1)
-
-                        #mskVmnthObs = ODObsT[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                        mskVmnthObs = ODObsT / ssn_data.MoLngt >= ssn_data.minObD
-                        mskVmnthREF = ODREFT / ssn_data.MoLngt >= ssn_data.minObD
-                            
-                        numADObs = GDObsT[mskVmnthObs]
-                        numQDObs = ssn_data.MoLngt - QDObsT[mskVmnthObs]                           
-                        denFMObs = GDObsT[mskVmnthObs]*0 + ssn_data.MoLngt
-                        denODObs = ODObsT[mskVmnthObs]
-                            
-                        numADREF = GDREFT[mskVmnthREF]
-                        numQDREF = ssn_data.MoLngt - QDREFT[mskVmnthREF]                           
-                        denFMREF = GDREFT[mskVmnthREF]*0 + ssn_data.MoLngt
-                        denODREF = ODREFT[mskVmnthREF]
-                            
-                            
+                        
+                        # Numerator and denominator for given observer
+                        numADObsT = GDObsT
+                        numQDObsT = ssn_data.MoLngt - QDObsT                          
+                        denFMObsT = GDObsT*0 + ssn_data.MoLngt
+                        denODObsT = ODObsT
+                        
+                        # Numerator and denominator for reference
+                        numADREFT = GDREFT
+                        numQDREFT = ssn_data.MoLngt - QDREFT                       
+                        denFMREFT = GDREFT*0 + ssn_data.MoLngt
+                        denODREFT = ODREFT 
+                        
                         if config.NUM_TYPE == "ADF": 
-                            numObs = numADObs
-                            numREF = numADREF
+                            numObsT = numADObsT
+                            numREFT = numADREFT                              
                         else: 
-                            numObs = numQDObs
-                            numREF = numQDREF
+                            numObsT = numQDObsT
+                            numREFT = numQDREFT
                                 
-                        if config.DEN_TYPE == "FULLM":
-                            denObs = denFMObs
-                            denREF = denFMREF
+                        if config.DEN_TYPE == "OBS":
+                            denObsT = denODObsT
+                            denREFT = denODREFT                           
                         else:
-                            denObs = denODObs
-                            denREF = denODREF
-                                
-                                
+                            denObsT = denFMObsT
+                            denREFT = denFMREFT
+                        
+                        
                         if config.DEN_TYPE == "DTh":
                                 
                             #defining solar activity level                            
-                            #MMObs=np.logical_and((SNdObsT[siInx][TIdx, SIdx, mskVmnthObs]>lowth), (SNdObsT[siInx][TIdx, SIdx, mskVmnthObs]<highth))
-                            MMObs=np.logical_and((SNdObsT[mskVmnthObs]>lowth), (SNdObsT[mskVmnthObs]<highth))
-                            MMREF=np.logical_and((SNdREFT[mskVmnthREF]>lowth), (SNdREFT[mskVmnthREF]<highth))
+                            MMObsT=np.logical_and((SNdObsT>lowth), (SNdObsT<highth))
+                            MMREFT=np.logical_and((SNdREFT>lowth), (SNdREFT<highth))
 
-                            HMObs=(SNdObsT[mskVmnthObs]>=highth)
-                            HMREF=(SNdREFT[mskVmnthREF]>=highth)
+                            HMObsT=(SNdObsT>=highth)
+                            HMREFT=(SNdREFT>=highth)
+                        
+                        
+                            numObsT[HMObsT] = numQDObsT[HMObsT]
+                            numREFT[HMREFT] = numQDREFT[HMREFT]
+                                
+                            denObsT[MMObsT] = denODObsT[MMObsT]
+                            denREFT[MMREFT] = denODREFT[MMREFT]
+
+                         
+                        ADF_Obs_fracT  = np.divide(numObsT, denObsT)
+                        ADF_REF_fracT  = np.divide(numREFT, denREFT)
+
+                        #mskVmnthObs = ODObsT / ssn_data.MoLngt >= ssn_data.minObD
+                        #mskVmnthREF = ODREFT / ssn_data.MoLngt >= ssn_data.minObD
+                            
+                        #numADObs = GDObsT[mskVmnthObs]
+                        #numQDObs = ssn_data.MoLngt - QDObsT[mskVmnthObs]                           
+                        #denFMObs = GDObsT[mskVmnthObs]*0 + ssn_data.MoLngt
+                        #denODObs = ODObsT[mskVmnthObs]
+                            
+                        #numADREF = GDREFT[mskVmnthREF]
+                        #numQDREF = ssn_data.MoLngt - QDREFT[mskVmnthREF]                           
+                        #denFMREF = GDREFT[mskVmnthREF]*0 + ssn_data.MoLngt
+                        #denODREF = ODREFT[mskVmnthREF]
+                            
+                            
+#                         if config.NUM_TYPE == "ADF": 
+#                             #numObs = numADObs
+#                             #numREF = numADREF
+#                             numObs = GDObsT
+#                             numREF = GDREFT                            
+#                         else: 
+#                             #numObs = numQDObs
+#                             #numREF = numQDREF
+#                             numObs = ssn_data.MoLngt - QDObsT 
+#                             numREF = ssn_data.MoLngt - QDREFT                            
+                                
+#                         if config.DEN_TYPE == "FULLM":
+#                             #denObs = denFMObs
+#                             #denREF = denFMREF
+#                             denObs = GDObsT*0 + ssn_data.MoLngt
+#                             denREF = GDREFT*0 + ssn_data.MoLngt                            
+#                         else:
+#                             #denObs = denODObs
+#                             #denREF = denODREF
+#                             denObs = ODObsT
+#                             denREF = ODREFT                            
                                 
                                 
-                            numObs = numADObs
-                            numObs[HMObs] = numQDObs[HMObs]
-                            denObs = denFMObs
-                            denObs[MMObs] = denODObs[MMObs]
+#                         if config.DEN_TYPE == "DTh":
+                                
+#                             #defining solar activity level                            
+#                             #MMObs=np.logical_and((SNdObsT[mskVmnthObs]>lowth), (SNdObsT[mskVmnthObs]<highth))
+#                             #MMREF=np.logical_and((SNdREFT[mskVmnthREF]>lowth), (SNdREFT[mskVmnthREF]<highth))
 
-                            numREF = numADREF
-                            numREF[HMREF] = numQDREF[HMREF]
-                            denREF = denFMREF
-                            denObs[MMREF] = denODObs[MMREF]
+#                             #HMObs=(SNdObsT[mskVmnthObs]>=highth)
+#                             #HMREF=(SNdREFT[mskVmnthREF]>=highth)
+                            
+#                             # Solar activity level mask
+#                             LMObs=SNdObsT<=lowth
+#                             LMRef=SNdREFT<=lowth
+
+#                             MMObs=np.logical_and((lowth<SNdObsT), (SNdObsT<highth))
+#                             MMRef=np.logical_and((lowth<SNdREFT), (SNdREFT<highth))
+
+#                             HMObs=(SNdObsT>=highth)
+#                             HMRef=(SNdREFT>=highth)
+                            
+#                             # ADF
+#                             #numObs[LMObs]=GDObsT[LMObs]
+#                             #denObs[LMObs]=ssn_data.MoLngt
+#                             #numREF[LMRef]=GDREFT[LMRef]/MoLngt
+#                             #denREF[LMRef]=ssn_data.MoLngt
+#                             numObsl=GDObsT[LMObs]
+#                             denObsl=GDObsT[LMObs]*0+ssn_data.MoLngt
+#                             numREFl=GDREFT[LMRef]
+#                             denREFl=GDREFT[LMRef]*0+ssn_data.MoLngt
+
+#                             #numObs[MMObs]=GDObsT[MMObs]
+#                             #denObs[MMObs]=ODObsT[MMObs]
+#                             #numREF[MMRef]=GDObsT[MMRef]
+#                             #denREF[MMRef]=ODREFT[MMRef]
+#                             numObsm=GDObsT[MMObs]
+#                             denObsm=ODObsT[MMObs]
+#                             numREFm=GDObsT[MMRef]
+#                             denREFm=ODREFT[MMRef]
+
+#                             #numObs[HMObs]=(ssn_data.MoLngt-QDObsT[HMObs])
+#                             #denObs[HMObs]=ssn_data.MoLngt
+#                             #numREF[HMRef]=(ssn_data.MoLngt-QDREFT[HMRef])
+#                             #denREF[HMRef]=ssn_data.MoLngt   
+#                             numObsh=(ssn_data.MoLngt-QDObsT[HMObs])
+#                             denObsh=QDObsT[HMObs]*0+ssn_data.MoLngt
+#                             numREFh=(ssn_data.MoLngt-QDREFT[HMRef])
+#                             denREFh=QDREFT[HMRef]*0+ssn_data.MoLngt  
+                            
+#                             numObs=np.concatenate([numObsh,numObsm,numObsl])
+#                             denObs=np.concatenate([denObsh,denObsm,denObsl])
+#                             numREF=np.concatenate([numREFh,numREFm,numREFl])
+#                             denREF=np.concatenate([denREFh,denREFm,denREFl])                            
+                                
+                                
+#                             #numObs = numADObs
+#                             #numObs[HMObs] = numQDObs[HMObs]
+#                             #denObs = denFMObs
+#                             #denObs[MMObs] = denODObs[MMObs]
+
+#                             #numREF = numADREF
+#                             #numREF[HMREF] = numQDREF[HMREF]
+#                             #denREF = denFMREF
+#                             #denObs[MMREF] = denODObs[MMREF]
                                                                 
-                        ADF_Obs_frac = np.divide(numObs, denObs)
-                        ADF_REF_frac = np.divide(numREF, denREF)
-                        
-                        
-                        # Solar activity level mask
-#                        LMObs=SNdObsT<=lowth
-#                        LMRef=SNdREFT<=lowth
-
-#                        MMObs=np.logical_and((lowth<SNdObsT), (SNdObsT<highth))
-#                        MMRef=np.logical_and((lowth<SNdREFT), (SNdREFT<highth))
-
-#                        HMObs=(SNdObsT>=highth)
-#                        HMRef=(SNdREFT>=highth)
-
-
-                        # ADF
-#                        ADFObs=GDObsT/ssn_data.MoLngt
-#                        ADFREF=GDREFT/ssn_data.MoLngt
-
-#                        ADFObs[MMObs]=GDObsT[MMObs]/ODObsT[MMObs]
-#                        ADFREF[MMRef]=GDObsT[MMRef]/ODREFT[MMRef]
-
-#                        ADFObs[HMObs]=(ssn_data.MoLngt-QDObsT[HMObs])/ssn_data.MoLngt
-#                        ADFREF[HMRef]=(ssn_data.MoLngt-QDREFT[HMRef])/ssn_data.MoLngt
+#                         ADF_Obs_frac = np.divide(numObs, denObs)
+#                         ADF_REF_frac = np.divide(numREF, denREF)
 
 
                         # Calculating Earth Mover's Distance
                         ADFObsDis, bins = np.histogram(
-                            ADF_Obs_frac,
+                            ADF_Obs_fracT[ODObsT / ssn_data.MoLngt >= ssn_data.minObD],
                             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
                         ADFREFDis, bins = np.histogram(
-                            ADF_REF_frac,
+                            ADF_REF_fracT[ODREFT / ssn_data.MoLngt >= ssn_data.minObD],
                             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
                         tmp = emd(ADFREFDis.astype(np.float64), ADFObsDis.astype(np.float64), ssn_data.Dis.astype(np.float64))
@@ -923,6 +1002,14 @@ def plotOptimalThresholdWindow(ssn_data,
                             tmpth = TIdx * ssn_data.thI
 
             OpMat = np.insert(OpMat, 0, [tmpt, tmpth, tmpEMD], axis=0)
+            
+            # Calculating mesh for plotting
+            x = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
+            y = np.arange(0,ssn_data.thN)*ssn_data.thI
+            xx, yy = np.meshgrid(x, y)             
+
+            #Plotting Optimization Matrix
+            mesh = ax1.pcolormesh(xx,yy,ssn_data.EMDD[siInx], alpha = 1, linewidth = 2, vmin = np.min(ssn_data.EMDD[siInx]), vmax = 6*np.min(ssn_data.EMDD[siInx]))            
 
             # Plotting Optimization Matrix
             ax1.pcolormesh(xx, yy, ssn_data.EMDD[siInx], alpha=1, linewidth=2, vmin=np.min(ssn_data.EMDD[siInx]),
@@ -942,12 +1029,12 @@ def plotOptimalThresholdWindow(ssn_data,
                 , ssn_data.obsPlt['Y'][
                     np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
                                    ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                color=ssn_data.Clr[5 % 1], linewidth=3
+                color=ssn_data.Clr[5 - siInx], linewidth=3
                 , alpha=0.2)
 
             # Best 5 points
             if config.NBEST >= 5:
-                for i in range(1, 6):
+                for i in range(2, 6):
                     ax1.scatter(OpMat[i, 0], OpMat[i, 1], c='w', linewidths=2, s=150, zorder=11, alpha=0.5)
                     ax2.plot(
                         ssn_data.obsPlt['X'][
@@ -958,7 +1045,7 @@ def plotOptimalThresholdWindow(ssn_data,
                         , ssn_data.obsPlt['Y'][
                             np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
                                            ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                        color=ssn_data.Clr[5 % i], linewidth=3
+                        color=ssn_data.Clr[5 - siInx], linewidth=3
                         , alpha=0.2)
 
             # Best 5-10 points
@@ -974,7 +1061,7 @@ def plotOptimalThresholdWindow(ssn_data,
                         , ssn_data.obsPlt['Y'][
                             np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
                                            ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                        color=ssn_data.Clr[5 % i], linewidth=3
+                        color=ssn_data.Clr[5 - siInx], linewidth=3
                         , alpha=0.2)
 
             # Best 10-15 points
@@ -992,22 +1079,29 @@ def plotOptimalThresholdWindow(ssn_data,
             ax1.fill_between(ssn_data.REF_Dat['FRACYEAR'], ssn_data.REF_Dat['FRACYEAR'] * 0,
                              y2=ssn_data.REF_Dat['FRACYEAR'] * 0 + ssn_data.thN,
                              where=pltMsk, color='w', zorder=10)
+            
+            # Adding best points
+            bestTh.append(OpMat[1:config.NBEST+1,:])
+            
+        # If period not valid store an empty array
+        else:
+            bestTh.append([])
 
-            # Plotting real location
-            ax1.plot(np.array([1, 1]) * TObsFYr[obsMinInx], np.array([0, np.max(y)]), 'w--', linewidth=3)
+        # Plotting real location
+        ax1.plot(np.array([1, 1]) * TObsFYr[obsMinInx], np.array([0, np.max(y)]), 'w--', linewidth=3)
 
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), '-', zorder=11, linewidth=1,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
 
         # Axes properties
         ax1.set_ylabel('Area threshold (uHem)')
@@ -1106,7 +1200,7 @@ def plotDistributionOfThresholdsMI(ssn_data,
                                                             + np.floor(np.min(ssn_data.bestTh[n][:, 2])),
                              color=ssn_data.Clr[4],
                              alpha=.6,
-                             density=True);
+                             density=True);                  
 
                     # Axes properties
                     axd.set_xlim(left=np.floor(np.min(ssn_data.bestTh[n][:, 2])),
@@ -1180,13 +1274,13 @@ def plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
 
     # Number of bins to use
     maxN = ssn_data.maxNPlt
-    Nbins = ssn_data.maxNPlt
-
+    Nbins = ssn_data.maxNPlt 
+    
     # Applying Sqrt + 1
-    if config.SQRT_2DHIS:
-        maxN = np.sqrt(maxN)
-        calRefT = np.sqrt(calRefT + 1)
-        calObsT = np.sqrt(calObsT + 1)
+    #if config.SQRT_2DHIS:
+    #    maxN = np.sqrt(maxN)
+    #    calRefT = np.sqrt(calRefT + 1)
+    #    calObsT = np.sqrt(calObsT + 1)
 
     # Average group number
     ax.hist2d(calObsT, calRefT, bins=ssn_data.edges, cmap=plt.cm.magma_r, cmin=1)
@@ -1204,7 +1298,7 @@ def plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
             pecentilesy = np.abs(np.percentile(ypoints, np.array([15, 85]), interpolation='linear') - Ymedian[i])
 
             xpoints = calObsT[np.logical_and(calRefT >= (Ymedian[i] - (np.ceil(maxN)) / Nbins / 2),
-                                             calRefT < (Ymedian[i] + (np.ceil(maxN)) / Nbins / 2))]
+                                             calRefT <= (Ymedian[i] + (np.ceil(maxN)) / Nbins / 2))]
 
             if xpoints.shape[0] > 0:
                 pecentilesx = np.abs(np.percentile(xpoints, np.array([15, 85]), interpolation='linear') - ssn_data.centers[i])
@@ -1289,6 +1383,13 @@ def plotIntervalScatterPlots(ssn_data,
             figure_path))
         return
 
+    
+    #Flag that activates sqrt(GN + 1)
+    SqrtF = False
+
+    calRef = np.array([0])
+    calObs = np.array([0])
+    
     frc = 0.8  # Fraction of the panel devoted to histograms
 
     nph = 3  # Number of horizontal panels
@@ -1306,6 +1407,20 @@ def plotIntervalScatterPlots(ssn_data,
 
     ## Start Figure
     fig = plt.figure(figsize=(fszh / dpi, fszv / dpi), dpi=dpi)
+    
+    # Calculating maximum for plotting
+    maxNPlt = 0
+    # Going through different sub-intervals
+    for siInx in range(0,ssn_data.cenPoints['OBS'].shape[0]): 
+        # Perform analysis Only if the period is valid
+        if ssn_data.vldIntr[siInx] and np.sum(np.logical_and(ssn_data.REF_Dat['FRACYEAR']>=ssn_data.endPoints['OBS'][siInx, 0],ssn_data.REF_Dat['FRACYEAR']<ssn_data.endPoints['OBS'][siInx+1, 0]))>0:
+            TObsDat = ssn_data.ObsDat.loc[np.logical_and(ssn_data.ObsDat['FRACYEAR']>=ssn_data.endPoints['OBS'][siInx, 0],ssn_data.ObsDat['FRACYEAR']<ssn_data.endPoints['OBS'][siInx+1, 0])
+                             ,'GROUPS'].values.copy()
+            TObsREFDat = np.nansum( np.greater(ssn_data.REF_Dat.values[:,3:ssn_data.REF_Dat.values.shape[1]-3],ssn_data.wAvI[siInx]) ,axis = 1).astype(float)
+            TObsREFDat = TObsREFDat[np.logical_and(ssn_data.REF_Dat['FRACYEAR']>=ssn_data.endPoints['OBS'][siInx, 0],ssn_data.REF_Dat['FRACYEAR']<ssn_data.endPoints['OBS'][siInx+1, 0])].copy()
+            maxNPlt = np.max([np.nanmax(TObsREFDat),np.nanmax(TObsDat), maxNPlt])
+            
+            
     for i in range(0, nph):
         for j in range(0, npv):
 
@@ -1319,8 +1434,31 @@ def plotIntervalScatterPlots(ssn_data,
                         np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
                                        ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][
                                                    n + 1, 0])) > 0:
-                    grpsREFw = ssn_data.calRef[n]
-                    grpsObsw = ssn_data.calObs[n]
+                    # Calculating number of groups in reference data for given threshold
+                    grpsREFw = np.nansum( np.greater(ssn_data.REF_Dat.values[:,3:ssn_data.REF_Dat.values.shape[1]-3],ssn_data.wAvI[n]) ,axis = 1).astype(float)
+                    grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+                    
+                    # Selecting observer's interval
+                    TObsDat = ssn_data.ObsDat.loc[np.logical_and(ssn_data.ObsDat['FRACYEAR']>=ssn_data.endPoints['OBS'][n, 0],ssn_data.ObsDat['FRACYEAR']<ssn_data.endPoints['OBS'][n+1, 0])
+                                         ,'GROUPS'].values.copy()
+                    TObsOrd = ssn_data.ObsDat.loc[np.logical_and(ssn_data.ObsDat['FRACYEAR']>=ssn_data.endPoints['OBS'][n, 0],ssn_data.ObsDat['FRACYEAR']<ssn_data.endPoints['OBS'][n+1, 0])
+                                         ,'ORDINAL'].values.copy()
+                    
+                    # Selecting the days of overlap with calibrated observer
+                    grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, TObsOrd)]
+                    grpsObsw = TObsDat[np.in1d(TObsOrd, ssn_data.REF_Dat['ORDINAL'].values)]
+
+                    # Removing NaNs    
+                    grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
+                    grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
+
+                    grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
+                    grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
+
+
+                    # Appending to calibrated arrays?
+                    calRef = np.append(calRef,grpsREFw)
+                    calObs = np.append(calObs,grpsObsw)
 
                     # Average group number
                     ax1 = fig.add_axes(
@@ -1375,6 +1513,13 @@ def plotMinEMD(ssn_data,
                 figure_path))
         return
 
+    
+    # Dictionary that will store valid shift indices for each sub-interval
+    valShfInx = []
+
+    # Dictionary that will store the length of the index array for each sub-interval
+    valShfLen = []
+        
     font = ssn_data.font
     plt.rc('font', **font)
 
@@ -1426,44 +1571,55 @@ def plotMinEMD(ssn_data,
                            ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
             , 'FRACYEAR'].values.copy()
 
-        # Initializing varialble to plot non-valid intervals
-        x = ssn_data.REF_Dat['FRACYEAR'].values[cadMaskI]
-        y = np.array([1, 10])
-
         # Plot only if period is valid
         if ssn_data.vldIntr[siInx]:
+            
             # Calculating minimum distance for plotting
+            x = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
             y = np.amin(ssn_data.EMDD[siInx], axis=0)
+            
+            # Appending valid indices to variable and storing length
+            valShfInx.append((y<=ssn_data.disThres*np.min(y)).nonzero()[0])
+            valShfLen.append(valShfInx[siInx].shape[0])
 
             # Plotting Optimization Matrix
             ax1.plot(x, y, color='k', linewidth=3)
 
             # Masking Gaps
             pltMsk = np.logical_not(cadMask)
-            ax1.fill_between(ssn_data.REF_Dat['FRACYEAR'], ssn_data.REF_Dat['FRACYEAR'] * 0,
-                             y2=ssn_data.REF_Dat['FRACYEAR'] * 0 + np.min(y) * 10, where=pltMsk, color='w', zorder=10)
+            #ax1.fill_between(ssn_data.REF_Grp['FRACYEAR'], ssn_data.REF_Grp['FRACYEAR'] * 0,
+            #                 y2=ssn_data.REF_Grp['FRACYEAR'] * 0 + np.min(y) * 10, where=pltMsk, color='w', zorder=10)
+            ax1.fill_between(ssn_data.REF_Grp['FRACYEAR'],  ssn_data.REF_Grp['FRACYEAR']*0, 
+                             y2=(ssn_data.REF_Grp['FRACYEAR'] * 0 + np.min(y)*10+20), where=pltMsk, color = 'w', zorder=10) #y2 is the color intensity of the border for earch panel. We added "+20" to get a thin line for the panel according to the observer #563 where min(y) is equal to 0 
 
             # Plotting possible theshold
-            ax1.plot(np.array([np.min(x), np.max(x)]), np.array([1, 1]) * ssn_data.disThres * np.min(y), 'b:',
-                     linewidth=3)
+            #ax1.plot(np.array([np.min(x), np.max(x)]), np.array([1, 1]) * ssn_data.disThres * np.min(y), 'b:',
+            #         linewidth=3)
+            ax1.plot(np.array([np.min(x),np.max(x)]),np.array([1,1])*ssn_data.disThres*(np.min(y)+0.5), 'b:', linewidth = 3)
 
+        # If period is not valid append ones so that they don't add to the permutations
+        else:
+            valShfInx.append(1)
+            valShfLen.append(1)    
+        
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), '-', zorder=11, linewidth=1,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
 
         # Axes properties
         ax1.set_ylabel('Distribution Distance')
         ax1.set_xlim(left=np.min(ssn_data.REF_Dat['FRACYEAR']), right=np.max(ssn_data.REF_Dat['FRACYEAR']))
-        ax1.set_ylim(bottom=0, top=np.min(y) * 5 + 1)
+        #ax1.set_ylim(bottom=0, top=np.min(y) * 5 + 1)
+        ax1.set_ylim(bottom = 0, top = np.min(y)*5+15)
 
         ax1.spines['bottom'].set_color(ssn_data.Clr[siInx % 6])
         ax1.spines['bottom'].set_linewidth(3)
@@ -1479,6 +1635,9 @@ def plotMinEMD(ssn_data,
             # ax1.text(0.5, 1.01,'Chi-Square (y-y_exp)^2/(y^2+y_exp^2) for ' + NamObs.capitalize(), horizontalalignment='center', transform = ax1.transAxes)
             ax1.text(0.5, 1.01, 'EMD linear distance for ' + ssn_data.NamObs, horizontalalignment='center',
                      transform=ax1.transAxes)
+            
+     # Saving lengths as array
+    valShfLen = np.array(valShfLen)
 
     fig.savefig(figure_path, bbox_inches='tight')
 
@@ -1542,7 +1701,7 @@ def plotSimultaneousFit(ssn_data,
 
     # Comparison with RGO
     ax2 = fig.add_axes([ppadh, ppadv, pxx / fszh * frc, pxy / fszv])
-    ax2.plot(ssn_data.REF_Dat['FRACYEAR'], ssn_data.REF_Dat['AVGROUPS'], 'r--', linewidth=2, alpha=1)
+    ax2.plot(ssn_data.REF_Grp['FRACYEAR'], ssn_data.REF_Grp['AVGROUPS'], 'r--', linewidth=2, alpha=1)
 
     # Plotting Observer
     ax2.plot(ssn_data.obsPlt['X'], ssn_data.obsPlt['Y'], color=ssn_data.Clr[0], linewidth=2)
@@ -1550,8 +1709,8 @@ def plotSimultaneousFit(ssn_data,
     # Axes properties
     ax2.set_ylabel('Av. Num. of Groups')
     ax2.set_xlabel('Center of sliding window (Year)')
-    ax2.set_xlim(left=np.min(ssn_data.REF_Dat['FRACYEAR']), right=np.max(ssn_data.REF_Dat['FRACYEAR']));
-    ax2.set_ylim(bottom=0, top=np.max(ssn_data.REF_Dat['AVGROUPS']) * 1.1)
+    ax2.set_xlim(left=np.min(ssn_data.REF_Grp['FRACYEAR']), right=np.max(ssn_data.REF_Grp['FRACYEAR']));
+    ax2.set_ylim(bottom=0, top=np.max(ssn_data.REF_Grp['AVGROUPS']) * 1.1)
 
     # Placement of top simultaneous fits
     ax1 = fig.add_axes([ppadh, ppadv + (pxy / fszv + ppadv2), pxx / fszh * frc, pxy / fszv])
@@ -1566,23 +1725,23 @@ def plotSimultaneousFit(ssn_data,
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), '-', zorder=11,
                  linewidth=1,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), '-', zorder=11,
                  linewidth=1,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[siInx % 6])
+                 color=ssn_data.Clr[5 - siInx])
 
     for i in range(0, config.NBEST):
 
@@ -1711,7 +1870,7 @@ def plotDistributionOfThresholds(ssn_data,
     axd.hist(ssn_data.EMDComb[0, :],
              bins=(np.arange(0, config.NBEST, 2)) / config.NBEST * (
                  np.ceil(np.max(ssn_data.EMDComb[0, :])) - np.floor(np.min(ssn_data.EMDComb[0, :])))
-                  + np.floor(np.min(ssn_data.EMDComb[0, :])), color=ssn_data.Clr[4], alpha=.6, density=True)
+                  + np.floor(np.min(ssn_data.EMDComb[0, :])), color=ssn_data.Clr[4], alpha=.6, density=True)   
 
     # Axes properties
     axd.set_xlim(left=np.floor(np.min(ssn_data.EMDComb[0, :])), right=np.ceil(np.max(ssn_data.EMDComb[0, :])))
@@ -1794,53 +1953,52 @@ def plotSingleThresholdScatterPlot(ssn_data,
                 figure_path))
         return
 
-    nph = 1  # Number of horizontal panels
-    npv = 1  # Number of vertical panels
+    ## Test if there is any overlap
+    if ( np.min(ssn_data.REF_Dat['ORDINAL'])<=np.min(ssn_data.ObsDat['ORDINAL']) ) or (np.max(ssn_data.REF_Dat['ORDINAL'])>=np.max(ssn_data.ObsDat['ORDINAL']) ):
 
-    # Figure sizes in pixels
-    fszv = (npv * pxy + 2 * padv + (npv - 1) * padv2)  # Vertical size of figure in inches
-    fszh = (nph * pxx + 2 * padh + (nph - 1) * padh2)  # Horizontal size of figure in inches
+        
+        # Calculating number of groups in reference data for given threshold
+        grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], ssn_data.wAv), axis=1).astype(float)
+        grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan 
 
-    # Conversion to relative unites
-    ppadv = padv / fszv  # Vertical padding in relative units
-    ppadv2 = padv2 / fszv  # Vertical padding in relative units
-    ppadh = padh / fszv  # Horizontal padding the edge of the figure in relative units
-    ppadh2 = padh2 / fszv  # Horizontal padding between panels in relative units
+        # Selecting the days of overlap with calibrated observer
+        grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values)]
+        grpsObsw = ssn_data.ObsDat.loc[np.in1d(ssn_data.ObsDat['ORDINAL'].values, ssn_data.REF_Dat['ORDINAL'].values),'GROUPS'].values
 
-    ## Start Figure
-    fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
+        # Removing NaNs    
+        grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
+        grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
 
-    # Determine which threshold to use
-    Th = ssn_data.wAv
+        grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
+        grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
+        
+        nph = 1  # Number of horizontal panels
+        npv = 1  # Number of vertical panels
 
-    # Calculating number of groups in reference data for given threshold
-    grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], Th),
-                         axis=1).astype(float)
-    grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+        # Figure sizes in pixels
+        fszv = (npv * pxy + 2 * padv + (npv - 1) * padv2)  # Vertical size of figure in inches
+        fszh = (nph * pxx + 2 * padh + (nph - 1) * padh2)  # Horizontal size of figure in inches
 
-    # Selecting the days of overlap with calibrated observer
-    grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values)]
-    grpsObsw = ssn_data.ObsDat.loc[
-        np.in1d(ssn_data.ObsDat['ORDINAL'].values, ssn_data.REF_Dat['ORDINAL'].values), 'GROUPS'].values
+        # Conversion to relative unites
+        ppadv = padv / fszv  # Vertical padding in relative units
+        ppadv2 = padv2 / fszv  # Vertical padding in relative units
+        ppadh = padh / fszv  # Horizontal padding the edge of the figure in relative units
+        ppadh2 = padh2 / fszv  # Horizontal padding between panels in relative units
 
-    # Removing NaNs
-    grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
-    grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
+        ## Start Figure
+        fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
 
-    grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
-    grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
+        # Average group number
+        ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])
 
-    # Average group number
-    ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])
+        plotHistSqrtSSN(ssn_data, ax1, grpsREFw, grpsObsw, np.round(ssn_data.wAv, decimals=1))
 
-    plotHistSqrtSSN(ssn_data, ax1, grpsREFw, grpsObsw, np.round(Th, decimals=1))
+        ax1.set_title('Single threshold - All days of overlap')
 
-    ax1.set_title('Single threshold - All days of overlap')
+        fig.savefig(figure_path, bbox_inches='tight')
 
-    fig.savefig(figure_path, bbox_inches='tight')
-
-    print('done.', flush=True)
-    print(' ', flush=True)
+        print('done.', flush=True)
+        print(' ', flush=True)
 
 
 def plotMultiThresholdScatterPlot(ssn_data,
@@ -1904,8 +2062,6 @@ def plotMultiThresholdScatterPlot(ssn_data,
         # Calculate R^2 and residual using only valid periods
         calRefN = np.array([0])
         calObsN = np.array([0])
-
-
 
         for n in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
