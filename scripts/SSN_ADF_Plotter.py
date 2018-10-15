@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 from astropy import convolution as conv
 import matplotlib.pyplot as plt
 from matplotlib import colors as clrs
@@ -120,9 +119,7 @@ def plotActiveVsObserved(ssn_data,
     figure_path = config.get_file_output_string('02', 'active_vs_observed_days',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -323,9 +320,7 @@ def plotHistSnADF(ssn_data,
     figure_path = config.get_file_output_string('03', 'SN vs ADF',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -536,9 +531,7 @@ def plotFitAl(ssn_data,
     figure_path = config.get_file_output_string('04', 'SN vs AL',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -638,9 +631,7 @@ def plotOptimalThresholdWindow(ssn_data,
     figure_path = config.get_file_output_string('05', 'Optimal_Threshold_Window',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -870,108 +861,6 @@ def plotOptimalThresholdWindow(ssn_data,
                         ADF_Obs_fracT  = np.divide(numObsT, denObsT)
                         ADF_REF_fracT  = np.divide(numREFT, denREFT)
 
-                        #mskVmnthObs = ODObsT / ssn_data.MoLngt >= ssn_data.minObD
-                        #mskVmnthREF = ODREFT / ssn_data.MoLngt >= ssn_data.minObD
-                            
-                        #numADObs = GDObsT[mskVmnthObs]
-                        #numQDObs = ssn_data.MoLngt - QDObsT[mskVmnthObs]                           
-                        #denFMObs = GDObsT[mskVmnthObs]*0 + ssn_data.MoLngt
-                        #denODObs = ODObsT[mskVmnthObs]
-                            
-                        #numADREF = GDREFT[mskVmnthREF]
-                        #numQDREF = ssn_data.MoLngt - QDREFT[mskVmnthREF]                           
-                        #denFMREF = GDREFT[mskVmnthREF]*0 + ssn_data.MoLngt
-                        #denODREF = ODREFT[mskVmnthREF]
-                            
-                            
-#                         if config.NUM_TYPE == "ADF": 
-#                             #numObs = numADObs
-#                             #numREF = numADREF
-#                             numObs = GDObsT
-#                             numREF = GDREFT                            
-#                         else: 
-#                             #numObs = numQDObs
-#                             #numREF = numQDREF
-#                             numObs = ssn_data.MoLngt - QDObsT 
-#                             numREF = ssn_data.MoLngt - QDREFT                            
-                                
-#                         if config.DEN_TYPE == "FULLM":
-#                             #denObs = denFMObs
-#                             #denREF = denFMREF
-#                             denObs = GDObsT*0 + ssn_data.MoLngt
-#                             denREF = GDREFT*0 + ssn_data.MoLngt                            
-#                         else:
-#                             #denObs = denODObs
-#                             #denREF = denODREF
-#                             denObs = ODObsT
-#                             denREF = ODREFT                            
-                                
-                                
-#                         if config.DEN_TYPE == "DTh":
-                                
-#                             #defining solar activity level                            
-#                             #MMObs=np.logical_and((SNdObsT[mskVmnthObs]>lowth), (SNdObsT[mskVmnthObs]<highth))
-#                             #MMREF=np.logical_and((SNdREFT[mskVmnthREF]>lowth), (SNdREFT[mskVmnthREF]<highth))
-
-#                             #HMObs=(SNdObsT[mskVmnthObs]>=highth)
-#                             #HMREF=(SNdREFT[mskVmnthREF]>=highth)
-                            
-#                             # Solar activity level mask
-#                             LMObs=SNdObsT<=lowth
-#                             LMRef=SNdREFT<=lowth
-
-#                             MMObs=np.logical_and((lowth<SNdObsT), (SNdObsT<highth))
-#                             MMRef=np.logical_and((lowth<SNdREFT), (SNdREFT<highth))
-
-#                             HMObs=(SNdObsT>=highth)
-#                             HMRef=(SNdREFT>=highth)
-                            
-#                             # ADF
-#                             #numObs[LMObs]=GDObsT[LMObs]
-#                             #denObs[LMObs]=ssn_data.MoLngt
-#                             #numREF[LMRef]=GDREFT[LMRef]/MoLngt
-#                             #denREF[LMRef]=ssn_data.MoLngt
-#                             numObsl=GDObsT[LMObs]
-#                             denObsl=GDObsT[LMObs]*0+ssn_data.MoLngt
-#                             numREFl=GDREFT[LMRef]
-#                             denREFl=GDREFT[LMRef]*0+ssn_data.MoLngt
-
-#                             #numObs[MMObs]=GDObsT[MMObs]
-#                             #denObs[MMObs]=ODObsT[MMObs]
-#                             #numREF[MMRef]=GDObsT[MMRef]
-#                             #denREF[MMRef]=ODREFT[MMRef]
-#                             numObsm=GDObsT[MMObs]
-#                             denObsm=ODObsT[MMObs]
-#                             numREFm=GDObsT[MMRef]
-#                             denREFm=ODREFT[MMRef]
-
-#                             #numObs[HMObs]=(ssn_data.MoLngt-QDObsT[HMObs])
-#                             #denObs[HMObs]=ssn_data.MoLngt
-#                             #numREF[HMRef]=(ssn_data.MoLngt-QDREFT[HMRef])
-#                             #denREF[HMRef]=ssn_data.MoLngt   
-#                             numObsh=(ssn_data.MoLngt-QDObsT[HMObs])
-#                             denObsh=QDObsT[HMObs]*0+ssn_data.MoLngt
-#                             numREFh=(ssn_data.MoLngt-QDREFT[HMRef])
-#                             denREFh=QDREFT[HMRef]*0+ssn_data.MoLngt  
-                            
-#                             numObs=np.concatenate([numObsh,numObsm,numObsl])
-#                             denObs=np.concatenate([denObsh,denObsm,denObsl])
-#                             numREF=np.concatenate([numREFh,numREFm,numREFl])
-#                             denREF=np.concatenate([denREFh,denREFm,denREFl])                            
-                                
-                                
-#                             #numObs = numADObs
-#                             #numObs[HMObs] = numQDObs[HMObs]
-#                             #denObs = denFMObs
-#                             #denObs[MMObs] = denODObs[MMObs]
-
-#                             #numREF = numADREF
-#                             #numREF[HMREF] = numQDREF[HMREF]
-#                             #denREF = denFMREF
-#                             #denObs[MMREF] = denODObs[MMREF]
-                                                                
-#                         ADF_Obs_frac = np.divide(numObs, denObs)
-#                         ADF_REF_frac = np.divide(numREF, denREF)
 
 
                         # Calculating Earth Mover's Distance
@@ -984,24 +873,6 @@ def plotOptimalThresholdWindow(ssn_data,
                             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
 
                         tmp = emd(ADFREFDis.astype(np.float64), ADFObsDis.astype(np.float64), ssn_data.Dis.astype(np.float64))
-
-                        # Calculating Chi-Square distance
-                        # ADFObs, bins = np.histogram(GDObsT[ODObsT / MoLngt >= minObD] / MoLngt,
-                        #                            bins=(np.arange(0, MoLngt + 2) - 0.5) / MoLngt)
-                        # ADFREF, bins = np.histogram(GDREFT[ODREFT / MoLngt >= minObD] / MoLngt,
-                        #                            bins=(np.arange(0, MoLngt + 2) - 0.5) / MoLngt)
-
-                        # Calculating numerator and denominator for Chi-square distance
-                        # Nom = np.power(ADFObs - ADFREF, 2)
-                        # Den = np.power(ADFObs,2) + np.power(ADFREF,2)
-                        # Den = ADFObs + ADFREF
-
-                        # Removing zeros in denominator
-                        # Nom = Nom[Den != 0]
-                        # Den = Den[Den != 0]
-
-                        # Calculating Chi-square distance
-                        # tmp = np.sum(np.divide(Nom, Den))
 
                         # Udating variables
                         if tmp < tmpEMD:
@@ -1164,9 +1035,7 @@ def plotDistributionOfThresholdsMI(ssn_data,
     figure_path = config.get_file_output_string('06', 'Distribution_of_Thresholds_MI',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1385,15 +1254,16 @@ def plotIntervalScatterPlots(ssn_data,
     figure_path = config.get_file_output_string('07', 'Interval_Scatter_Plots',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print("\nFigure at {} already exists.\n"
               " Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
             figure_path))
         return
+
+    calRef = np.array([0])
+    calObs = np.array([0])
 
     frc = 1  # Fraction of the panel devoted to histograms
 
@@ -1638,9 +1508,7 @@ def plotMinEMD(ssn_data,
     figure_path = config.get_file_output_string('08', 'Min_EMD',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1753,8 +1621,7 @@ def plotMinEMD(ssn_data,
         # Axes properties
         ax1.set_ylabel('Distribution Distance')
         ax1.set_xlim(left=np.min(ssn_data.REF_Dat['FRACYEAR']), right=np.max(ssn_data.REF_Dat['FRACYEAR']))
-        #ax1.set_ylim(bottom=0, top=np.min(y) * 5 + 1)
-        ax1.set_ylim(bottom = 0, top = np.min(y)*5+15)
+        ax1.set_ylim(bottom = 0, top = np.min(y)*5+10)
 
         ax1.spines['bottom'].set_color(ssn_data.Clr[siInx % 6])
         ax1.spines['bottom'].set_linewidth(3)
@@ -1805,9 +1672,7 @@ def plotSimultaneousFit(ssn_data,
     figure_path = config.get_file_output_string('09', 'Simultaneous_Fit',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1979,9 +1844,7 @@ def plotDistributionOfThresholds(ssn_data,
     figure_path = config.get_file_output_string('10', 'Distribution_of_Thresholds',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -2088,9 +1951,7 @@ def plotSingleThresholdScatterPlot(ssn_data,
     figure_path = config.get_file_output_string('11', 'Single_Threshold_ScatterPlot',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE,
-                                                PCTLO=config.PCTLO,
-                                                PCTHI=config.PCTHI)
+                                                den_type=config.DEN_TYPE)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -2180,9 +2041,7 @@ def plotMultiThresholdScatterPlot(ssn_data,
         figure_path = config.get_file_output_string('12', 'Multi_Threshold_ScatterPlot',
                                                     ssn_data=ssn_data,
                                                     num_type=config.NUM_TYPE,
-                                                    den_type=config.DEN_TYPE,
-                                                    PCTLO=config.PCTLO,
-                                                    PCTHI=config.PCTHI)
+                                                    den_type=config.DEN_TYPE)
 
         if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
             print(
