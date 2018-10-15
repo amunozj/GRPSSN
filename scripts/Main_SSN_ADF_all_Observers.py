@@ -29,7 +29,7 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 336
+SSN_ADF_Config.OBS_START_ID = 337
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 
@@ -37,7 +37,7 @@ SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
-SSN_ADF_Config.DEN_TYPE = "DTh"
+SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -93,7 +93,7 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
 
 # Output CSV file path
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
-    SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE, SSN_ADF_Config.PCTLO, SSN_ADF_Config.PCTHI))
+    SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
 
 
 #################
@@ -220,9 +220,9 @@ def run_obs(CalObsID):
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         if np.sum(ssn_data.vldIntr) > 1:
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
-                                                  disThres=3,
+                                                  disThres=4,
                                                   # Threshold above which we will ignore timeshifts in simultaneous fit
-                                                  MaxIter=2000)
+                                                  MaxIter=3000)
                                                   # Maximum number of iterations above which we skip simultaneous fit
 
         if plotSwitch:

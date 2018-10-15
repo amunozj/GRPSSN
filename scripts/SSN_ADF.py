@@ -520,27 +520,12 @@ class ssnADF(ssn_data):
         :param centers: Centers of the bins used in the calibration
         :param edges: Edges of the bins used in the calibration
         """
-
-        #######################################3
-        # Number of bins to use
-        #Nbins = maxN
-
-        #Edges and Centers
-        #edges = np.arange(0,np.ceil(maxN)+np.round(maxN*0.25), (np.ceil(maxN))/Nbins) - (np.ceil(maxN))/Nbins/2
-        #centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0]-1])/2 
-        #########################################
         
         
         # Applying Sqrt + 1
         if config.SQRT_2DHIS:
             calRefT = np.sqrt(calRefT + 1)
             calObsT = np.sqrt(calObsT + 1)
-            
-            ##############################################3
-            #Edges and Centers
-            #edges = np.arange(1,np.ceil(maxN)*1.05, (np.ceil(maxN))/Nbins) - (np.ceil(maxN))/Nbins/2
-            #centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0]-1])/2 
-            #################################################3
 
         # Calculating Median for bins
         Ymedian = centers * np.nan
@@ -588,8 +573,6 @@ class ssnADF(ssn_data):
 
         thN = 21  # Number of thresholds to plot
         thS = 5  # Threshold increment
-#         pctllow = 85  # Percentile to define low solar activity level
-#         pctlhigh = 90 # Percentile to define high solar activity level
 
         # creating matrix to define thresholds
         TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
@@ -769,11 +752,7 @@ class ssnADF(ssn_data):
                 
                 # mask for monthly (from daily) sunspot number
                 SNdObs = np.zeros((ssn_data.thN,cadMaskI.shape[0],np.int(TObsSNd.shape[0]/ssn_data.MoLngt))) 
-                SNdREF = np.zeros((ssn_data.thN,cadMaskI.shape[0],np.int(TObsSNd.shape[0]/ssn_data.MoLngt))) 
-                
-#                 # mask for monthly ADF
-#                 ADF_Obs_frac = np.zeros((ssn_data.thN,cadMaskI.shape[0],np.int(TObsDat.shape[0]/ssn_data.MoLngt))) 
-#                 ADF_REF_frac = np.zeros((ssn_data.thN,cadMaskI.shape[0],np.int(TObsDat.shape[0]/ssn_data.MoLngt))) 
+                SNdREF = np.zeros((ssn_data.thN,cadMaskI.shape[0],np.int(TObsSNd.shape[0]/ssn_data.MoLngt)))
                     
                 # Going through different thresholds
                 for TIdx in range(0, ssn_data.thN):
@@ -843,129 +822,9 @@ class ssnADF(ssn_data):
                             QDREF[TIdx, SIdx, :] = np.sum(np.equal(TgrpsREF, 0), axis=1)
                             
                             # monthly sunspot number
-                            #SNdObs[TIdx, SIdx, :] = np.mean(TObsSNd,axis=1)
-                            #SNdREF[TIdx, SIdx, :] = np.mean(TSNdREF,axis=1)
                             SNdObs[TIdx,SIdx,:] = np.mean(TObsSNd,axis=1)
                             SNdREF[TIdx,SIdx,:] = np.mean(TSNdREF,axis=1)
-                            
-                            # masks
-                            #mskVmnthObs = ODObs[TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                            #mskVmnthREF = ODREF[TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                            
-#                             #version 1 numdenObs
-#                             numADObs = GDObs[TIdx, SIdx, :]
-#                             numQDObs = ssn_data.MoLngt - QDObs[TIdx, SIdx, :]                          
-#                             denFMObs = GDObs[TIdx, SIdx, :]*0 + ssn_data.MoLngt
-#                             denODObs = ODObs[TIdx, SIdx, :]
-#                             #version 2 numdenObs
-#                             #numADObs = GDObs
-#                             #numQDObs = ssn_data.MoLngt - QDObs                         
-#                             #denFMObs = GDObs*0 + ssn_data.MoLngt
-#                             #denODObs = ODObs
-                            
-#                             #version 1 numdenREF
-#                             numADREF = GDREF[TIdx, SIdx, :]
-#                             numQDREF = ssn_data.MoLngt - QDREF[TIdx, SIdx, :]                       
-#                             denFMREF = GDREF[TIdx, SIdx, :]*0 + ssn_data.MoLngt
-#                             denODREF = ODREF[TIdx, SIdx, :] 
-#                             #version 2 numdenREF
-#                             #numADREF = GDREF
-#                             #numQDREF = ssn_data.MoLngt - QDREF                      
-#                             #denFMREF = GDREF*0 + ssn_data.MoLngt
-#                             #denODREF = ODREF
-                            
-                            
-#                             if config.NUM_TYPE == "ADF": 
-#                                 numObs = numADObs
-#                                 numREF = numADREF
-#                                 #numObs = GDObs[TIdx, SIdx, :]
-#                                 #numREF = GDREF[TIdx, SIdx, :]                                
-#                             else: 
-#                                 numObs = numQDObs
-#                                 numREF = numQDREF
-#                                 #numObs = ssn_data.MoLngt - QDObs[TIdx, SIdx, :] 
-#                                 #numREF = ssn_data.MoLngt - QDREF[TIdx, SIdx, :]
-                                
-#                             if config.DEN_TYPE == "OBS":
-#                                 denObs = denODObs
-#                                 denREF = denODREF
-#                                 #denObs = ODObs[TIdx, SIdx, :]
-#                                 #denREF = ODREF[TIdx, SIdx, :]                             
-#                             else:
-#                                 denObs = denFMObs
-#                                 denREF = denFMREF
-#                                 #denObs = GDObs[TIdx, SIdx, :]*0 + ssn_data.MoLngt
-#                                 #denREF = GDREF[TIdx, SIdx, :]*0 + ssn_data.MoLngt
 
-                            
-#                             if config.DEN_TYPE == "DTh":
-                                
-#                                #defining solar activity level                            
-#                                 MMObs=np.logical_and((SNdObs>lowth), (SNdObs<highth))
-#                                 MMREF=np.logical_and((SNdREF>lowth), (SNdREF<highth))
-
-#                                 HMObs=(SNdObs>=highth)
-#                                 HMREF=(SNdREF>=highth)
-                                
-#                                 # Solar activity level mask
-#                                 #LMObs=SNdObs<=lowth
-#                                 #LMRef=SNdREF<=lowth
-
-#                                 #MMObs=np.logical_and((lowth<SNdObs), (SNdObs<highth))
-#                                 #MMRef=np.logical_and((lowth<SNdREF), (SNdREF<highth))
-
-#                                 #HMObs=(SNdObs>=highth)
-#                                 #HMRef=(SNdREF>=highth)
-
-#                                 # ADF
-#                                 #ADF_Obs_frac[TIdx,SIdx,LMObs]=GDObs[TIdx,SIdx][LMObs]/MoLngt
-#                                 #ADF_REF_frac[TIdx,SIdx,LMRef]=GDREF[TIdx,SIdx][LMRef]/MoLngt
-                                
-# #                                 #numObs[TIdx,SIdx,LMObs]=GDObs[TIdx,SIdx][LMObs]
-# #                                 #denObs[TIdx,SIdx,LMObs]=ssn_data.MoLngt
-# #                                 #numREF[TIdx,SIdx,LMRef]=GDREF[TIdx,SIdx][LMRef]
-# #                                 #denREF[TIdx,SIdx,LMRef]=ssn_data.MoLngt
-# #                                 numObsl=GDObs[TIdx,SIdx,:][LMObs]
-# #                                 denObsl=GDObs[TIdx,SIdx,:][LMObs]*0 + ssn_data.MoLngt
-# #                                 numREFl=GDREF[TIdx,SIdx,:][LMRef]
-# #                                 denREFl=GDREF[TIdx,SIdx,:][LMRef]*0 + ssn_data.MoLngt
-                                
-# #                                 #numObs[TIdx,SIdx,MMObs]=GDObs[TIdx,SIdx][MMObs]
-# #                                 #denObs[TIdx,SIdx,MMObs]=ODObs[TIdx,SIdx][MMObs]
-# #                                 #numREF[TIdx,SIdx,MMRef]=GDObs[TIdx,SIdx][MMRef]
-# #                                 #denREF[TIdx,SIdx,MMRef]=ODREF[TIdx,SIdx][MMRef]
-# #                                 numObsm=GDObs[TIdx,SIdx,:][MMObs]
-# #                                 denObsm=ODObs[TIdx,SIdx,:][MMObs]
-# #                                 numREFm=GDREF[TIdx,SIdx,:][MMRef]
-# #                                 denREFm=ODREF[TIdx,SIdx,:][MMRef]
-                                
-
-# #                                 #numObs[TIdx,SIdx,HMObs]=(ssn_data.MoLngt-QDObs[TIdx,SIdx][HMObs])
-# #                                 #denObs[TIdx,SIdx,HMObs]=ssn_data.MoLngt
-# #                                 #numREF[TIdx,SIdx,HMRef]=(ssn_data.MoLngt-QDREF[TIdx,SIdx][HMRef])
-# #                                 #denREF[TIdx,SIdx,HMRef]=ssn_data.MoLngt
-# #                                 numObsh=(ssn_data.MoLngt-QDObs[TIdx,SIdx,:][HMObs])
-# #                                 denObsh=QDObs[TIdx,SIdx,:][HMObs]*0+ssn_data.MoLngt
-# #                                 numREFh=(ssn_data.MoLngt-QDREF[TIdx,SIdx,:][HMRef])
-# #                                 denREFh=QDREF[TIdx,SIdx,:][HMRef]*0+ssn_data.MoLngt
-                                
-#                                 #numObs=np.concatenate([numObsl,numObsm,numObsh])
-#                                 #numObs=np.concatenate([numObsh,numObsm,numObsl])
-#                                 #denObs=np.concatenate([denObsh,denObsm,denObsl])
-#                                 #numREF=np.concatenate([numREFh,numREFm,numREFl])
-# #                                 denREF=np.concatenate([denREFh,denREFm,denREFl])                                
-                                                              
-                                
-#                                 numObs[HMObs] = numQDObs[HMObs]
-#                                 numREF[HMREF] = numQDREF[HMREF]
-                                
-#                                 denObs[MMObs] = denODObs[MMObs]
-#                                 denObs[MMREF] = denODObs[MMREF]
-
-
-# #                             print(siInx,TIdx,SIdx)                          
-#                             ADF_Obs_frac[TIdx,SIdx,:]  = np.divide(numObs, denObs)
-#                             ADF_REF_frac[TIdx,SIdx,:]  = np.divide(numREF, denREF)
 
             # If period is not valid append empty variavbles
             else:
@@ -978,8 +837,6 @@ class ssnADF(ssn_data):
                 QDREF = []                
                 SNdObs = []
                 SNdREF = []
-#                 ADF_Obs_frac = []
-#                 ADF_REF_frac = []
               
 
             print(' ')
@@ -992,14 +849,9 @@ class ssnADF(ssn_data):
             QDObsI.append(QDObs)
             QDREFI.append(QDREF)                       
             SNdObsI.append(SNdObs)    
-            SNdREFI.append(SNdREF) 
-#             ADF_Obs_fracI.append(ADF_Obs_frac)    
-#             ADF_REF_fracI.append(ADF_REF_frac) 
+            SNdREFI.append(SNdREF)
         
-        #print(GDREF)
-        #print(SNdREF)
-        #print(ADF_REF_frac[0,0])
-        #print(ADF_Obs_frac[0,0]) 
+
         print('done.', flush=True)
         print(' ', flush=True)
 
@@ -1020,7 +872,6 @@ class ssnADF(ssn_data):
 
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
-        #for siInx in range(0, 1):
 
             print('Center:', np.round(ssn_data.cenPoints['OBS'][siInx, 0], 2), 'Edges:',
                   np.round(ssn_data.endPoints['OBS'][siInx, 0], 2),
@@ -1047,11 +898,9 @@ class ssnADF(ssn_data):
 
                 # Going through different thresholds
                 for TIdx in range(0, ssn_data.thN):
-                #for TIdx in range(0, 1):
 
                     # Going through different shifts
                     for SIdx in range(0, cadMaskI.shape[0]):
-                    #for SIdx in range(0, 31):
                     
 
                         if np.any(ODObsI[siInx][TIdx, SIdx, :] != 0) and np.any(ODREFI[siInx][TIdx, SIdx, :] != 0):
@@ -1072,24 +921,16 @@ class ssnADF(ssn_data):
                             if config.NUM_TYPE == "ADF": 
                                 numObs = numADObs
                                 numREF = numADREF
-                                #numObs = GDObs[TIdx, SIdx, :]
-                                #numREF = GDREF[TIdx, SIdx, :]                                
                             else: 
                                 numObs = numQDObs
                                 numREF = numQDREF
-                                #numObs = ssn_data.MoLngt - QDObs[TIdx, SIdx, :] 
-                                #numREF = ssn_data.MoLngt - QDREF[TIdx, SIdx, :]
                                 
                             if config.DEN_TYPE == "OBS":
                                 denObs = denODObs
                                 denREF = denODREF
-                                #denObs = ODObs[TIdx, SIdx, :]
-                                #denREF = ODREF[TIdx, SIdx, :]                             
                             else:
                                 denObs = denFMObs
                                 denREF = denFMREF
-                                #denObs = GDObs[TIdx, SIdx, :]*0 + ssn_data.MoLngt
-                                #denREF = GDREF[TIdx, SIdx, :]*0 + ssn_data.MoLngt
 
                             
                             if config.DEN_TYPE == "DTh":
@@ -1274,11 +1115,9 @@ class ssnADF(ssn_data):
 
         # Applying Sqrt + 1
         if config.SQRT_2DHIS:
-            #maxNT = np.sqrt(maxNPlt)
             maxNPlt = np.sqrt(maxNPlt)
 
             # Edges and Centers
-            #edges = np.arange(1, np.ceil(maxNT) * 1.05, (np.ceil(maxNT)) / Nbins) - (np.ceil(maxNT)) / Nbins / 2
             edges = np.arange(1, np.ceil(maxNPlt) * 1.05, (np.ceil(maxNPlt)) / Nbins) - (np.ceil(maxNPlt)) / Nbins / 2
             centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
 
@@ -1331,10 +1170,6 @@ class ssnADF(ssn_data):
 
 
         # Storing variables in object-----------------------------------------------------------------------------------
-
-#         ssn_data.pctllow = pctllow # Percentile to determine the low solar activity level
-#         ssn_data.pctlhigh = pctlhigh # Percentile to determine the high solar activity level
-        
         ssn_data.LowALlim = LowALlim # Data to obtain the coefficients for the fits of the low solar activity
         ssn_data.HighALlim = HighALlim # Data to obtain the coefficients for the fits of the high solar activity
         
@@ -1357,9 +1192,6 @@ class ssnADF(ssn_data):
         
         ssn_data.SNdObsI = SNdObsI  # Variable that stores the daily sunspot number of days for each interval, threshold, window shift, and window
         ssn_data.SNdREFI = SNdREFI  # Variable that stores the daily sunspot number of days for each interval, threshold, window shift, and window
-        
-#         ssn_data.ADF_Obs_fracI = ADF_Obs_fracI # Variable that stores the ADF for given observer for each interval, threshold, window shift, and window
-#         ssn_data.ADF_REF_fracI = ADF_REF_fracI # Variable that stores the ADF for RGO for each interval, threshold, window shift, and window
 
         ssn_data.EMDD = EMDD  # Variable that stores the EMD between the reference and the observer for each interval, threshold, and window shift
         ssn_data.EMDtD = EMDtD  # Variable that stores the windowshift matching EMDD for each interval, threshold, and window shift
@@ -1668,18 +1500,12 @@ class ssnADF(ssn_data):
                         if ADFObsI.shape[0] == 0:  
                             ADFObsI = ADF_Obs_fracII                    
                             ADFREFI = ADF_REF_fracII
-                            
-#                             ADFObsI = ssn_data.ADF_Obs_fracI[siInx][TIdx,valShfInx[siInx][comb[siInx]],ssn_data.ODObsI[siInx][TIdx,valShfInx[siInx][comb[siInx]],:]/ssn_data.MoLngt>=ssn_data.minObD]
-#                             ADFREFI = ssn_data.ADF_REF_fracI[siInx][TIdx,valShfInx[siInx][comb[siInx]],ssn_data.ODREFI[siInx][TIdx,valShfInx[siInx][comb[siInx]],:]/ssn_data.MoLngt>=ssn_data.minObD]
 
                         # If not, append ADF from all sub-interval for the specified shifts
                         else:
                             ADFObsI = np.append(ADFObsI,ADF_Obs_fracII)
                             ADFREFI = np.append(ADFREFI, ADF_REF_fracII)   
-                    
-#                             ADFObsI = np.append(ADFObsI,ssn_data.ADF_Obs_fracI[siInx][TIdx,valShfInx[siInx][comb[siInx]],ssn_data.ODObsI[siInx][TIdx,valShfInx[siInx][comb[siInx]],:]/ssn_data.MoLngt>=ssn_data.minObD])
-#                             ADFREFI = np.append(ADFREFI,ssn_data.ADF_REF_fracI[siInx][TIdx,valShfInx[siInx][comb[siInx]],ssn_data.ODREFI[siInx][TIdx,valShfInx[siInx][comb[siInx]],:]/ssn_data.MoLngt>=ssn_data.minObD])
-                            
+
                 # Calculating Earth Mover's Distance
                 ADFObs, bins = np.histogram(ADFObsI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
                                             density=True)
@@ -1705,12 +1531,6 @@ class ssnADF(ssn_data):
                     # Convert to numpy array
                     insArr = np.array(insArr)
 
-                    # if config.NBEST == 1:
-                    #
-                    #     EMDComb = insArr
-                    #
-                    # else:
-
                     # Determining index for insertion
                     insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
 
@@ -1727,11 +1547,10 @@ class ssnADF(ssn_data):
         
         # Only plot if using more than one theshold
         if config.NBEST == 1:
-            
-            # Going through different sub-intervals
-            for siInx in range(0,ssn_data.cenPoints['OBS'].shape[0]):
-                wAv = ssn_data.wAvI[ssn_data.vldIntr][0]                
-                wSD = np.nan
+
+            wAv = EMDComb[1, :][0] * ssn_data.thI
+            wSD = np.nan
+
         else:
             # Constructing weights
             alph = 1-(EMDComb[0,:]-np.min(EMDComb[0,:]))/(np.max(EMDComb[0,:])-np.min(EMDComb[0,:]))
@@ -1816,8 +1635,6 @@ class ssnADF(ssn_data):
                     # Appending to calibrated arrays?
                     calRefN = np.append(calRefN, grpsREFw)
                     calObsN = np.append(calObsN, grpsObsw)
-
-            # Calculating goodness of fit of Y=X
 
             # Calculating goodness of fit of Y=X
             metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)

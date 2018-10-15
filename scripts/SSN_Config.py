@@ -68,7 +68,7 @@ class SSN_ADF_Config:
     SUPPRESS_NP_WARNINGS = False
 
     @staticmethod
-    def get_file_prepend(num_type, den_type, PCTLO, PCTHI):
+    def get_file_prepend(num_type, den_type):
         """
         :param num_type: ADF parameter set in config
         :param den_type: month length parameter set in config
@@ -103,21 +103,19 @@ class SSN_ADF_Config:
         return prepend
 
     @staticmethod
-    def get_file_output_string(number, title, ssn_data, num_type, den_type, PCTLO, PCTHI):
+    def get_file_output_string(number, title, ssn_data, num_type, den_type):
         """
         :param number: Plot type identifier
         :param title: Plot title
         :param ssn_data: SSN_Data object storing metadata
         :param num_type: ADF parameter set in config
         :param den_type: month length parameter set in config
-        :param PCTLO: defines the percentile of ADF months for which low activity conditions hold
-        :param PCTLO: defines the percentile of ADF months for which high activity conditions hold
         :return: Path
         """
         return os.path.join(ssn_data.output_path,
                             "{}_{}".format(ssn_data.CalObs, ssn_data.NamObs),
                             "{}_{}_{}_{}_{}.png".format(number,
-                                                       SSN_ADF_Config.get_file_prepend(num_type, den_type, PCTLO, PCTHI),
+                                                       SSN_ADF_Config.get_file_prepend(num_type, den_type),
                                                        ssn_data.CalObs,
                                                        ssn_data.NamObs,
                                                        title))
