@@ -29,8 +29,8 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 476 #318 #356
-SSN_ADF_Config.OBS_END_ID = 477 #600
+SSN_ADF_Config.OBS_START_ID = 446 #318 #356
+SSN_ADF_Config.OBS_END_ID = 447 #600
 SSN_ADF_Config.SKIP_OBS = [332]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
@@ -43,7 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-14'
+output_path = 'Run-2018-10-15'
 
 
 ###################
@@ -91,10 +91,9 @@ if args.suppress_warnings:
 if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
-
 # Output CSV file path
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
-    SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
+    SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE, SSN_ADF_Config.PCTLO, SSN_ADF_Config.PCTHI))
 
 
 #################

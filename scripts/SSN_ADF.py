@@ -586,8 +586,8 @@ class ssnADF(ssn_data):
 
         thN = 21  # Number of thresholds to plot
         thS = 5  # Threshold increment
-        pctllow = 85  # Percentile to define low solar activity level
-        pctlhigh = 90 # Percentile to define high solar activity level
+#         pctllow = 85  # Percentile to define low solar activity level
+#         pctlhigh = 90 # Percentile to define high solar activity level
 
         # creating matrix to define thresholds
         TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
@@ -633,7 +633,7 @@ class ssnADF(ssn_data):
 
                     ALP = pprange*np.nan
                     for ALi in np.arange(0,pprange.shape[0]):
-                        if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], pctllow)
+                        if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], config.PCTLO)
 
                     intrsc = np.where(np.abs(ALP-0.25)==np.nanmin(np.abs(ALP-0.25)))[0]
                     cut = np.mean(pprange[intrsc])        
@@ -648,7 +648,7 @@ class ssnADF(ssn_data):
 
                     ALP = pprange*np.nan
                     for ALi in np.arange(0,pprange.shape[0]):
-                        if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-pctlhigh)
+                        if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-config.PCTHI)
 
                     intrsc = np.where(np.abs(ALP-0.75)==np.nanmin(np.abs(ALP-0.75)))[0]
                     cut = np.mean(pprange[intrsc])
@@ -1349,8 +1349,8 @@ class ssnADF(ssn_data):
 
         # Storing variables in object-----------------------------------------------------------------------------------
 
-        ssn_data.pctllow = pctllow # Percentile to determine the low solar activity level
-        ssn_data.pctlhigh = pctlhigh # Percentile to determine the high solar activity level
+#         ssn_data.pctllow = pctllow # Percentile to determine the low solar activity level
+#         ssn_data.pctlhigh = pctlhigh # Percentile to determine the high solar activity level
         
         ssn_data.LowALlim = LowALlim # Data to obtain the coefficients for the fits of the low solar activity
         ssn_data.HighALlim = HighALlim # Data to obtain the coefficients for the fits of the high solar activity

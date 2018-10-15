@@ -120,7 +120,9 @@ def plotActiveVsObserved(ssn_data,
     figure_path = config.get_file_output_string('02', 'active_vs_observed_days',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -321,7 +323,9 @@ def plotHistSnADF(ssn_data,
     figure_path = config.get_file_output_string('03', 'SN vs ADF',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -421,7 +425,7 @@ def plotHistSnADF(ssn_data,
 
                 ALP = pprange*np.nan
                 for ALi in np.arange(0,pprange.shape[0]):
-                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], ssn_data.pctllow)
+                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], config.PCTLO)
 
                 ax1.plot(pprange, ALP)
                 ax1.plot([0,150],[0.25,0.25],color='k',linestyle='--')
@@ -454,7 +458,7 @@ def plotHistSnADF(ssn_data,
 
                 ALP = pprange*np.nan
                 for ALi in np.arange(0,pprange.shape[0]):
-                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-ssn_data.pctlhigh)
+                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-config.PCTHI)
 
                 ax2.plot(pprange, ALP)
                 ax2.plot([0,150],[0.75,0.75],color='k',linestyle='--')
@@ -532,7 +536,9 @@ def plotFitAl(ssn_data,
     figure_path = config.get_file_output_string('04', 'SN vs AL',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -632,7 +638,9 @@ def plotOptimalThresholdWindow(ssn_data,
     figure_path = config.get_file_output_string('05', 'Optimal_Threshold_Window',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1156,7 +1164,9 @@ def plotDistributionOfThresholdsMI(ssn_data,
     figure_path = config.get_file_output_string('06', 'Distribution_of_Thresholds_MI',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1375,7 +1385,9 @@ def plotIntervalScatterPlots(ssn_data,
     figure_path = config.get_file_output_string('07', 'Interval_Scatter_Plots',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print("\nFigure at {} already exists.\n"
@@ -1505,7 +1517,9 @@ def plotMinEMD(ssn_data,
     figure_path = config.get_file_output_string('08', 'Min_EMD',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1670,7 +1684,9 @@ def plotSimultaneousFit(ssn_data,
     figure_path = config.get_file_output_string('09', 'Simultaneous_Fit',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1838,7 +1854,9 @@ def plotDistributionOfThresholds(ssn_data,
     figure_path = config.get_file_output_string('10', 'Distribution_of_Thresholds',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -1945,7 +1963,9 @@ def plotSingleThresholdScatterPlot(ssn_data,
     figure_path = config.get_file_output_string('11', 'Single_Threshold_ScatterPlot',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
+                                                den_type=config.DEN_TYPE,
+                                                PCTLO=config.PCTLO,
+                                                PCTHI=config.PCTHI)
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -2035,7 +2055,9 @@ def plotMultiThresholdScatterPlot(ssn_data,
         figure_path = config.get_file_output_string('12', 'Multi_Threshold_ScatterPlot',
                                                     ssn_data=ssn_data,
                                                     num_type=config.NUM_TYPE,
-                                                    den_type=config.DEN_TYPE)
+                                                    den_type=config.DEN_TYPE,
+                                                    PCTLO=config.PCTLO,
+                                                    PCTHI=config.PCTHI)
 
         if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
             print(
