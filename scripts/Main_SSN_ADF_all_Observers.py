@@ -33,7 +33,6 @@ SSN_ADF_Config.OBS_START_ID = 336
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 
-
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
@@ -44,7 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-9-28'
+output_path = 'Run-2018-10-15'
 
 
 ###################
@@ -92,10 +91,9 @@ if args.suppress_warnings:
 if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
-
 # Output CSV file path
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
-    SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
+    SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE, SSN_ADF_Config.PCTLO, SSN_ADF_Config.PCTHI))
 
 
 #################
@@ -199,11 +197,11 @@ def run_obs(CalObsID):
                 SSN_ADF_Plotter.plotOptimalThresholdWindow(ssn_data)
                 
             # Plot SN vs. ADF
-            if SSN_ADF_Config.PLOT_SN_ADF:
+            if SSN_ADF_Config.PLOT_SN_ADF and SSN_ADF_Config.DEN_TYPE  == "DTh":
                 SSN_ADF_Plotter.plotHistSnADF(ssn_data)
                 
             # Plot SN vs AL
-            if SSN_ADF_Config.PLOT_SN_AL:
+            if SSN_ADF_Config.PLOT_SN_AL and SSN_ADF_Config.DEN_TYPE  == "DTh":
                 SSN_ADF_Plotter.plotFitAl(ssn_data)
                 
             # Plot Distribution of active thresholds
