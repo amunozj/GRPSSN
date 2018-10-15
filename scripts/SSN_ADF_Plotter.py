@@ -1457,11 +1457,6 @@ def plotIntervalDistributions(ssn_data,
                         bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False)
                     ax1.plot(xAD, yAD, color=ssn_data.Clr[4], linewidth=3)
 
-                    ax1.text(0.5, 0.87, 'Th: ' + str(int(ssn_data.bestTh[n][0][1])) + '     From ' + str(
-                        np.round(ssn_data.endPoints['OBS'][n, 0], decimals=2)) + ' to ' + str(
-                        np.round(ssn_data.endPoints['OBS'][n + 1, 0], decimals=2)), horizontalalignment='center',
-                             verticalalignment='center', transform=ax1.transAxes)
-
                     ax1.text(0.02, 0.96, 'From ' + str( np.round(ssn_data.endPoints['OBS'][n, 0], decimals=1)) + ' to '
                              + str(np.round(ssn_data.endPoints['OBS'][n + 1, 0], decimals=1))
                              + '\nbest match: ' + str(np.round(ssn_data.bestTh[n][0][0], decimals=1))

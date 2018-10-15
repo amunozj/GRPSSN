@@ -95,7 +95,7 @@ class SSN_ADF_Config:
         return prepend
 
     @staticmethod
-    def get_file_output_string(number, title, ssn_data, num_type, den_type, pctllow, pctlhigh):
+    def get_file_output_string(number, title, ssn_data, num_type, den_type):
         """
         :param number: Plot type identifier
         :param title: Plot title

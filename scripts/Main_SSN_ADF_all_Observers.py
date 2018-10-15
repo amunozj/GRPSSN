@@ -38,7 +38,7 @@ SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
-SSN_ADF_Config.DEN_TYPE = "DTh"
+SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
