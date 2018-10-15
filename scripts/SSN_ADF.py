@@ -571,7 +571,8 @@ class ssnADF(ssn_data):
                 'mRRes': mRRes}
 
     def ADFscanningWindowEMD(self,
-                             ssn_data):
+                             ssn_data,
+                             Dis_Pow = 2):
 
         """
         Function that preps the search windows and calculates the EMD for each separate rising and decaying interval
@@ -579,6 +580,7 @@ class ssnADF(ssn_data):
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
         :param ssn_data: ssn_data class object storing SSN metadata
+        :param Dis_Pow: Power index used to define the distance matrix for EMD calculation
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """
 
@@ -1005,14 +1007,16 @@ class ssnADF(ssn_data):
 
         # Creating Storing dictionaries for distance matrices
         EMDD = []
+        EMDiD = []
         EMDtD = []
         EMDthD = []
+        EMDthiD = []
 
         # Calculation of distance matrix to be used in the Earth Movers Metric
         x = np.arange(0, ssn_data.MoLngt + 1)
         y = np.arange(0, ssn_data.MoLngt + 1)
         xx, yy = np.meshgrid(x, y)
-        Dis = np.absolute(np.power(xx - yy, 1))
+        Dis = np.absolute(np.power(xx - yy, Dis_Pow))
 
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
@@ -1036,8 +1040,10 @@ class ssnADF(ssn_data):
                 # Pre-allocating EMD matrix and associated coordinate matrices.  A large default distance valued is used
                 # to account for missing points
                 EMD = np.ones((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1])) * 1e16
+                EMDi = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
                 EMDt = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
                 EMDth = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
+                EMDthi = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
 
                 # Going through different thresholds
                 for TIdx in range(0, ssn_data.thN):
@@ -1119,54 +1125,31 @@ class ssnADF(ssn_data):
                             ADFREF, bins = np.histogram(ADF_REF_fracI,bins=(np.arange(0,ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,density=True)
                             
                             EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), Dis.astype(np.float64))
-
-#                            ADFObs, bins = np.histogram(ADF_Obs_frac,
-#                                                        bins=(
-#                                                                 np.arange(0,
-#                                                                           ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-#                                                        density=True)
-
-#                            ADFREF, bins = np.histogram(ADF_REF_frac,
-#                                                        bins=(
-#                                                                 np.arange(0,
-#                                                                           ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-#                                                        density=True)
-
-
-
-                        # #Calculating Chi-Square distance
-                        #                 ADFObs, bins = np.histogram(GDObsI[siInx][TIdx,SIdx,ODObsI[siInx][TIdx,SIdx,:]/MoLngt>=minObD]/MoLngt, bins= (np.arange(0,MoLngt+2)-0.5)/MoLngt)
-                        #                 ADFREF, bins = np.histogram(GDREFI[siInx][TIdx,SIdx,ODREFI[siInx][TIdx,SIdx,:]/MoLngt>=minObD]/MoLngt, bins= (np.arange(0,MoLngt+2)-0.5)/MoLngt)
-
-                        #                 # Calculating numerator and denominator for Chi-square distance
-                        #                 Nom = np.power(ADFObs-ADFREF,2)
-                        #                 #Den = np.power(ADFObs,2) + np.power(ADFREF,2)
-                        #                 Den = ADFObs + ADFREF
-
-                        #                 # Removing zeros in denominator
-                        #                 Nom = Nom[Den!=0]
-                        #                 Den = Den[Den!=0]
-
-                        #                 # Calculating Chi-square distance
-                        #                 EMD[TIdx,SIdx] = np.sum(np.divide(Nom,Den))
+                            EMDi[TIdx, SIdx] = SIdx
 
                         # Storing coordinates of EMD distances
                         EMDt[TIdx, SIdx] = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI[SIdx]]
                         EMDth[TIdx, SIdx] = TIdx * ssn_data.thI
+                        EMDthi[TIdx, SIdx] = TIdx
 
             # If period is not valid append empty variables
             else:
                 print('[{}/{}] INVALID Interval'.format(siInx + 1, num_intervals))
                 EMD = []
+                EMDi = []
                 EMDt = []
                 EMDth = []
+                EMDthi = []
 
             print(' ')
 
             EMDD.append(EMD)
+            EMDiD.append(EMDi)
             EMDtD.append(EMDt)
             EMDthD.append(EMDth)
-        
+            EMDthiD.append(EMDthi)
+
+            
         print('done.', flush=True)
         print(' ', flush=True)
 
@@ -1196,8 +1179,8 @@ class ssnADF(ssn_data):
                 # Creating matrix for sorting and find the best combinations of threshold and shift
                 OpMat = np.concatenate(
                     (EMDtD[siInx].reshape((-1, 1)), EMDthD[siInx].reshape((-1, 1)),
-                     EMDD[siInx].reshape((-1, 1))),
-                    axis=1)
+                     EMDD[siInx].reshape((-1, 1)), EMDiD[siInx].reshape((-1,1)),
+                     EMDthiD[siInx].reshape((-1,1))), axis=1)
 
                 # Sort according to EMD to find the best matches
                 I = np.argsort(OpMat[:, 2], axis=0)
@@ -1489,28 +1472,23 @@ class ssnADF(ssn_data):
         return False
 
 
-
-    def ADFsimultaneousEMD(self,
-                           ssn_data,
-                           disThres=1.5,
-                           MaxIter=100000):
-
+    def _disThres_Limit(self,
+                        ssn_data,
+                        disThres
+                        ):
         """
-        Function that peforms the EMD optimization by allowing variations of shift while keeping thresholds constant
-        VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
+        Internal function that Function that identifies valid indices for each interval that are below a relative threshold
 
         :param disThres: Threshold above which we will ignore timeshifts (in units of the shortest
                          distance between observer and reference ADFs for each sub-interval separately)
-        :param MaxIter:  Maximum number of iterations above which we skip simultaneous fit
+        :returns valShfInx, valShfLen:  Variables  with the indices and lengths to calculate the number of permutations
         """
-
-        print('Identify valid shifts for simultaneous fitting...', flush=True)
-
         # Dictionary that will store valid shift indices for each sub-interval
         valShfInx = []
 
         # Dictionary that will store the length of the index array for each sub-interval
         valShfLen = []
+
 
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
@@ -1538,6 +1516,43 @@ class ssnADF(ssn_data):
 
         # Saving lengths as array
         valShfLen = np.array(valShfLen)
+
+        return valShfInx, valShfLen
+
+
+    def ADFsimultaneousEMD(self,
+                           ssn_data,
+                           disThres=3,
+                           MaxIter=2000):
+
+        """
+        Function that peforms the EMD optimization by allowing variations of shift while keeping thresholds constant
+        VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
+
+        :param disThres: Threshold above which we will ignore timeshifts (in units of the shortest
+                         distance between observer and reference ADFs for each sub-interval separately)
+        :param MaxIter:  Maximum number of iterations above which we skip simultaneous fit
+        """
+
+        print('Identify valid shifts for simultaneous fitting...', flush=True)
+
+        valShfInx, valShfLen = self._disThres_Limit(ssn_data, disThres)
+
+        # Perform binary search to get as close as possible to the limit
+        if np.nanprod(valShfLen) > MaxIter:
+
+            disThresT = disThres * 0.5
+            for n in range(2, 30):
+
+                valShfInx, valShfLen = self._disThres_Limit(ssn_data, disThresT)
+
+                if np.nanprod(valShfLen) > MaxIter:
+                    disThresT = disThresT - disThres / np.power(2, n)
+                else:
+                    disThresT = disThresT + disThres / np.power(2, n)
+
+            valShfInx, valShfLen = self._disThres_Limit(ssn_data, disThresT)
+
 
         print('Number of valid combinations:', np.nanprod(valShfLen))
         print(valShfLen)
