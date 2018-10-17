@@ -29,15 +29,15 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 337
+SSN_ADF_Config.OBS_START_ID = 412
 SSN_ADF_Config.OBS_END_ID = 600
-SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
+SSN_ADF_Config.SKIP_OBS = [332, 338, 385, 418]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
-SSN_ADF_Config.DEN_TYPE = "OBS"
+SSN_ADF_Config.DEN_TYPE = "DTh"
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -151,6 +151,11 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  phTol=2,  # Cycle phase tolerance in years
                  thN=100,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
+                 thNPc=10,  #Number of thresholds including 0 for percentile fitting
+                 thIPc=10,  # Threshold increments for percentile fitting
+                 MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
+                 minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
+                 vldIntThr=0.33,  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
                  plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
@@ -175,10 +180,7 @@ def run_obs(CalObsID):
 
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata
-                                        CalObs=CalObsID,  # Observer identifier denoting observer to be processed
-                                        MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
-                                        minObD=0.33,# Minimum proportion of days with observation for a "month" to be considered valid
-                                        vldIntThr=0.33)  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
+                                        CalObs=CalObsID)  # Observer identifier denoting observer to be processed
 
     # Continue only if observer has valid intervals
     if obs_valid:
@@ -242,6 +244,9 @@ def run_obs(CalObsID):
 
                 if SSN_ADF_Config.PLOT_MULTI_THRESH_SCATTER and obs_ref_overlap:
                     SSN_ADF_Plotter.plotMultiThresholdScatterPlot(ssn_data)
+
+                if SSN_ADF_Config.PLOT_SINGLE_THRESH_DIS:
+                    SSN_ADF_Plotter.plotSingleThresholdDistributions(ssn_data)
 
             # If there is overlap between the observer and reference plot the y=x scatterplots
             if obs_ref_overlap:

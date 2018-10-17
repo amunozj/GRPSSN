@@ -7,7 +7,7 @@ from SSN_Config import SSN_ADF_Config as config
 import os
 
 
-def plotSearchWindows(ssn_data, SILSO_Sn, SILSO_Sn_d, SIL_max, SIL_min, REF_min, REF_max,
+def plotSearchWindows(ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
                       dpi=300,
                       pxx=4000,
                       pxy=1300,
@@ -95,6 +95,292 @@ def plotSearchWindows(ssn_data, SILSO_Sn, SILSO_Sn_d, SIL_max, SIL_min, REF_min,
     print(' ', flush=True)
 
 
+def plotHistSnADF(ssn_data,
+                  dpi=300,
+                  pxx=1500,
+                  pxy=1500,
+                  padv=50,
+                  padh=50,
+                  padv2=0,
+                  padh2=0):
+    """
+
+    :param dpi: Dots per inch in figure
+    :param pxx: Horizontal size of each panel in pixels
+    :param pxy: Vertical size of each panel in pixels
+    :param padv: Vertical padding in pixels at the edge of the figure in pixels
+    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
+    :param padv2: Vertical padding in pixels between panels
+    :param padh2: Horizontal padding in pixels between panels
+    """
+
+    font = ssn_data.font
+    plt.rc('font', **font)
+
+    figure_path = '{}/02_2DHist_SN_vs_ADF.png'.format(ssn_data.output_path)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
+                figure_path).format(figure_path))
+        return
+
+    print('Creating and saving SN vs ADF Histogram figure...', end="", flush=True)
+
+    # creating matrix to define thresholds
+    TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
+    TREFSNd = ssn_data.REF_Grp['AVGSNd'].values.copy()
+
+    GDREF = np.zeros((ssn_data.thNPc, np.int(TREFDat.shape[0] / ssn_data.MoLngt)))
+    ODREF = np.zeros((ssn_data.thNPc, np.int(TREFDat.shape[0] / ssn_data.MoLngt)))
+    SNdREF = np.zeros((ssn_data.thNPc, np.int(TREFDat.shape[0] / ssn_data.MoLngt)))
+
+    for TIdx in range(0, ssn_data.thNPc):
+        grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], TIdx * ssn_data.thIPc),
+                             axis=1).astype(float)
+        grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+
+        TgrpsREF = grpsREFw[0:np.int(grpsREFw.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
+        TgrpsREF = TgrpsREF.reshape((-1, ssn_data.MoLngt))
+        TSNdREF = TREFSNd[0:np.int(TREFSNd.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
+        TSNdREF = TSNdREF.reshape((-1, ssn_data.MoLngt))
+        # Number of days with groups
+        GDREF[TIdx, :] = np.sum(np.greater(TgrpsREF, 0), axis=1)
+        # Number of days with observations
+        ODREF[TIdx, :] = np.sum(np.isfinite(TgrpsREF), axis=1)
+        # ACTIVE DAY FRACTION
+        ADFREF = GDREF / ODREF
+        # Monthly sunspot number
+        SNdREF[TIdx, :] = np.mean(TSNdREF, axis=1)
+
+        # Plotting threshold
+    plt.rc('font', **font)
+
+    nph = 2  # Number of horizontal panels
+    npv = ssn_data.thNPc  # Number of vertical panels
+
+
+    # Figure sizes in pixels
+    fszv = (npv * pxy + 2 * padv + (npv - 1) * padv2)  # Vertical size of figure in inches
+    fszh = (nph * pxx + 2 * padh + (nph - 1) * padh2)  # Horizontal size of figure in inches
+
+    # Conversion to relative unites
+    ppadv = padv / fszv  # Vertical padding in relative units
+    ppadv2 = padv2 / fszv  # Vertical padding in relative units
+    ppadh = padh / fszv  # Horizontal padding the edge of the figure in relative units
+    ppadh2 = padh2 / fszv  # Horizontal padding between panels in relative units
+
+    Nbinsx = 20
+    Nbinsy = ssn_data.MoLngt+1
+
+    edgesx = np.arange(0, Nbinsx + 1) / Nbinsx * 150
+    edgesy = np.arange(0, Nbinsy + 1) / Nbinsy
+
+    # Box plot AL range for percentile scan
+    bprange = np.arange(10, 175, 10)
+
+    # Curve AL range for percentile scan
+    pprange = np.arange(5, 175, 2)
+
+    ## Start Figure
+    fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
+
+    LowALlim = np.zeros(ssn_data.thNPc)
+    HighALlim = np.zeros(ssn_data.thNPc)
+
+    for n in range(0, ssn_data.thNPc):
+
+        pltmsk = np.logical_and(ODREF[n, :] == ssn_data.MoLngt, ADFREF[n, :] < 1)
+
+        # ax1
+        ax1 = fig.add_axes([ppadh, ppadv + n * pxy / fszv, pxx / fszh, pxy / fszv], label='b1')
+        ax1.hist2d(SNdREF[n, :][pltmsk], ADFREF[n, :][pltmsk], bins=[edgesx, edgesy], cmap=plt.cm.magma_r, cmin=1)
+
+        bpdat = []
+        for AL in bprange:
+            bpdat.append(ADFREF[n, :][np.logical_and(pltmsk, SNdREF[n, :] <= AL)])
+
+        ax1.boxplot(bpdat, positions=bprange, widths=5)
+
+        # Activity level percentile
+        ADFP = pprange * np.nan
+        # ADF below which we have config.PCTLO % of all ADFS for a given AL
+        # ADF below which we have config.PCTLO % of all ADFS for a given AL
+        for ALi in np.arange(0, pprange.shape[0]):
+            if np.sum(np.logical_and(pltmsk, SNdREF[n, :] <= pprange[ALi])) > 0:
+                ADFP[ALi] = np.percentile(ADFREF[n, :][np.logical_and(pltmsk, SNdREF[n, :] <= pprange[ALi])],
+                                          config.PCTLO)
+
+        ax1.plot(pprange, ADFP)
+        ax1.plot([0, 150], [config.QTADF, config.QTADF], color='k', linestyle='--')
+
+        # Intersect between our definition of what a quiet interval is and ADFP
+        intrsc = np.where(np.abs(ADFP - config.QTADF) == np.nanmin(np.abs(ADFP - config.QTADF)))[0]
+        cut = np.mean(pprange[intrsc])
+        if np.sum(ADFP < config.QTADF) == 0:
+            cut = np.nan
+
+        LowALlim[n] = cut
+
+        ax1.plot([cut, cut], [0, 1.2], color='k', linestyle=':')
+
+        # Axes properties
+        ax1.text(0.5, 0.9, 'Th: ' + str(n * ssn_data.thIPc) + ' - AL cut: ' + str(cut), horizontalalignment='center', fontsize=15,
+                 transform=ax1.transAxes)
+        ax1.set_ylabel('ADF')
+        ax1.set_ylim(top=1.2, bottom=0)
+        ax1.set_xlim(left=0, right=150)
+
+        # ax2
+        ax2 = fig.add_axes([ppadh + pxx / fszh, ppadv + n * pxy / fszv, pxx / fszh, pxy / fszv], label='b2')
+        ax2.hist2d(SNdREF[n, :][pltmsk], ADFREF[n, :][pltmsk], bins=[edgesx, edgesy], cmap=plt.cm.magma_r, cmin=1)
+
+        bpdat = []
+        for AL in bprange:
+            bpdat.append(ADFREF[n, :][np.logical_and(pltmsk, SNdREF[n, :] >= AL)])
+
+        ax2.boxplot(bpdat, positions=bprange, widths=5)
+
+        # Activity level percentile
+        ADFP = pprange * np.nan
+        # ADF above which we have config.PCTHI % of all ADFS for a given AL
+        for ALi in np.arange(0, pprange.shape[0]):
+            if (np.sum(np.logical_and(pltmsk, SNdREF[n, :] >= pprange[ALi])) > 0):
+                ADFP[ALi] = np.percentile(ADFREF[n, :][np.logical_and(pltmsk, SNdREF[n, :] >= pprange[ALi])],
+                                          100-config.PCTHI)
+
+        ax2.plot(pprange, ADFP)
+        ax2.plot([0, 150], [config.ACADF, config.ACADF], color='k', linestyle='--')
+
+        # Intersect between our definition of what an active interval is and ADFP
+        intrsc = np.where(np.abs(ADFP - config.ACADF) == np.nanmin(np.abs(ADFP - config.ACADF)))[0]
+        cut = np.mean(pprange[intrsc])
+        if np.sum(ADFP < config.ACADF) == 0:
+            cut = np.nan
+
+        HighALlim[n] = cut
+
+        ax2.plot([cut, cut], [0, 1.2], color='k', linestyle=':')
+
+        # Axes properties
+        ax2.set_ylabel('ADF')
+        ax2.yaxis.set_label_position("right")
+        ax2.text(0.5, 0.9, 'Th: ' + str(n * ssn_data.thIPc) + ' - AL cut: ' + str(cut), horizontalalignment='center', fontsize=15,
+                 transform=ax2.transAxes)
+        ax2.set_ylim(top=1.2, bottom=0)
+
+        ax2.yaxis.tick_right()
+        ax2.set_xlim(left=0, right=150)
+
+        if n > 0 & n < ssn_data.thNPc - 1:
+            ax1.set_xticklabels([])
+            ax2.set_xticklabels([])
+        else:
+            ax1.set_xlabel('SMSN')
+            ax2.set_xlabel('SMSN')
+            ax1.set_xticks([0, 50, 100, 150])
+            ax1.set_xticklabels([0, 50, 100, 150])
+            ax2.set_xticks([50, 100, 150])
+            ax2.set_xticklabels([50, 100, 150])
+
+        if n == ssn_data.thNPc - 1:
+            ax1.xaxis.set_label_position("top")
+            ax1.xaxis.tick_top()
+            ax2.xaxis.tick_top()
+            ax2.xaxis.set_label_position("top")
+            ax1.set_xlabel('SMSN')
+            ax2.set_xlabel('SMSN')
+            ax1.set_xticks([0, 50, 100, 150])
+            ax1.set_xticklabels([0, 50, 100, 150])
+            ax2.set_xticks([50, 100, 150])
+            ax2.set_xticklabels([50, 100, 150])
+
+    fig.savefig(figure_path, bbox_inches='tight')
+
+    print('done.', flush=True)
+    print(' ', flush=True)
+
+
+def plotFitAl(ssn_data,
+              dpi=300,
+              pxx=4000,
+              pxy=1300,
+              padv=50,
+              padh=50,
+              padv2=0,
+              padh2=0):
+    """
+
+    :param dpi: Dots per inch in figure
+    :param pxx: Horizontal size of each panel in pixels
+    :param pxy: Vertical size of each panel in pixels
+    :param padv: Vertical padding in pixels at the edge of the figure in pixels
+    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
+    :param padv2: Vertical padding in pixels between panels
+    :param padh2: Horizontal padding in pixels between panels
+    """
+
+    font = ssn_data.font
+    plt.rc('font', **font)
+
+    figure_path = '{}/03_SN_vs_AL.png'.format(ssn_data.output_path)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
+                figure_path).format(figure_path))
+        return
+
+    print('Creating and saving SN vs AL scatter plot figure...', end="", flush=True)
+
+
+    # fit for low solar activity
+    xlow = np.arange(0, ssn_data.thNPc) * ssn_data.thIPc
+    xlow = xlow[np.isfinite(ssn_data.LowALlim)]
+    ylow = ssn_data.LowALlim[np.isfinite(ssn_data.LowALlim)]
+
+    # fit for high solar activity
+    xhigh = np.arange(0, ssn_data.thNPc) * ssn_data.thIPc
+    xhigh = xhigh[np.isfinite(ssn_data.HighALlim)]
+    yhigh = ssn_data.HighALlim[np.isfinite(ssn_data.HighALlim)]
+
+    plt.rc('font', **font)
+
+    # Size definitions
+    nph = 1  # Number of horizontal panels
+    npv = 1  # Number of vertical panels
+
+    # Padding
+
+    # Figure sizes in pixels
+    fszv = (npv * pxy + 2 * padv + (npv - 1) * padv2)  # Vertical size of figure in inches
+    fszh = (nph * pxx + 2 * padh + (nph - 1) * padh2)  # Horizontal size of figure in inches
+
+    # Conversion to relative unites
+    ppadv = padv / fszv  # Vertical padding in relative units
+    ppadv2 = padv2 / fszv  # Vertical padding in relative units
+    ppadh = padh / fszv  # Horizontal padding the edge of the figure in relative units
+    ppadh2 = padh2 / fszv  # Horizontal padding between panels in relative units
+
+    ## Start Figure
+    fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
+    ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])
+
+    ax1.scatter(xlow, ylow, alpha=1)
+    ax1.scatter(xhigh, yhigh, alpha=1)
+    ax1.plot(xhigh, ssn_data.a1high*xhigh * ssn_data.thI + ssn_data.a0high)
+    ax1.plot(xlow, ssn_data.a1low*xlow * ssn_data.thI + ssn_data.a0low)
+
+    ax1.set_xlabel('SN Threshold (uHem)')
+    ax1.set_ylabel('Activity Level Limit (SSN)');
+
+    fig.savefig(figure_path, bbox_inches='tight')
+
+    print('done.', flush=True)
+    print(' ', flush=True)
+
+
+
 def plotActiveVsObserved(ssn_data,
                          dpi=300,
                          pxx=4000,
@@ -116,7 +402,7 @@ def plotActiveVsObserved(ssn_data,
 
     print('Creating and saving active vs. observed days figure...', end="", flush=True)
 
-    figure_path = config.get_file_output_string('02', 'active_vs_observed_days',
+    figure_path = config.get_file_output_string('04', 'active_vs_observed_days',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -293,317 +579,6 @@ def plotActiveVsObserved(ssn_data,
 
     print('done.', flush=True)
     print(' ', flush=True)
-
-
-def plotHistSnADF(ssn_data,
-                               dpi=300,
-                               pxx=1500,
-                               pxy=1500,
-                               padv=50,
-                               padh=50,
-                               padv2=0,
-                               padh2=0):
-    """
-
-    :param dpi: Dots per inch in figure
-    :param pxx: Horizontal size of each panel in pixels
-    :param pxy: Vertical size of each panel in pixels
-    :param padv: Vertical padding in pixels at the edge of the figure in pixels
-    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
-    :param padv2: Vertical padding in pixels between panels
-    :param padh2: Horizontal padding in pixels between panels
-    """
-
-    font = ssn_data.font
-    plt.rc('font', **font)
-
-    figure_path = config.get_file_output_string('03', 'SN vs ADF',
-                                                ssn_data=ssn_data,
-                                                num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
-
-    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
-        print(
-            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
-                figure_path).format(figure_path))
-        return
-
-    print('Creating and saving SN vs ADF figure...', end="", flush=True)
-
-    thN = 21  # Number of thresholds to plot
-    thS = 5  # Threshold increment
-
-    # creating matrix to define thresholds
-    TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
-    TREFSNd = ssn_data.REF_Grp['AVGSNd'].values.copy()
-
-    GDREF = np.zeros((thN,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
-    ODREF = np.zeros((thN,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
-    SNdREF = np.zeros((thN,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
-
-    for TIdx in range(0,thN):
-                grpsREFw = np.nansum( np.greater(ssn_data.REF_Dat.values[:,3:ssn_data.REF_Dat.values.shape[1]-3],TIdx*thS) ,axis = 1).astype(float)
-                grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
-
-                TgrpsREF = grpsREFw[0:np.int(grpsREFw.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
-                TgrpsREF = TgrpsREF.reshape((-1,ssn_data.MoLngt))            
-                TSNdREF = TREFSNd[0:np.int(TREFSNd.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
-                TSNdREF = TSNdREF.reshape((-1,ssn_data.MoLngt))            
-                # Number of days with groups
-                GDREF[TIdx,:] = np.sum(np.greater(TgrpsREF,0),axis=1)
-                # Number of days with observations
-                ODREF[TIdx,:]= np.sum(np.isfinite(TgrpsREF),axis=1)            
-                # Number of quiet days
-                QDREF = ODREF-GDREF
-                # ACTIVE DAY FRACTION
-                ADFREF = GDREF/ODREF
-                # Monthly sunspot number
-                SNdREF[TIdx,:]=np.mean(TSNdREF,axis=1) 
-
-
-    # Plotting threshold           
-    plt.rc('font', **font)
-
-    # Size definitions
-    dpi = 300
-    pxx = 1500   # Horizontal size of each panel
-    pxy = pxx    # Vertical size of each panel
-
-    nph = 2      # Number of horizontal panels
-    npv = thN    # Number of vertical panels
-
-    # Padding
-    padv  = 50 #Vertical padding in pixels
-    padv2 = 0  #Vertical padding in pixels between panels
-    padh  = 50 #Horizontal padding in pixels at the edge of the figure
-    padh2 = 0  #Horizontal padding in pixels between panels
-
-    # Figure sizes in pixels
-    fszv = (npv*pxy + 2*padv + (npv-1)*padv2 )      #Vertical size of figure in inches
-    fszh = (nph*pxx + 2*padh + (nph-1)*padh2 )      #Horizontal size of figure in inches
-
-    # Conversion to relative unites
-    ppadv  = padv/fszv     #Vertical padding in relative units
-    ppadv2 = padv2/fszv    #Vertical padding in relative units
-    ppadh  = padh/fszv     #Horizontal padding the edge of the figure in relative units
-    ppadh2 = padh2/fszv    #Horizontal padding between panels in relative units
-
-    Nbinsx = 20
-    Nbinsy = 20
-
-    edgesx = np.arange(0,Nbinsy+1)/Nbinsy*150
-    edgesy = np.arange(0,Nbinsy+1)/Nbinsy
-
-    bprange = np.arange(10,175,10)
-    pprange = np.arange(5,175,2)
-
-
-    ## Start Figure
-    fig = plt.figure(figsize=(fszh/dpi,fszv/dpi))
-
-    LowALlim = np.zeros(thN)
-    HighALlim = np.zeros(thN)
-
-    for n in range(0,thN):
-
-                pltmsk = np.logical_and(ODREF[n,:]==ssn_data.MoLngt,ADFREF[n,:]<1)
-
-                #ax1
-                ax1 = fig.add_axes([ppadh, ppadv+n*pxy/fszv, pxx/fszh, pxy/fszv], label= 'b1')
-                ax1.hist2d(SNdREF[n,:][pltmsk], ADFREF[n,:][pltmsk], bins=[edgesx,edgesy], cmap=plt.cm.magma_r,cmin=1) 
-
-                bpdat = []    
-                for AL in bprange:
-                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=AL)])
-
-                ax1.boxplot(bpdat, positions=bprange, widths=5)
-
-                ALP = pprange*np.nan
-                for ALi in np.arange(0,pprange.shape[0]):
-                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], config.PCTLO)
-
-                ax1.plot(pprange, ALP)
-                ax1.plot([0,150],[0.25,0.25],color='k',linestyle='--')
-
-                intrsc = np.where(np.abs(ALP-0.25)==np.nanmin(np.abs(ALP-0.25)))[0]
-                cut = np.mean(pprange[intrsc])        
-                if np.sum(ALP<0.25)==0:
-                    cut = np.nan
-
-                LowALlim[n] = cut          
-
-                ax1.plot([cut,cut],[0,1.2],color='k',linestyle=':')
-
-                # Axes properties
-                ax1.text(0.5, 0.9,'Th: ' + str(n*thS) + ' - AL cut: ' + str(cut), horizontalalignment='center',fontsize=15,transform = ax1.transAxes)
-                ax1.set_ylabel('ADF')
-                ax1.set_ylim(top=1.2,bottom=0)
-                ax1.set_xlim(left = 0, right=150)    
-
-
-                #ax2
-                ax2 = fig.add_axes([ppadh+pxx/fszh, ppadv+n*pxy/fszv, pxx/fszh, pxy/fszv], label= 'b2')
-                ax2.hist2d(SNdREF[n,:][pltmsk], ADFREF[n,:][pltmsk], bins=[edgesx,edgesy], cmap=plt.cm.magma_r,cmin=1)
-
-                bpdat = []
-                for AL in bprange:        
-                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=AL)])
-
-                ax2.boxplot(bpdat, positions=bprange, widths=5)
-
-                ALP = pprange*np.nan
-                for ALi in np.arange(0,pprange.shape[0]):
-                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-config.PCTHI)
-
-                ax2.plot(pprange, ALP)
-                ax2.plot([0,150],[0.75,0.75],color='k',linestyle='--')
-
-                intrsc = np.where(np.abs(ALP-0.75)==np.nanmin(np.abs(ALP-0.75)))[0]
-                cut = np.mean(pprange[intrsc])
-                if np.sum(ALP<0.75)==0:
-                    cut = np.nan
-
-                HighALlim[n] = cut            
-
-                ax2.plot([cut,cut],[0,1.2],color='k',linestyle=':')            
-
-                # Axes properties
-                ax2.set_ylabel('ADF')
-                ax2.yaxis.set_label_position("right")
-                ax2.text(0.5, 0.9,'Th: ' + str(n*thS) + ' - AL cut: ' + str(cut), horizontalalignment='center',fontsize=15,transform = ax2.transAxes)
-                ax2.set_ylim(top=1.2,bottom=0)
-
-                ax2.yaxis.tick_right()
-                ax2.set_xlim(left = 0, right=150)
-
-                if n>0&n<thN-1:
-                    ax1.set_xticklabels([])
-                    ax2.set_xticklabels([])        
-                else:
-                    ax1.set_xlabel('SMSN')
-                    ax2.set_xlabel('SMSN')
-                    ax1.set_xticks([0,50,100,150])
-                    ax1.set_xticklabels([0,50,100,150])
-                    ax2.set_xticks([50,100,150])
-                    ax2.set_xticklabels([50,100,150])
-
-                if n==thN-1:
-                    ax1.xaxis.set_label_position("top")
-                    ax1.xaxis.tick_top()
-                    ax2.xaxis.tick_top()
-                    ax2.xaxis.set_label_position("top")
-                    ax1.set_xlabel('SMSN')
-                    ax2.set_xlabel('SMSN')
-                    ax1.set_xticks([0,50,100,150])
-                    ax1.set_xticklabels([0,50,100,150])
-                    ax2.set_xticks([50,100,150])
-                    ax2.set_xticklabels([50,100,150])
-    
-    
-    fig.savefig(figure_path, bbox_inches='tight')
-
-    print('done.', flush=True)
-    print(' ', flush=True)
-
-
-def plotFitAl(ssn_data,
-                               dpi=300,
-                               pxx=4000,
-                               pxy=1300,
-                               padv=50,
-                               padh=50,
-                               padv2=0,
-                               padh2=0):
-    """
-
-    :param dpi: Dots per inch in figure
-    :param pxx: Horizontal size of each panel in pixels
-    :param pxy: Vertical size of each panel in pixels
-    :param padv: Vertical padding in pixels at the edge of the figure in pixels
-    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
-    :param padv2: Vertical padding in pixels between panels
-    :param padh2: Horizontal padding in pixels between panels
-    """
-
-    font = ssn_data.font
-    plt.rc('font', **font)
-
-    figure_path = config.get_file_output_string('04', 'SN vs AL',
-                                                ssn_data=ssn_data,
-                                                num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
-
-    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
-        print(
-            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
-                figure_path).format(figure_path))
-        return
-
-    print('Creating and saving SN vs AL figure...', end="", flush=True)
-
-    thN = 21  # Number of thresholds to plot
-    thS = 5  # Threshold increment
-    
-    # fit for low solar activity
-    xlow = np.arange(0,thN)*thS
-    xlow = xlow[np.isfinite(ssn_data.LowALlim)]
-    ylow = ssn_data.LowALlim[np.isfinite(ssn_data.LowALlim)]
-    fitlow = np.polyfit(xlow,ylow,deg=1)
-    a1low = fitlow[0]
-    a0low = fitlow[1]
-
-    # fit for high solar activity
-    xhigh = np.arange(0,thN)*thS
-    xhigh = xhigh[np.isfinite(ssn_data.HighALlim)]
-    yhigh = ssn_data.HighALlim[np.isfinite(ssn_data.HighALlim)]
-    fithigh = np.polyfit(xhigh,yhigh,deg=1)
-    a1high = fithigh[0]
-    a0high = fithigh[1]
-
-
-    plt.rc('font', **font)
-
-    # Size definitions
-    dpi = 300
-    pxx = 1500   # Horizontal size of each panel
-    pxy = 1000   # Vertical size of each panel
-
-    nph = 1      # Number of horizontal panels
-    npv = 1      # Number of vertical panels
-
-    # Padding
-    padv  = 50 #Vertical padding in pixels
-    padv2 = 0  #Vertical padding in pixels between panels
-    padh  = 50 #Horizontal padding in pixels at the edge of the figure
-    padh2 = 0  #Horizontal padding in pixels between panels
-
-    # Figure sizes in pixels
-    fszv = (npv*pxy + 2*padv + (npv-1)*padv2 )      #Vertical size of figure in inches
-    fszh = (nph*pxx + 2*padh + (nph-1)*padh2 )      #Horizontal size of figure in inches
-
-    # Conversion to relative unites
-    ppadv  = padv/fszv     #Vertical padding in relative units
-    ppadv2 = padv2/fszv    #Vertical padding in relative units
-    ppadh  = padh/fszv     #Horizontal padding the edge of the figure in relative units
-    ppadh2 = padh2/fszv    #Horizontal padding between panels in relative units
-
-    ## Start Figure
-    fig = plt.figure(figsize=(fszh/dpi,fszv/dpi))
-    ax1 = fig.add_axes([ppadh, ppadv, pxx/fszh, pxy/fszv])
-
-    ax1.scatter(xlow, ylow, alpha=1)
-    ax1.scatter(xhigh, yhigh,alpha=1)
-    ax1.plot(xhigh,fithigh[0]*xhigh+fithigh[1])
-    ax1.plot(xlow,fitlow[0]*xlow+fitlow[1])
-
-    ax1.set_xlabel('SN Threshold (uHem)')
-    ax1.set_ylabel('Activity Level Limit (SSN)');
-
-    
-    fig.savefig(figure_path, bbox_inches='tight')
-
-    print('done.', flush=True)
-    print(' ', flush=True)
     
 
 def plotOptimalThresholdWindow(ssn_data,
@@ -757,19 +732,20 @@ def plotOptimalThresholdWindow(ssn_data,
                     # Going through different thresholds
                     for TIdx in range(0, ssn_data.thN):
 
+                        if config.DEN_TYPE == 'DTh':
+                            # Final fit to define threshold
+                            highth = ssn_data.a1high * TIdx * ssn_data.thI + ssn_data.a0high
+                            if TIdx * ssn_data.thI >= ssn_data.minVldThr:
+                                lowth = ssn_data.a1low * TIdx * ssn_data.thI + ssn_data.a0low
+                            else:
+                                lowth = 0
+
                         # Calculating number of groups in reference data for given threshold
                         grpsREFw = np.nansum(
                             np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3],
                                        TIdx * ssn_data.thI),
                             axis=1).astype(float)
                         grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
-                        
-                        # Final fit to define solar activity thresholds
-                        highth = ssn_data.a1high*TIdx*ssn_data.thI + ssn_data.a0high
-                        if TIdx*ssn_data.thI >= np.min(ssn_data.xlow): 
-                            lowth = ssn_data.a1low*TIdx*ssn_data.thI + ssn_data.a0low
-                        else:
-                            lowth = 0
 
                         # Selecting the maximum integer amount of "months" out of the original data
                         TgrpsOb = TObsDat[0:np.int(TObsDat.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
@@ -1153,13 +1129,7 @@ def plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
 
     # Number of bins to use
     maxN = ssn_data.maxNPlt
-    Nbins = ssn_data.maxNPlt 
-    
-    # Applying Sqrt + 1
-    #if config.SQRT_2DHIS:
-    #    maxN = np.sqrt(maxN)
-    #    calRefT = np.sqrt(calRefT + 1)
-    #    calObsT = np.sqrt(calObsT + 1)
+    Nbins = ssn_data.maxNPlt
 
     # Average group number
     ax.hist2d(calObsT, calRefT, bins=ssn_data.edges, cmap=plt.cm.magma_r, cmin=1)
@@ -1189,9 +1159,8 @@ def plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
             ax.scatter(ssn_data.centers[i], Ymedian[i], color='w', edgecolor='k', s=100, linewidths=3, zorder=11,
                        alpha=alphaY[i])
 
-    # Calculating quantities for assessment
-    y = Ymedian
-    x = ssn_data.centers
+    y = calRefT
+    x = calObsT
 
     x = x[np.isfinite(y)]
     y = y[np.isfinite(y)]
@@ -1207,11 +1176,30 @@ def plotHistSqrtSSN(ssn_data, ax, calRefT, calObsT, Th):
     # Mean Relative Residual
     mRRes = np.mean(np.divide(y[x > 0] - x[x > 0], x[x > 0]))
 
+
+    # Calculating quantities for assessment
+    y = Ymedian
+    x = ssn_data.centers
+
+    x = x[np.isfinite(y)]
+    y = y[np.isfinite(y)]
+
+    # R squared of the median
+    yMean = np.mean(y)
+    SStot = np.sum(np.power(y - yMean, 2))
+    SSreg = np.sum(np.power(y - x, 2))
+    rSqM = (1 - SSreg / SStot)
+
+    # Mean Residual
+    mResM = np.mean(y - x)
+    # Mean Relative Residual
+    mRResM = np.mean(np.divide(y[x > 0] - x[x > 0], x[x > 0]))
+
     ax.plot(ssn_data.edges, ssn_data.edges, '--'
             , color=ssn_data.Clr[4], linewidth=3)
 
-    ax.text(0.5, 0.95,
-            '$R^2M$=' + str(np.round(rSq, decimals=2)) + ' $MR$=' + str(np.round(mRes, decimals=2)) + ' $MRR$=' + str(int(np.round(mRRes*100,decimals=0))) + '% $Th$=' + str(
+    ax.text(0.5, 0.95, '$R^2$=' + str(np.round(rSq, decimals=2)) + ' $MR$=' + str(np.round(mRes, decimals=2)) + ' $MRR$=' + str(int(np.round(mRRes*100,decimals=0))) + '%' +
+            '\n$R^2M$=' + str(np.round(rSqM, decimals=2)) + ' $MRM$=' + str(np.round(mResM, decimals=2)) + ' $MRRM$=' + str(int(np.round(mRResM*100,decimals=0))) + '% $Th$=' + str(
                 Th), horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     # Axes properties
@@ -1412,7 +1400,7 @@ def plotIntervalDistributions(ssn_data,
 
     print('Creating and saving interval distribution-plots figure...', end="", flush=True)
 
-    figure_path = config.get_file_output_string('06', 'Interval_Distribution_Plots',
+    figure_path = config.get_file_output_string('08', 'Interval_Distribution_Plots',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -1505,7 +1493,7 @@ def plotMinEMD(ssn_data,
 
     print('Creating and saving minimum EMD figure...', end="", flush=True)
 
-    figure_path = config.get_file_output_string('08', 'Min_EMD',
+    figure_path = config.get_file_output_string('09', 'Min_EMD',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -1669,7 +1657,7 @@ def plotSimultaneousFit(ssn_data,
 
     print('Creating and saving simultaneous fit figure...', end="", flush=True)
 
-    figure_path = config.get_file_output_string('09', 'Simultaneous_Fit',
+    figure_path = config.get_file_output_string('10', 'Simultaneous_Fit',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -1841,7 +1829,7 @@ def plotDistributionOfThresholds(ssn_data,
 
     print('Creating and saving distribution of thresholds for different intervals figure...', end="", flush=True)
 
-    figure_path = config.get_file_output_string('10', 'Distribution_of_Thresholds',
+    figure_path = config.get_file_output_string('11', 'Distribution_of_Thresholds',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -1923,6 +1911,133 @@ def plotDistributionOfThresholds(ssn_data,
     print(' ', flush=True)
 
 
+def plotSingleThresholdDistributions(ssn_data,
+                                     dpi=300,
+                                     pxx=2300,
+                                     pxy=1000,
+                                     padv=50,
+                                     padh=50,
+                                     padv2=100,
+                                     padh2=100):
+    """
+
+    :param dpi: Dots per inch in figure
+    :param pxx: Horizontal size of each panel in pixels
+    :param pxy: Vertical size of each panel in pixels
+    :param padv: Vertical padding in pixels at the edge of the figure in pixels
+    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
+    :param padv2: Vertical padding in pixels between panels
+    :param padh2: Horizontal padding in pixels between panels
+    """
+
+    font = ssn_data.font
+    plt.rc('font', **font)
+
+    print('Creating and saving interval distribution-plots figure...', end="", flush=True)
+
+    figure_path = config.get_file_output_string('12', 'Single_Threshold_Distribution_Plot',
+                                                ssn_data=ssn_data,
+                                                num_type=config.NUM_TYPE,
+                                                den_type=config.DEN_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print("\nFigure at {} already exists.\n"
+              " Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
+            figure_path))
+        return
+
+    frc = 1  # Fraction of the panel devoted to histograms
+
+    nph = 1  # Number of horizontal panels
+    npv = 1  # Number of vertical panels
+
+    # Figure sizes in pixels
+    fszv = (npv * pxy + 2 * padv + (npv - 1) * padv2)  # Vertical size of figure in inches
+    fszh = (nph * pxx + 2 * padh + (nph - 1) * padh2)  # Horizontal size of figure in inches
+
+    # Conversion to relative unites
+    ppadv = padv / fszv  # Vertical padding in relative units
+    ppadv2 = padv2 / fszv  # Vertical padding in relative units
+    ppadh = padh / fszv  # Horizontal padding the edge of the figure in relative units
+    ppadh2 = padh2 / fszv  # Horizontal padding between panels in relative units
+
+
+
+    TIdx = int(ssn_data.EMDComb[1, 0])
+    ADFObsI = np.array([])
+    ADFREFI = np.array([])
+
+    txt1 = 'Real Loc. ->  '
+    txt2 = 'Optimal   ->  '
+
+    # Joining ADF from all sub-interval for the specified shifts
+    for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+        # Defining mask based on the interval type (rise or decay)
+        if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
+            cadMaskI = ssn_data.risMask['INDEX']
+        else:
+            cadMaskI = ssn_data.decMask['INDEX']
+
+        Year = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
+
+        # Append only if period is valid
+        if ssn_data.vldIntr[siInx]:
+            tmpInx = int(ssn_data.EMDComb[siInx + 2, 0])
+
+            TObsFYr = ssn_data.ObsDat.loc[
+                np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0], ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
+                , 'FRACYEAR'].values.copy()
+
+            txt1 = txt1 + str(siInx + 1) + ': ' + str(
+                np.round((np.min(TObsFYr) + np.max(TObsFYr)) / 2, decimals=1)) + '  '
+            txt2 = txt2 + str(siInx + 1) + ': ' + str(
+                np.round(Year[ssn_data.EMDComb[siInx + 2, 0].astype(np.int)], decimals=1)) + '  '
+            # If it is the first interval re-create the arrays
+            if ADFObsI.shape[0] == 0:
+                ADFObsI = np.divide(
+                    ssn_data.GDObsI[siInx][TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
+                    ssn_data.ODObsI[siInx][TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD])
+
+                ADFREFI = np.divide(
+                    ssn_data.GDREFI[siInx][TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
+                    ssn_data.ODREFI[siInx][TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD])
+
+            # If not, append ADF from all sub-interval for the specified shifts
+            else:
+                ADFObsI = np.append(ADFObsI, np.divide(
+                    ssn_data.GDObsI[siInx][TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
+                    ssn_data.ODObsI[siInx][TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD]))
+
+                ADFREFI = np.append(ADFREFI, np.divide(
+                    ssn_data.GDREFI[siInx][TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
+                    ssn_data.ODREFI[siInx][TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD]))
+
+    ## Start Figure
+    fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
+
+    ax1 = fig.add_axes([ppadh, ppadv , pxx/fszh*frc, pxy/fszv*frc])
+
+    # Calculating Earth Mover's Distance
+    ax1.hist(ADFObsI,
+             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False, color='0.5', alpha=.6)
+
+    (xAD, yAD) = histOutline(ADFREFI,
+                             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False)
+    ax1.plot(xAD, yAD, color=ssn_data.Clr[4], linewidth=3)
+
+    ax1.text(0.015, 0.96, txt1 + '\n' + txt2 + '\nTh: ' + str(int(ssn_data.wAv)), horizontalalignment='left',
+             verticalalignment='top', transform=ax1.transAxes)
+    ax1.set_title('Single threshold - Best distribution match')
+    ax1.set_xlabel('ADF')
+    ax1.set_ylabel('PDF');
+
+    fig.savefig(figure_path, bbox_inches='tight')
+
+    print('done.', flush=True)
+    print(' ', flush=True)
+
+
 def plotSingleThresholdScatterPlot(ssn_data,
                                    dpi=300,
                                    pxx=2500,
@@ -1948,7 +2063,7 @@ def plotSingleThresholdScatterPlot(ssn_data,
     print('Creating and saving scatterplot of overlap...', end="",
           flush=True)
 
-    figure_path = config.get_file_output_string('11', 'Single_Threshold_ScatterPlot',
+    figure_path = config.get_file_output_string('13', 'Single_Threshold_ScatterPlot',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -2038,7 +2153,7 @@ def plotMultiThresholdScatterPlot(ssn_data,
         print('Creating and saving scatterplot of overlap with different thresholds...', end="",
               flush=True)
 
-        figure_path = config.get_file_output_string('12', 'Multi_Threshold_ScatterPlot',
+        figure_path = config.get_file_output_string('14', 'Multi_Threshold_ScatterPlot',
                                                     ssn_data=ssn_data,
                                                     num_type=config.NUM_TYPE,
                                                     den_type=config.DEN_TYPE)
@@ -2152,7 +2267,7 @@ def plotSmoothedSeries(ssn_data,
         print('Creating and saving smoothed series comparing thresholded reference with observer...', end="",
               flush=True)
 
-        figure_path = config.get_file_output_string('11', 'SmoothedSeriesPlot',
+        figure_path = config.get_file_output_string('15', 'SmoothedSeriesPlot',
                                                     ssn_data=ssn_data,
                                                     num_type=config.NUM_TYPE,
                                                     den_type=config.DEN_TYPE)
