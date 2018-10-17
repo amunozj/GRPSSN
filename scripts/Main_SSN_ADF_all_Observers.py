@@ -29,21 +29,21 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 337
-SSN_ADF_Config.OBS_END_ID = 600
+SSN_ADF_Config.OBS_START_ID = 476 #337
+SSN_ADF_Config.OBS_END_ID = 477 #600
 SSN_ADF_Config.SKIP_OBS = [332, 385, 418]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
-SSN_ADF_Config.DEN_TYPE = "OBS"
+SSN_ADF_Config.DEN_TYPE = "DTh"
 
 # Flag to turn on saving of figures
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-15'
+output_path = 'Run-2018-10-16'
 
 
 ###################
@@ -222,7 +222,7 @@ def run_obs(CalObsID):
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
                                                   disThres=4,
                                                   # Threshold above which we will ignore timeshifts in simultaneous fit
-                                                  MaxIter=3000)
+                                                  MaxIter=10000)
                                                   # Maximum number of iterations above which we skip simultaneous fit
 
         if plotSwitch:

@@ -95,6 +95,319 @@ def plotSearchWindows(ssn_data, SILSO_Sn, SILSO_Sn_d, SIL_max, SIL_min, REF_min,
     print(' ', flush=True)
 
 
+def plotHistSnADF(ssn_data, 
+                               dpi=300,
+                               pxx=1500,
+                               pxy=1500,
+                               padv=50,
+                               padh=50,
+                               padv2=0,
+                               padh2=0):
+    """
+
+    :param dpi: Dots per inch in figure
+    :param pxx: Horizontal size of each panel in pixels
+    :param pxy: Vertical size of each panel in pixels
+    :param padv: Vertical padding in pixels at the edge of the figure in pixels
+    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
+    :param padv2: Vertical padding in pixels between panels
+    :param padh2: Horizontal padding in pixels between panels
+    """
+
+    font = ssn_data.font
+    plt.rc('font', **font)
+
+    figure_path = '{}/02_hist_SN vs ADF.png'.format(ssn_data.output_path)
+#     figure_path = config.get_file_output_string('03', 'SN vs ADF',
+#                                                 ssn_data=ssn_data,
+#                                                 num_type=config.NUM_TYPE,
+#                                                 den_type=config.DEN_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
+                figure_path).format(figure_path))
+        return
+
+    print('Creating and saving SN vs ADF figure...', end="", flush=True)
+    
+#     MoLngt =15
+#     thNP = 21  # Number of thresholds to plot
+#     thSP = 5  # Threshold increment
+    
+    # creating matrix to define thresholds
+    TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
+    TREFSNd = ssn_data.REF_Grp['AVGSNd'].values.copy()
+
+    GDREF = np.zeros((ssn_data.thNP,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
+    ODREF = np.zeros((ssn_data.thNP,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
+    SNdREF = np.zeros((ssn_data.thNP,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
+
+    for TIdx in range(0,ssn_data.thNP):
+                grpsREFw = np.nansum( np.greater(ssn_data.REF_Dat.values[:,3:ssn_data.REF_Dat.values.shape[1]-3],TIdx*ssn_data.thSP) ,axis = 1).astype(float)
+                grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+
+                TgrpsREF = grpsREFw[0:np.int(grpsREFw.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
+                TgrpsREF = TgrpsREF.reshape((-1,ssn_data.MoLngt))            
+                TSNdREF = TREFSNd[0:np.int(TREFSNd.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
+                TSNdREF = TSNdREF.reshape((-1,ssn_data.MoLngt))            
+                # Number of days with groups
+                GDREF[TIdx,:] = np.sum(np.greater(TgrpsREF,0),axis=1)
+                # Number of days with observations
+                ODREF[TIdx,:]= np.sum(np.isfinite(TgrpsREF),axis=1)            
+                # Number of quiet days
+                QDREF = ODREF-GDREF
+                # ACTIVE DAY FRACTION
+                ADFREF = GDREF/ODREF
+                # Monthly sunspot number
+                SNdREF[TIdx,:] = np.mean(TSNdREF,axis=1)     
+
+    # Plotting threshold           
+    plt.rc('font', **font)
+
+    # Size definitions
+    dpi = 300
+    pxx = 1500   # Horizontal size of each panel
+    pxy = pxx    # Vertical size of each panel
+
+    nph = 2      # Number of horizontal panels
+    npv = ssn_data.thNP   # Number of vertical panels
+
+    # Padding
+    padv  = 50 #Vertical padding in pixels
+    padv2 = 0  #Vertical padding in pixels between panels
+    padh  = 50 #Horizontal padding in pixels at the edge of the figure
+    padh2 = 0  #Horizontal padding in pixels between panels
+
+    # Figure sizes in pixels
+    fszv = (npv*pxy + 2*padv + (npv-1)*padv2 )      #Vertical size of figure in inches
+    fszh = (nph*pxx + 2*padh + (nph-1)*padh2 )      #Horizontal size of figure in inches
+
+    # Conversion to relative unites
+    ppadv  = padv/fszv     #Vertical padding in relative units
+    ppadv2 = padv2/fszv    #Vertical padding in relative units
+    ppadh  = padh/fszv     #Horizontal padding the edge of the figure in relative units
+    ppadh2 = padh2/fszv    #Horizontal padding between panels in relative units
+
+    Nbinsx = 20
+    Nbinsy = 20
+
+    edgesx = np.arange(0,Nbinsy+1)/Nbinsy*150
+    edgesy = np.arange(0,Nbinsy+1)/Nbinsy
+
+    bprange = np.arange(10,175,10)
+    pprange = np.arange(5,175,2)
+
+
+    ## Start Figure
+    fig = plt.figure(figsize=(fszh/dpi,fszv/dpi))
+
+    LowALlim = np.zeros(ssn_data.thNP)
+    HighALlim = np.zeros(ssn_data.thNP)
+
+    for n in range(0,ssn_data.thNP):
+
+                pltmsk = np.logical_and(ODREF[n,:]==ssn_data.MoLngt,ADFREF[n,:]<1)
+
+                #ax1
+                ax1 = fig.add_axes([ppadh, ppadv+n*pxy/fszv, pxx/fszh, pxy/fszv], label= 'b1')
+                ax1.hist2d(SNdREF[n,:][pltmsk], ADFREF[n,:][pltmsk], bins=[edgesx,edgesy], cmap=plt.cm.magma_r,cmin=1) 
+
+                bpdat = []    
+                for AL in bprange:
+                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=AL)])
+
+                ax1.boxplot(bpdat, positions=bprange, widths=5)
+
+                ALP = pprange*np.nan
+                for ALi in np.arange(0,pprange.shape[0]):
+                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], config.PCTLO)
+
+                ax1.plot(pprange, ALP)
+                ax1.plot([0,150],[0.25,0.25],color='k',linestyle='--')
+
+                intrsc = np.where(np.abs(ALP-0.25)==np.nanmin(np.abs(ALP-0.25)))[0]
+                cut = np.mean(pprange[intrsc])        
+                if np.sum(ALP<0.25)==0:
+                    cut = np.nan
+
+                LowALlim[n] = cut          
+
+                ax1.plot([cut,cut],[0,1.2],color='k',linestyle=':')
+
+                # Axes properties
+                ax1.text(0.5, 0.9,'Th: ' + str(n*ssn_data.thSP) + ' - AL cut: ' + str(cut), horizontalalignment='center',fontsize=15,transform = ax1.transAxes)
+                ax1.set_ylabel('ADF')
+                ax1.set_ylim(top=1.2,bottom=0)
+                ax1.set_xlim(left = 0, right=150)    
+
+
+                #ax2
+                ax2 = fig.add_axes([ppadh+pxx/fszh, ppadv+n*pxy/fszv, pxx/fszh, pxy/fszv], label= 'b2')
+                ax2.hist2d(SNdREF[n,:][pltmsk], ADFREF[n,:][pltmsk], bins=[edgesx,edgesy], cmap=plt.cm.magma_r,cmin=1)
+
+                bpdat = []
+                for AL in bprange:        
+                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=AL)])
+
+                ax2.boxplot(bpdat, positions=bprange, widths=5)
+
+                ALP = pprange*np.nan
+                for ALi in np.arange(0,pprange.shape[0]):
+                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-config.PCTHI)
+
+                ax2.plot(pprange, ALP)
+                ax2.plot([0,150],[0.75,0.75],color='k',linestyle='--')
+
+                intrsc = np.where(np.abs(ALP-0.75)==np.nanmin(np.abs(ALP-0.75)))[0]
+                cut = np.mean(pprange[intrsc])
+                if np.sum(ALP<0.75)==0:
+                    cut = np.nan
+
+                HighALlim[n] = cut            
+
+                ax2.plot([cut,cut],[0,1.2],color='k',linestyle=':')            
+
+                # Axes properties
+                ax2.set_ylabel('ADF')
+                ax2.yaxis.set_label_position("right")
+                ax2.text(0.5, 0.9,'Th: ' + str(n*ssn_data.thSP) + ' - AL cut: ' + str(cut), horizontalalignment='center',fontsize=15,transform = ax2.transAxes)
+                ax2.set_ylim(top=1.2,bottom=0)
+
+                ax2.yaxis.tick_right()
+                ax2.set_xlim(left = 0, right=150)
+
+                if n>0&n<ssn_data.thNP-1:
+                    ax1.set_xticklabels([])
+                    ax2.set_xticklabels([])        
+                else:
+                    ax1.set_xlabel('SMSN')
+                    ax2.set_xlabel('SMSN')
+                    ax1.set_xticks([0,50,100,150])
+                    ax1.set_xticklabels([0,50,100,150])
+                    ax2.set_xticks([50,100,150])
+                    ax2.set_xticklabels([50,100,150])
+
+                if n==ssn_data.thNP-1:
+                    ax1.xaxis.set_label_position("top")
+                    ax1.xaxis.tick_top()
+                    ax2.xaxis.tick_top()
+                    ax2.xaxis.set_label_position("top")
+                    ax1.set_xlabel('SMSN')
+                    ax2.set_xlabel('SMSN')
+                    ax1.set_xticks([0,50,100,150])
+                    ax1.set_xticklabels([0,50,100,150])
+                    ax2.set_xticks([50,100,150])
+                    ax2.set_xticklabels([50,100,150])
+    
+    
+    fig.savefig(figure_path, bbox_inches='tight')
+
+    print('done.', flush=True)
+    print(' ', flush=True)
+
+
+def plotFitAl(ssn_data,
+                               dpi=300,
+                               pxx=4000,
+                               pxy=1300,
+                               padv=50,
+                               padh=50,
+                               padv2=0,
+                               padh2=0):
+    """
+
+    :param dpi: Dots per inch in figure
+    :param pxx: Horizontal size of each panel in pixels
+    :param pxy: Vertical size of each panel in pixels
+    :param padv: Vertical padding in pixels at the edge of the figure in pixels
+    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
+    :param padv2: Vertical padding in pixels between panels
+    :param padh2: Horizontal padding in pixels between panels
+    """
+
+    font = ssn_data.font
+    plt.rc('font', **font)
+
+    figure_path = '{}/03_scatt_SN vs AL.png'.format(ssn_data.output_path)
+#     figure_path = config.get_file_output_string('03', 'SN vs AL',
+#                                                 ssn_data=ssn_data,
+#                                                 num_type=config.NUM_TYPE,
+#                                                 den_type=config.DEN_TYPE)
+
+    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
+        print(
+            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
+                figure_path).format(figure_path))
+        return
+
+    print('Creating and saving SN vs AL figure...', end="", flush=True)
+
+#     thN = 21  # Number of thresholds to plot
+#     thS = 5  # Threshold increment
+    
+    # fit for low solar activity
+#     xlow = np.arange(0,thN)*thS
+#     xlow = xlow[np.isfinite(LowALlim)]
+#     ylow = LowALlim[np.isfinite(LowALlim)]
+#     fitlow = np.polyfit(xlow,ylow,deg=1)
+#     a1low = fitlow[0]
+#     a0low = fitlow[1]
+
+#     # fit for high solar activity
+#     xhigh = np.arange(0,thN)*thS
+#     xhigh = xhigh[np.isfinite(HighALlim)]
+#     yhigh = HighALlim[np.isfinite(HighALlim)]
+#     fithigh = np.polyfit(xhigh,yhigh,deg=1)
+#     a1high = fithigh[0]
+#     a0high = fithigh[1]
+
+
+    plt.rc('font', **font)
+
+    # Size definitions
+    dpi = 300
+    pxx = 1500   # Horizontal size of each panel
+    pxy = 1000   # Vertical size of each panel
+
+    nph = 1      # Number of horizontal panels
+    npv = 1      # Number of vertical panels
+
+    # Padding
+    padv  = 50 #Vertical padding in pixels
+    padv2 = 0  #Vertical padding in pixels between panels
+    padh  = 50 #Horizontal padding in pixels at the edge of the figure
+    padh2 = 0  #Horizontal padding in pixels between panels
+
+    # Figure sizes in pixels
+    fszv = (npv*pxy + 2*padv + (npv-1)*padv2 )      #Vertical size of figure in inches
+    fszh = (nph*pxx + 2*padh + (nph-1)*padh2 )      #Horizontal size of figure in inches
+
+    # Conversion to relative unites
+    ppadv  = padv/fszv     #Vertical padding in relative units
+    ppadv2 = padv2/fszv    #Vertical padding in relative units
+    ppadh  = padh/fszv     #Horizontal padding the edge of the figure in relative units
+    ppadh2 = padh2/fszv    #Horizontal padding between panels in relative units
+
+    ## Start Figure
+    fig = plt.figure(figsize=(fszh/dpi,fszv/dpi))
+    ax1 = fig.add_axes([ppadh, ppadv, pxx/fszh, pxy/fszv])
+
+    ax1.scatter(ssn_data.xlow, ssn_data.ylow, alpha=1)
+    ax1.scatter(ssn_data.xhigh, ssn_data.yhigh,alpha=1)
+    ax1.plot(ssn_data.xhigh,ssn_data.fithigh[0]*ssn_data.xhigh+ssn_data.fithigh[1])
+    ax1.plot(ssn_data.xlow,ssn_data.fitlow[0]*ssn_data.xlow+ssn_data.fitlow[1])
+
+    ax1.set_xlabel('SN Threshold (uHem)')
+    ax1.set_ylabel('Activity Level Limit (SSN)');
+
+    
+    fig.savefig(figure_path, bbox_inches='tight')
+
+    print('done.', flush=True)
+    print(' ', flush=True)
+    
+
 def plotActiveVsObserved(ssn_data,
                          dpi=300,
                          pxx=4000,
@@ -116,7 +429,7 @@ def plotActiveVsObserved(ssn_data,
 
     print('Creating and saving active vs. observed days figure...', end="", flush=True)
 
-    figure_path = config.get_file_output_string('02', 'active_vs_observed_days',
+    figure_path = config.get_file_output_string('04', 'active_vs_observed_days',
                                                 ssn_data=ssn_data,
                                                 num_type=config.NUM_TYPE,
                                                 den_type=config.DEN_TYPE)
@@ -294,317 +607,6 @@ def plotActiveVsObserved(ssn_data,
     print('done.', flush=True)
     print(' ', flush=True)
 
-
-def plotHistSnADF(ssn_data,
-                               dpi=300,
-                               pxx=1500,
-                               pxy=1500,
-                               padv=50,
-                               padh=50,
-                               padv2=0,
-                               padh2=0):
-    """
-
-    :param dpi: Dots per inch in figure
-    :param pxx: Horizontal size of each panel in pixels
-    :param pxy: Vertical size of each panel in pixels
-    :param padv: Vertical padding in pixels at the edge of the figure in pixels
-    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
-    :param padv2: Vertical padding in pixels between panels
-    :param padh2: Horizontal padding in pixels between panels
-    """
-
-    font = ssn_data.font
-    plt.rc('font', **font)
-
-    figure_path = config.get_file_output_string('03', 'SN vs ADF',
-                                                ssn_data=ssn_data,
-                                                num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
-
-    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
-        print(
-            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
-                figure_path).format(figure_path))
-        return
-
-    print('Creating and saving SN vs ADF figure...', end="", flush=True)
-
-    thN = 21  # Number of thresholds to plot
-    thS = 5  # Threshold increment
-
-    # creating matrix to define thresholds
-    TREFDat = ssn_data.REF_Grp['GROUPS'].values.copy()
-    TREFSNd = ssn_data.REF_Grp['AVGSNd'].values.copy()
-
-    GDREF = np.zeros((thN,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
-    ODREF = np.zeros((thN,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
-    SNdREF = np.zeros((thN,np.int(TREFDat.shape[0]/ssn_data.MoLngt)))
-
-    for TIdx in range(0,thN):
-                grpsREFw = np.nansum( np.greater(ssn_data.REF_Dat.values[:,3:ssn_data.REF_Dat.values.shape[1]-3],TIdx*thS) ,axis = 1).astype(float)
-                grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
-
-                TgrpsREF = grpsREFw[0:np.int(grpsREFw.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
-                TgrpsREF = TgrpsREF.reshape((-1,ssn_data.MoLngt))            
-                TSNdREF = TREFSNd[0:np.int(TREFSNd.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt].copy()
-                TSNdREF = TSNdREF.reshape((-1,ssn_data.MoLngt))            
-                # Number of days with groups
-                GDREF[TIdx,:] = np.sum(np.greater(TgrpsREF,0),axis=1)
-                # Number of days with observations
-                ODREF[TIdx,:]= np.sum(np.isfinite(TgrpsREF),axis=1)            
-                # Number of quiet days
-                QDREF = ODREF-GDREF
-                # ACTIVE DAY FRACTION
-                ADFREF = GDREF/ODREF
-                # Monthly sunspot number
-                SNdREF[TIdx,:]=np.mean(TSNdREF,axis=1) 
-
-
-    # Plotting threshold           
-    plt.rc('font', **font)
-
-    # Size definitions
-    dpi = 300
-    pxx = 1500   # Horizontal size of each panel
-    pxy = pxx    # Vertical size of each panel
-
-    nph = 2      # Number of horizontal panels
-    npv = thN    # Number of vertical panels
-
-    # Padding
-    padv  = 50 #Vertical padding in pixels
-    padv2 = 0  #Vertical padding in pixels between panels
-    padh  = 50 #Horizontal padding in pixels at the edge of the figure
-    padh2 = 0  #Horizontal padding in pixels between panels
-
-    # Figure sizes in pixels
-    fszv = (npv*pxy + 2*padv + (npv-1)*padv2 )      #Vertical size of figure in inches
-    fszh = (nph*pxx + 2*padh + (nph-1)*padh2 )      #Horizontal size of figure in inches
-
-    # Conversion to relative unites
-    ppadv  = padv/fszv     #Vertical padding in relative units
-    ppadv2 = padv2/fszv    #Vertical padding in relative units
-    ppadh  = padh/fszv     #Horizontal padding the edge of the figure in relative units
-    ppadh2 = padh2/fszv    #Horizontal padding between panels in relative units
-
-    Nbinsx = 20
-    Nbinsy = 20
-
-    edgesx = np.arange(0,Nbinsy+1)/Nbinsy*150
-    edgesy = np.arange(0,Nbinsy+1)/Nbinsy
-
-    bprange = np.arange(10,175,10)
-    pprange = np.arange(5,175,2)
-
-
-    ## Start Figure
-    fig = plt.figure(figsize=(fszh/dpi,fszv/dpi))
-
-    LowALlim = np.zeros(thN)
-    HighALlim = np.zeros(thN)
-
-    for n in range(0,thN):
-
-                pltmsk = np.logical_and(ODREF[n,:]==ssn_data.MoLngt,ADFREF[n,:]<1)
-
-                #ax1
-                ax1 = fig.add_axes([ppadh, ppadv+n*pxy/fszv, pxx/fszh, pxy/fszv], label= 'b1')
-                ax1.hist2d(SNdREF[n,:][pltmsk], ADFREF[n,:][pltmsk], bins=[edgesx,edgesy], cmap=plt.cm.magma_r,cmin=1) 
-
-                bpdat = []    
-                for AL in bprange:
-                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=AL)])
-
-                ax1.boxplot(bpdat, positions=bprange, widths=5)
-
-                ALP = pprange*np.nan
-                for ALi in np.arange(0,pprange.shape[0]):
-                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], config.PCTLO)
-
-                ax1.plot(pprange, ALP)
-                ax1.plot([0,150],[0.25,0.25],color='k',linestyle='--')
-
-                intrsc = np.where(np.abs(ALP-0.25)==np.nanmin(np.abs(ALP-0.25)))[0]
-                cut = np.mean(pprange[intrsc])        
-                if np.sum(ALP<0.25)==0:
-                    cut = np.nan
-
-                LowALlim[n] = cut          
-
-                ax1.plot([cut,cut],[0,1.2],color='k',linestyle=':')
-
-                # Axes properties
-                ax1.text(0.5, 0.9,'Th: ' + str(n*thS) + ' - AL cut: ' + str(cut), horizontalalignment='center',fontsize=15,transform = ax1.transAxes)
-                ax1.set_ylabel('ADF')
-                ax1.set_ylim(top=1.2,bottom=0)
-                ax1.set_xlim(left = 0, right=150)    
-
-
-                #ax2
-                ax2 = fig.add_axes([ppadh+pxx/fszh, ppadv+n*pxy/fszv, pxx/fszh, pxy/fszv], label= 'b2')
-                ax2.hist2d(SNdREF[n,:][pltmsk], ADFREF[n,:][pltmsk], bins=[edgesx,edgesy], cmap=plt.cm.magma_r,cmin=1)
-
-                bpdat = []
-                for AL in bprange:        
-                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=AL)])
-
-                ax2.boxplot(bpdat, positions=bprange, widths=5)
-
-                ALP = pprange*np.nan
-                for ALi in np.arange(0,pprange.shape[0]):
-                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-config.PCTHI)
-
-                ax2.plot(pprange, ALP)
-                ax2.plot([0,150],[0.75,0.75],color='k',linestyle='--')
-
-                intrsc = np.where(np.abs(ALP-0.75)==np.nanmin(np.abs(ALP-0.75)))[0]
-                cut = np.mean(pprange[intrsc])
-                if np.sum(ALP<0.75)==0:
-                    cut = np.nan
-
-                HighALlim[n] = cut            
-
-                ax2.plot([cut,cut],[0,1.2],color='k',linestyle=':')            
-
-                # Axes properties
-                ax2.set_ylabel('ADF')
-                ax2.yaxis.set_label_position("right")
-                ax2.text(0.5, 0.9,'Th: ' + str(n*thS) + ' - AL cut: ' + str(cut), horizontalalignment='center',fontsize=15,transform = ax2.transAxes)
-                ax2.set_ylim(top=1.2,bottom=0)
-
-                ax2.yaxis.tick_right()
-                ax2.set_xlim(left = 0, right=150)
-
-                if n>0&n<thN-1:
-                    ax1.set_xticklabels([])
-                    ax2.set_xticklabels([])        
-                else:
-                    ax1.set_xlabel('SMSN')
-                    ax2.set_xlabel('SMSN')
-                    ax1.set_xticks([0,50,100,150])
-                    ax1.set_xticklabels([0,50,100,150])
-                    ax2.set_xticks([50,100,150])
-                    ax2.set_xticklabels([50,100,150])
-
-                if n==thN-1:
-                    ax1.xaxis.set_label_position("top")
-                    ax1.xaxis.tick_top()
-                    ax2.xaxis.tick_top()
-                    ax2.xaxis.set_label_position("top")
-                    ax1.set_xlabel('SMSN')
-                    ax2.set_xlabel('SMSN')
-                    ax1.set_xticks([0,50,100,150])
-                    ax1.set_xticklabels([0,50,100,150])
-                    ax2.set_xticks([50,100,150])
-                    ax2.set_xticklabels([50,100,150])
-    
-    
-    fig.savefig(figure_path, bbox_inches='tight')
-
-    print('done.', flush=True)
-    print(' ', flush=True)
-
-
-def plotFitAl(ssn_data,
-                               dpi=300,
-                               pxx=4000,
-                               pxy=1300,
-                               padv=50,
-                               padh=50,
-                               padv2=0,
-                               padh2=0):
-    """
-
-    :param dpi: Dots per inch in figure
-    :param pxx: Horizontal size of each panel in pixels
-    :param pxy: Vertical size of each panel in pixels
-    :param padv: Vertical padding in pixels at the edge of the figure in pixels
-    :param padh: Horizontal padding in pixels at the edge of the figure in pixels
-    :param padv2: Vertical padding in pixels between panels
-    :param padh2: Horizontal padding in pixels between panels
-    """
-
-    font = ssn_data.font
-    plt.rc('font', **font)
-
-    figure_path = config.get_file_output_string('04', 'SN vs AL',
-                                                ssn_data=ssn_data,
-                                                num_type=config.NUM_TYPE,
-                                                den_type=config.DEN_TYPE)
-
-    if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
-        print(
-            "\nFigure at {} already exists.\n Change the OVERWRITE_OBSERVERS config flag to overwrite existing plots\n".format(
-                figure_path).format(figure_path))
-        return
-
-    print('Creating and saving SN vs AL figure...', end="", flush=True)
-
-    thN = 21  # Number of thresholds to plot
-    thS = 5  # Threshold increment
-    
-    # fit for low solar activity
-    xlow = np.arange(0,thN)*thS
-    xlow = xlow[np.isfinite(ssn_data.LowALlim)]
-    ylow = ssn_data.LowALlim[np.isfinite(ssn_data.LowALlim)]
-    fitlow = np.polyfit(xlow,ylow,deg=1)
-    a1low = fitlow[0]
-    a0low = fitlow[1]
-
-    # fit for high solar activity
-    xhigh = np.arange(0,thN)*thS
-    xhigh = xhigh[np.isfinite(ssn_data.HighALlim)]
-    yhigh = ssn_data.HighALlim[np.isfinite(ssn_data.HighALlim)]
-    fithigh = np.polyfit(xhigh,yhigh,deg=1)
-    a1high = fithigh[0]
-    a0high = fithigh[1]
-
-
-    plt.rc('font', **font)
-
-    # Size definitions
-    dpi = 300
-    pxx = 1500   # Horizontal size of each panel
-    pxy = 1000   # Vertical size of each panel
-
-    nph = 1      # Number of horizontal panels
-    npv = 1      # Number of vertical panels
-
-    # Padding
-    padv  = 50 #Vertical padding in pixels
-    padv2 = 0  #Vertical padding in pixels between panels
-    padh  = 50 #Horizontal padding in pixels at the edge of the figure
-    padh2 = 0  #Horizontal padding in pixels between panels
-
-    # Figure sizes in pixels
-    fszv = (npv*pxy + 2*padv + (npv-1)*padv2 )      #Vertical size of figure in inches
-    fszh = (nph*pxx + 2*padh + (nph-1)*padh2 )      #Horizontal size of figure in inches
-
-    # Conversion to relative unites
-    ppadv  = padv/fszv     #Vertical padding in relative units
-    ppadv2 = padv2/fszv    #Vertical padding in relative units
-    ppadh  = padh/fszv     #Horizontal padding the edge of the figure in relative units
-    ppadh2 = padh2/fszv    #Horizontal padding between panels in relative units
-
-    ## Start Figure
-    fig = plt.figure(figsize=(fszh/dpi,fszv/dpi))
-    ax1 = fig.add_axes([ppadh, ppadv, pxx/fszh, pxy/fszv])
-
-    ax1.scatter(xlow, ylow, alpha=1)
-    ax1.scatter(xhigh, yhigh,alpha=1)
-    ax1.plot(xhigh,fithigh[0]*xhigh+fithigh[1])
-    ax1.plot(xlow,fitlow[0]*xlow+fitlow[1])
-
-    ax1.set_xlabel('SN Threshold (uHem)')
-    ax1.set_ylabel('Activity Level Limit (SSN)');
-
-    
-    fig.savefig(figure_path, bbox_inches='tight')
-
-    print('done.', flush=True)
-    print(' ', flush=True)
-    
 
 def plotOptimalThresholdWindow(ssn_data,
                                dpi=300,

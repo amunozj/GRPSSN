@@ -32,6 +32,7 @@ class ssnADF(ssn_data):
                  obs_observer_path='input_data/GNObservers_JV_V1.22.csv',
                  output_path='output',
                  font=None,
+                 MoLngt=15,
                  dt=10,
                  phTol=2,
                  thN=100,
@@ -212,20 +213,129 @@ class ssnADF(ssn_data):
         decMask['INDEX'] = np.array(decMask['MASK'].nonzero()[0])
 
         print('done.', flush=True)
+        # --------------------------------------------------------------------------------------------------
+        print('Creating plot SN vs ADF...', end="", flush=True)
+        
+        ssn_data.MoLngt = MoLngt
+#         MoLngt = 15
+        thNP = 21  # Number of thresholds to plot
+        thSP = 5  # Threshold increment
+
+        # creating matrix to define thresholds
+        TREFDat = REF_Grp['GROUPS'].values.copy()
+        TREFSNd = REF_Grp['AVGSNd'].values.copy()
+
+        GDREF = np.zeros((thNP,np.int(TREFDat.shape[0]/MoLngt)))
+        ODREF = np.zeros((thNP,np.int(TREFDat.shape[0]/MoLngt)))
+        SNdREF = np.zeros((thNP,np.int(TREFDat.shape[0]/MoLngt)))
+
+        for TIdx in range(0,thNP):
+                    grpsREFw = np.nansum( np.greater(REF_Dat.values[:,3:REF_Dat.values.shape[1]-3],TIdx*thSP) ,axis = 1).astype(float)
+                    grpsREFw[np.isnan(REF_Dat['AREA1'])] = np.nan
+
+                    TgrpsREF = grpsREFw[0:np.int(grpsREFw.shape[0]/MoLngt)*MoLngt].copy()
+                    TgrpsREF = TgrpsREF.reshape((-1,MoLngt))            
+                    TSNdREF = TREFSNd[0:np.int(TREFSNd.shape[0]/MoLngt)*MoLngt].copy()
+                    TSNdREF = TSNdREF.reshape((-1,MoLngt))            
+                    # Number of days with groups
+                    GDREF[TIdx,:] = np.sum(np.greater(TgrpsREF,0),axis=1)
+                    # Number of days with observations
+                    ODREF[TIdx,:]= np.sum(np.isfinite(TgrpsREF),axis=1)            
+                    # Number of quiet days
+                    QDREF = ODREF-GDREF
+                    # ACTIVE DAY FRACTION
+                    ADFREF = GDREF/ODREF
+                    # Monthly sunspot number
+                    SNdREF[TIdx,:] = np.mean(TSNdREF,axis=1)     
+                    
+
+        bprange = np.arange(10,175,10)
+        pprange = np.arange(5,175,2)
+
+        LowALlim = np.zeros(thNP)
+        HighALlim = np.zeros(thNP)
+
+        for n in range(0,thNP):
+
+                pltmsk = np.logical_and(ODREF[n,:]==MoLngt,ADFREF[n,:]<1)
+
+                bpdat = []    
+                for AL in bprange:
+                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=AL)])
+
+                ALP = pprange*np.nan
+                for ALi in np.arange(0,pprange.shape[0]):
+                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]<=pprange[ALi])], config.PCTLO)
+
+                intrsc = np.where(np.abs(ALP-0.25)==np.nanmin(np.abs(ALP-0.25)))[0]
+                cut = np.mean(pprange[intrsc])        
+                if np.sum(ALP<0.25)==0:
+                    cut = np.nan
+
+                LowALlim[n] = cut
+
+                #ax2
+
+                bpdat = []
+                for AL in bprange:        
+                    bpdat.append(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=AL)])
+
+                ALP = pprange*np.nan
+                for ALi in np.arange(0,pprange.shape[0]):
+                    if (np.sum(np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi]))>0):ALP[ALi] = np.percentile(ADFREF[n,:][np.logical_and(pltmsk, SNdREF[n,:]>=pprange[ALi])], 100-config.PCTHI)
+
+                intrsc = np.where(np.abs(ALP-0.75)==np.nanmin(np.abs(ALP-0.75)))[0]
+                cut = np.mean(pprange[intrsc])
+                if np.sum(ALP<0.75)==0:
+                    cut = np.nan
+
+                HighALlim[n] = cut
+                
+        
+        # fit for low solar activity
+        xlow = np.arange(0,thNP)*thSP
+        xlow = xlow[np.isfinite(LowALlim)]
+        ylow = LowALlim[np.isfinite(LowALlim)]
+        fitlow = np.polyfit(xlow,ylow,deg=1)
+        a1low = fitlow[0]
+        a0low = fitlow[1]
+
+        # fit for high solar activity
+        xhigh = np.arange(0,thNP)*thSP
+        xhigh = xhigh[np.isfinite(HighALlim)]
+        yhigh = HighALlim[np.isfinite(HighALlim)]
+        fithigh = np.polyfit(xhigh,yhigh,deg=1)
+        a1high = fithigh[0]
+        a0high = fithigh[1]
+                    
 
         # Storing variables in object-----------------------------------------------------------------------------------
 
         self.ssn_data.output_path = output_path  # Location of all output files
+        
+        self.ssn_data.MoLngt = MoLngt  # Duration of the interval ("month") used to calculate the ADF
 
         self.ssn_data.font = font  # Font to be used while plotting
         self.ssn_data.ssn_datadt = dt  # Temporal Stride in days
         self.ssn_data.phTol = phTol  # Cycle phase tolerance in years
         self.ssn_data.thN = thN  # Number of thresholds including 0
         self.ssn_data.thI = thI  # Threshold increments
+        
+        self.ssn_data.thNP = thNP  # Number of thresholds including 0
+        self.ssn_data.thSP = thSP  # Threshold increments
+        self.ssn_data.pltmsk = pltmsk  # mask for plot
+        self.ssn_data.bpdat = bpdat  
+        self.ssn_data.ALP = ALP
+        self.ssn_data.cut = cut
+        
 
         self.ssn_data.REF_Dat = REF_Dat  # Reference data with individual group areas each day
         self.ssn_data.REF_Grp = REF_Grp  # Reference data with individual numbers of sunspot for each day
         self.ssn_data.SILSO_Sn_d = SILSO_Sn_d  # SILSO data for each day
+        
+        self.ssn_data.SNdREF = SNdREF  # Sunspot number from reference to plot
+        self.ssn_data.ADFREF = ADFREF  # ADF from reference to plot
+        
 
         self.ssn_data.risMask = risMask  # Mask indicating where to place the search window during raising phases
         self.ssn_data.decMask = decMask  # Mask indicating where to place the search window during declining phases
@@ -234,6 +344,24 @@ class ssnADF(ssn_data):
             'SILSO': endPointsS}  # Variable that stores the boundaries of each rising and decaying phase
         self.ssn_data.cenPoints = {
             'SILSO': cenPointsS}  # Variable that stores the centers of each rising and decaying phase
+        
+        
+        
+        self.ssn_data.LowALlim = LowALlim # Data to obtain the coefficients for the fits of the low solar activity
+        self.ssn_data.HighALlim = HighALlim # Data to obtain the coefficients for the fits of the high solar activity
+        
+        self.ssn_data.xlow = xlow # Data of the x-axis for the fit to obtain the threshold for low solar activity
+        self.ssn_data.ylow = ylow # Data of the y-axis for the fit to obtain the threshold for low solar activity  
+        self.ssn_data.xhigh = xhigh 
+        self.ssn_data.yhigh = yhigh    
+        self.ssn_data.fitlow = fitlow 
+        self.ssn_data.fithigh = fithigh        
+        
+        self.ssn_data.a1high = a1high # Coefficient #1 of the fit for high solar activity
+        self.ssn_data.a0high = a0high # Coefficient #0 of the fit for high solar activity
+        self.ssn_data.a1low = a1low # Coefficient #1 of the fit for low solar activity
+        self.ssn_data.a0low = a0low # Coefficient #0 of the fit for low solar activity   
+
 
         # --------------------------------------------------------------------------------------------------------------
 
@@ -242,6 +370,20 @@ class ssnADF(ssn_data):
 
         print('Done initializing data.', flush=True)
         print(' ', flush=True)
+        
+        # Plot histogram SN vs ADF and scatter SN vs AL
+        if plot:
+            SSN_ADF_Plotter.plotHistSnADF(self.ssn_data)
+
+        print('Done initializing data.', flush=True)
+        print(' ', flush=True)
+        
+        if plot:
+            SSN_ADF_Plotter.plotFitAl(self.ssn_data)
+
+        print('Done initializing data.', flush=True)
+        print(' ', flush=True)        
+        
 
     def processObserver(self,
                         ssn_data,
@@ -569,7 +711,8 @@ class ssnADF(ssn_data):
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """
 
-        print('Calculating number of active and observed days using scanning windows...', flush=True)
+        print('Calculating number of active and observed days using scanning windows...', flush=True)   
+               
 
         thN = 21  # Number of thresholds to plot
         thS = 5  # Threshold increment
@@ -1170,16 +1313,16 @@ class ssnADF(ssn_data):
 
 
         # Storing variables in object-----------------------------------------------------------------------------------
-        ssn_data.LowALlim = LowALlim # Data to obtain the coefficients for the fits of the low solar activity
-        ssn_data.HighALlim = HighALlim # Data to obtain the coefficients for the fits of the high solar activity
+#         ssn_data.LowALlim = LowALlim # Data to obtain the coefficients for the fits of the low solar activity
+#         ssn_data.HighALlim = HighALlim # Data to obtain the coefficients for the fits of the high solar activity
         
-        ssn_data.xlow = xlow # Data of the x-axis for the fit to obtain the threshold for low solar activity
-        ssn_data.ylow = ylow # Data of the y-axis for the fit to obtain the threshold for low solar activity        
+#         ssn_data.xlow = xlow # Data of the x-axis for the fit to obtain the threshold for low solar activity
+#         ssn_data.ylow = ylow # Data of the y-axis for the fit to obtain the threshold for low solar activity        
         
-        ssn_data.a1high = a1high # Coefficient #1 of the fit for high solar activity
-        ssn_data.a0high = a0high # Coefficient #0 of the fit for high solar activity
-        ssn_data.a1low = a1low # Coefficient #1 of the fit for low solar activity
-        ssn_data.a0low = a0low # Coefficient #0 of the fit for low solar activity   
+#         ssn_data.a1high = a1high # Coefficient #1 of the fit for high solar activity
+#         ssn_data.a0high = a0high # Coefficient #0 of the fit for high solar activity
+#         ssn_data.a1low = a1low # Coefficient #1 of the fit for low solar activity
+#         ssn_data.a0low = a0low # Coefficient #0 of the fit for low solar activity   
         ssn_data.lowth = lowth # Threshold for low solar activity
         ssn_data.highth = highth # Threshold for high solar activity
 
