@@ -43,7 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-15'
+output_path = 'Run-2018-10-18'
 
 
 ###################
@@ -222,10 +222,14 @@ def run_obs(CalObsID):
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         if np.sum(ssn_data.vldIntr) > 1:
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
-                                                  disThres=4,
-                                                  # Threshold above which we will ignore timeshifts in simultaneous fit
-                                                  MaxIter=3000)
-                                                  # Maximum number of iterations above which we skip simultaneous fit
+                                                      NTshifts=20,
+                                                      # Number of best distances to use per interval
+                                                      maxInterv=4,
+                                                      # Maximum number of separate intervals after which we force the root calculation
+                                                      addNTshifts=20,
+                                                      # Additional number of distances to use per each number of intervals below maxInterv
+                                                      maxIter=3000)
+                                                      # Maximum number of iterations accepted
 
         if plotSwitch:
 

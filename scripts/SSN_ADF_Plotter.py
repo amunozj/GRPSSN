@@ -1568,30 +1568,16 @@ def plotMinEMD(ssn_data,
             # Calculating minimum distance for plotting
             x = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
             y = np.amin(ssn_data.EMDD[siInx], axis=0)
-            
-            # Appending valid indices to variable and storing length
-            valShfInx.append((y<=ssn_data.disThres*np.min(y)).nonzero()[0])
-            valShfLen.append(valShfInx[siInx].shape[0])
+            sortIn = np.argsort(y)
 
             # Plotting Optimization Matrix
             ax1.plot(x, y, color='k', linewidth=3)
+            ax1.scatter(x[sortIn[0:ssn_data.NTshifts]], y[sortIn[0:ssn_data.NTshifts]], color='r', s=100, zorder=11)
 
             # Masking Gaps
             pltMsk = np.logical_not(cadMask)
-            #ax1.fill_between(ssn_data.REF_Grp['FRACYEAR'], ssn_data.REF_Grp['FRACYEAR'] * 0,
-            #                 y2=ssn_data.REF_Grp['FRACYEAR'] * 0 + np.min(y) * 10, where=pltMsk, color='w', zorder=10)
-            ax1.fill_between(ssn_data.REF_Grp['FRACYEAR'],  ssn_data.REF_Grp['FRACYEAR']*0, 
-                             y2=(ssn_data.REF_Grp['FRACYEAR'] * 0 + np.min(y)*10+20), where=pltMsk, color = 'w', zorder=10) #y2 is the color intensity of the border for earch panel. We added "+20" to get a thin line for the panel according to the observer #563 where min(y) is equal to 0 
-
-            # Plotting possible theshold
-            #ax1.plot(np.array([np.min(x), np.max(x)]), np.array([1, 1]) * ssn_data.disThres * np.min(y), 'b:',
-            #         linewidth=3)
-            ax1.plot(np.array([np.min(x),np.max(x)]),np.array([1,1])*ssn_data.disThres*(np.min(y)+0.5), 'b:', linewidth = 3)
-
-        # If period is not valid append ones so that they don't add to the permutations
-        else:
-            valShfInx.append(1)
-            valShfLen.append(1)    
+            ax1.fill_between(ssn_data.REF_Grp['FRACYEAR'],  ssn_data.REF_Grp['FRACYEAR']*0,
+                             y2=(ssn_data.REF_Grp['FRACYEAR'] * 0 + np.min(y)*10+20), where=pltMsk, color = 'w', zorder=10) #y2 is the color intensity of the border for earch panel. We added "+20" to get a thin line for the panel according to the observer #563 where min(y) is equal to 0
         
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
@@ -1625,9 +1611,6 @@ def plotMinEMD(ssn_data,
             # ax1.text(0.5, 1.01,'Chi-Square (y-y_exp)^2/(y^2+y_exp^2) for ' + NamObs.capitalize(), horizontalalignment='center', transform = ax1.transAxes)
             ax1.text(0.5, 1.01, 'EMD linear distance for ' + ssn_data.NamObs, horizontalalignment='center',
                      transform=ax1.transAxes)
-            
-     # Saving lengths as array
-    valShfLen = np.array(valShfLen)
 
     fig.savefig(figure_path, bbox_inches='tight')
 

@@ -1356,36 +1356,59 @@ class ssnADF(ssn_data):
 
     def ADFsimultaneousEMD(self,
                            ssn_data,
-                           disThres=3,
-                           MaxIter=2000):
+                           NTshifts=20,
+                           maxInterv=4,
+                           addNTshifts=20,
+                           maxIter=160001):
 
         """
         Function that peforms the EMD optimization by allowing variations of shift while keeping thresholds constant
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
-        :param disThres: Threshold above which we will ignore timeshifts (in units of the shortest
-                         distance between observer and reference ADFs for each sub-interval separately)
-        :param MaxIter:  Maximum number of iterations above which we skip simultaneous fit
+        :param NTshifts:  Number of best distances to use per interval
+        :param maxInterv:  Maximum number of separate intervals after which we force the root calculation
+        :param addNTshifts:  Additional number of distances to use per each number of intervals below maxInterv
+        :param MaxIter:  Maximum number of iterations accepted
+        :return plot_EMD_obs: whether to plot or not the figures
         """
 
         print('Identify valid shifts for simultaneous fitting...', flush=True)
 
-        valShfInx, valShfLen = self._disThres_Limit(ssn_data, disThres)
+        # Add a more iterations for fewer valid intervals
+        if np.sum(ssn_data.vldIntr) <= maxInterv:
+            NTshifts = int(NTshifts + addNTshifts * (maxInterv - np.sum(ssn_data.vldIntr)))
+            NTshifts = int(np.min([NTshifts, np.power(maxIter, 1 / np.sum(ssn_data.vldIntr))]))
+        else:
+            NTshifts = int(np.power(maxIter, 1 / np.sum(ssn_data.vldIntr)))
 
-        # Perform binary search to get as close as possible to the limit
-        if np.nanprod(valShfLen) > MaxIter:
+        # Dictionary that will store valid shift indices for each sub-interval
+        valShfInx = []
 
-            disThresT = disThres * 0.5
-            for n in range(2, 30):
+        # Dictionary that will store the length of the index array for each sub-interval
+        valShfLen = []
 
-                valShfInx, valShfLen = self._disThres_Limit(ssn_data, disThresT)
 
-                if np.nanprod(valShfLen) > MaxIter:
-                    disThresT = disThresT - disThres / np.power(2, n)
-                else:
-                    disThresT = disThresT + disThres / np.power(2, n)
+        # Going through different sub-intervals
+        for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
-            valShfInx, valShfLen = self._disThres_Limit(ssn_data, disThresT)
+            # Plot only if period is valid
+            if ssn_data.vldIntr[siInx]:
+
+                # Calculating minimum distance
+                y = np.amin(ssn_data.EMDD[siInx], axis=0)
+                sortIn = np.argsort(y)
+
+                # Appending valid indices to variable and storing length
+                valShfInx.append(sortIn[0:NTshifts])
+                valShfLen.append(valShfInx[siInx].shape[0])
+
+            # If period is not valid append ones so that they don't add to the permutations
+            else:
+                valShfInx.append(1)
+                valShfLen.append(1)
+
+        # Saving lengths as array
+        valShfLen = np.array(valShfLen)
 
 
         print('Number of valid combinations:', np.nanprod(valShfLen))
@@ -1664,8 +1687,10 @@ class ssnADF(ssn_data):
         print(' ', flush=True)
 
         # Storing variables in object-----------------------------------------------------------------------------------
-
-        ssn_data.disThres = disThres  # Threshold above which we will ignore timeshifts
+        ssn_data.NTshifts = NTshifts  # Number of best distances to use per interval
+        ssn_data.maxInterv = maxInterv  # Maximum number of separate intervals after which we force the root calculation
+        ssn_data.addNTshifts = addNTshifts  # Additional number of distances to use per each number of intervals below maxInterv
+        ssn_data.maxIter = maxIter  # Maximum number of iterations accepted
         ssn_data.EMDComb = EMDComb  # Variable storing best simultaneous fits
 
         ssn_data.wAv = wAv  # Weighted threshold average based on the nBest matches for all simultaneous fits
