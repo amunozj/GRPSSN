@@ -438,7 +438,7 @@ class ssnADF(ssn_data):
         # Selecting the maximum integer amount of "months" out of the original data
         yrOb = ObsDat['FRACYEAR'].values
         yrOb = yrOb[0:np.int(yrOb.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt]
-        
+
         ordOb = ObsDat['ORDINAL'].values
         ordOb = ordOb[0:np.int(ordOb.shape[0]/ssn_data.MoLngt)*ssn_data.MoLngt]
 
@@ -636,11 +636,10 @@ class ssnADF(ssn_data):
         for i in range(0, centers.shape[0]):
             ypoints = calRefT[np.logical_and(calObsT >= edges[i], calObsT <= edges[i + 1])]
             if ypoints.shape[0] > 0:
-                Ymedian[i] = np.nanmedian(ypoints)            
+                Ymedian[i] = np.nanmedian(ypoints)
 
-        # Calculating quantities for assessment
-        y = Ymedian
-        x = centers
+        y = calRefT
+        x = calObsT
 
         x = x[np.isfinite(y)]
         y = y[np.isfinite(y)]
@@ -653,11 +652,32 @@ class ssnADF(ssn_data):
 
         # Mean Residual
         mRes = np.mean(y - x)
+        # Mean Relative Residual
         mRRes = np.mean(np.divide(y[x > 0] - x[x > 0], x[x > 0]))
+
+        # Calculating quantities for assessment
+        y = Ymedian
+        x = centers
+
+        x = x[np.isfinite(y)]
+        y = y[np.isfinite(y)]
+
+        # R squared
+        yMean = np.mean(y)
+        SStot = np.sum(np.power(y - yMean, 2))
+        SSreg = np.sum(np.power(y - x, 2))
+        rSqM = (1 - SSreg / SStot)
+
+        # Mean Residual
+        mResM = np.mean(y - x)
+        mRResM = np.mean(np.divide(y[x > 0] - x[x > 0], x[x > 0]))
 
         return {'rSq': rSq,
                 'mRes': mRes,
-                'mRRes': mRRes}
+                'mRRes': mRRes,
+                'rSqM': rSqM,
+                'mResM': mResM,
+                'mRResM': mRResM}
 
     def ADFscanningWindowEMD(self,
                              ssn_data,
@@ -1115,10 +1135,13 @@ class ssnADF(ssn_data):
                 calRef.append([])
                 calObs.append([])
 
-        # Creating storing dictionaries to store fit properties
+        # Creating storing lists to store fit properties
         rSqI = []
         mResI = []
         mRResI = []
+        rSqIM = []
+        mResIM = []
+        mRResIM = []
 
         # Number of bins to use
         Nbins = maxNPlt
@@ -1153,36 +1176,44 @@ class ssnADF(ssn_data):
                     rSqI.append(metricsDic['rSq'])
                     mResI.append(metricsDic['mRes'])
                     mRResI.append(metricsDic['mRRes'])
+                    rSqIM.append(metricsDic['rSqM'])
+                    mResIM.append(metricsDic['mResM'])
+                    mRResIM.append(metricsDic['mRResM'])
 
                 else:            
             
                     rSqI.append([])
                     mResI.append([])
                     mRResI.append([])
-                  
+                    rSqIM.append([])
+                    mResIM.append([])
+                    mRResIM.append([])
+
 
             # If period not valid store an empty array
             else:
                 rSqI.append([])
                 mResI.append([])
                 mRResI.append([])
+                rSqIM.append([])
+                mResIM.append([])
+                mRResIM.append([])
 
-        rSqDT = np.nan
-        mResDT = np.nan
-        mRResDT = np.nan
+        # Metrics dictionary for different threshold calculations
+        mDDT = {'rSq': np.nan,
+                'mRes': np.nan,
+                'mRRes': np.nan,
+                'rSqM': np.nan,
+                'mResM': np.nan,
+                'mRResM': np.nan}
 
-        # Only if there is only one interval that is valid
+        # Only if there is at least only one interval that is valid
         if len(calRef) > 0:
 
             calRefT = np.concatenate(calRef, axis=0)
             calObsT = np.concatenate(calObs, axis=0)
 
-            metricsDic = self._Calculate_R2M_MRes_MRRes(calObsT, calRefT, centers, edges)
-
-            rSqDT = metricsDic['rSq']
-            mResDT = metricsDic['mRes']
-            mRResDT = metricsDic['mRRes']
-
+            mDDT = self._Calculate_R2M_MRes_MRRes(calObsT, calRefT, centers, edges)
 
         # Storing variables in object-----------------------------------------------------------------------------------
         ssn_data.GDObsI = GDObsI  # Variable that stores the number of days with groups of the observer for each interval, threshold, window shift, and window
@@ -1216,10 +1247,11 @@ class ssnADF(ssn_data):
         ssn_data.rSqI = rSqI  # R square of the y=x line for each separate interval
         ssn_data.mResI = mResI  # Mean residual of the y=x line for each separate interval
         ssn_data.mRResI = mRResI  # Mean relative residual of the y=x line for each separate interval
+        ssn_data.rSqIM = rSqIM  # R square of the median y=x line for each separate interval
+        ssn_data.mResIM = mResIM  # Mean residual of the median y=x line for each separate interval
+        ssn_data.mRResIM = mRResIM  # Mean relative residual of the median y=x line for each separate interval
 
-        ssn_data.rSqDT = rSqDT  # R square of the y=x line using the average threshold for each interval
-        ssn_data.mResDT = mResDT  # Mean residual of the y=x line using the average threshold for each interval
-        ssn_data.mRResDT = mRResDT  # Mean relative residual of the y=x line using the average threshold for each interval
+        ssn_data.mDDT = mDDT  # Metrics dictionary for different threshold calculations
 
         ssn_data.RiseMonths = rise_count  # Number of months in rising phase
         ssn_data.DecMonths = dec_count  # Number of months in declining phase
@@ -1228,9 +1260,7 @@ class ssnADF(ssn_data):
         if len(calRef) == 1:
             ssn_data.wAv = wAvI[ssn_data.vldIntr][0]
             ssn_data.wSD = wSDI[ssn_data.vldIntr][0]
-            ssn_data.rSqOO = rSqDT
-            ssn_data.mResOO = mResDT
-            ssn_data.mRResOO = mRResDT
+            ssn_data.mDOO = mDDT  # Metrics dictionary for common threshold, but only valid intervals
 
              # Determine which threshold to use
             Th = ssn_data.wAvI[ssn_data.vldIntr][0]
@@ -1252,11 +1282,8 @@ class ssnADF(ssn_data):
             grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
             grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
 
-            metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, centers, edges)
-
-            ssn_data.rSq = metricsDic['rSq']
-            ssn_data.mRes = metricsDic['mRes']
-            ssn_data.mRRes = metricsDic['mRRes']
+            # Metrics dictionary for common threshold
+            ssn_data.mD = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, centers, edges)
 
 
         self.ssn_data = ssn_data
@@ -1606,6 +1633,21 @@ class ssnADF(ssn_data):
         mResOO = np.nan
         mRResOO = np.nan
 
+        # Metrics dictionary for common threshold
+        mD = {'rSq': np.nan,
+              'mRes': np.nan,
+              'mRRes': np.nan,
+              'rSqM': np.nan,
+              'mResM': np.nan,
+              'mRResM': np.nan}
+
+        # Common threshold, but only the valid intervals
+        mDOO = {'rSq': np.nan,
+                'mRes': np.nan,
+                'mRRes': np.nan,
+                'rSqM': np.nan,
+                'mResM': np.nan,
+                'mRResM': np.nan}
         
         print('Calculating r-square if there is overlap between observer and reference...', end="", flush=True)        
         if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
@@ -1629,11 +1671,7 @@ class ssnADF(ssn_data):
             grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
 
             # Calculating goodness of fit of Y=X
-            metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
-
-            rSq = metricsDic['rSq']
-            mRes = metricsDic['mRes']
-            mRRes = metricsDic['mRRes']
+            mD = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
 
             # Calculate R^2 and residual using only valid periods
             calRefN = np.array([0])
@@ -1677,11 +1715,7 @@ class ssnADF(ssn_data):
                     calObsN = np.append(calObsN, grpsObsw)
 
             # Calculating goodness of fit of Y=X
-            metricsDic = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
-
-            rSqOO = metricsDic['rSq']
-            mResOO = metricsDic['mRes']
-            mRResOO = metricsDic['mRRes']
+            mDOO = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -1696,13 +1730,8 @@ class ssnADF(ssn_data):
         ssn_data.wAv = wAv  # Weighted threshold average based on the nBest matches for all simultaneous fits
         ssn_data.wSD = wSD  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
 
-        ssn_data.rSq = rSq  # R square of the y=x line using a common threshold
-        ssn_data.mRes = mRes  # Mean residual of the y=x line using a common threshold
-        ssn_data.mRRes = mRRes  # Mean relative residual of the y=x line using a common threshold
-
-        ssn_data.rSqOO = rSqOO  # R square of the y=x line using a common threshold, but only the valid intervals
-        ssn_data.mResOO = mResOO  # Mean residual of the y=x line using a common threshold, but only the valid intervals
-        ssn_data.mRResOO = mRResOO  # Mean relative residual of the y=x line using a common threshold, but only the valid intervals
+        ssn_data.mD = mD  # metrics dictionary for common threshold
+        ssn_data.mDOO = mDOO  # metrics dictionary for common threshold, but only the valid intervals
 
         # --------------------------------------------------------------------------------------------------------------
 

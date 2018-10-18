@@ -108,20 +108,39 @@ header = ['Observer',
           'Station',
           'AvThreshold',  # Weighted threshold average based on the nBest matches for all simultaneous fits
           'SDThreshold',  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
-          'R2Md',  # R square of the y=x line using a common threshold
-          'Mean.Res',  # Mean residual of the y=x line using a common threshold
-          'Mean.Rel.Res',  # Mean relative residual of the y=x line using a common threshold
           'AvThresholdS',  # Weighted threshold average based on the nBest matches for different intervals
           'SDThresholdS',  # Weighted threshold standard deviation based on the nBest matches for different intervals
-          'R2MdSI',  # R square of the y=x line for each separate interval
-          'Mean.Res.SI',  # Mean residual of the y=x line for each separate interval
-          'Mean.Rel.Res.SI',  # Mean relative residual of the y=x line for each separate interval
-          'R2MdDifT',  # R square of the y=x line using the different threshold for each interval
-          'Mean.ResDifT',  # Mean residual of the y=x line using different thresholds for each interval
-          'Mean.Rel.ResDifT',  # Mean relative residual of the y=x line using different thresholds for each interval
-          'R2MdVI',  # R square of the y=x line using a common threshold, but only the valid intervals
-          'Mean.ResVI',  # Mean residual of the y=x line using a common threshold, but only the valid intervals
-          'Mean.Rel.ResVI',  # Mean Relative residual of the y=x line using a common threshold, but only the valid intervals
+          'mneSth',  # Mean normalized error - single threshold
+          'mneMth',  # Mean normalized error - multi threshold
+          # Common threshold
+          'R2d',  # R square
+          'Mean.Res',  # Mean residual
+          'Mean.Rel.Res',  # Mean relative residual
+          'R2Md',  # R square of the median
+          'Mean.ResM',  # Mean residual of the median
+          'Mean.Rel.ResM',  # Mean relative residual of the median
+          # Separate intervals
+          'R2dSI',  # R square
+          'Mean.Res.SI',  # Mean residual
+          'Mean.Rel.Res.SI',  # Mean relative residual
+          'R2MdSI',  # R square of the median
+          'Mean.ResM.SI',  # Mean residual of the median
+          'Mean.Rel.ResM.SI',  # Mean relative residual of the median
+          # Using the different threshold for each interval
+          'R2dDifT',  # R square
+          'Mean.ResDifT',  # Mean residual
+          'Mean.Rel.ResDifT',  # Mean relative residual
+          'R2MdDifT',  # R square of the median
+          'Mean.ResMDifT',  # Mean residual of the median
+          'Mean.Rel.ResMDifT',  # Mean relative residual of the median
+          # Common threshold, but only the valid intervals
+          'R2dVI',  # R square
+          'Mean.ResVI',  # Mean residual
+          'Mean.Rel.ResVI',  # Mean Relative residual
+          'R2MdVI',  # R square of the median
+          'Mean.ResMVI',  # Mean residual of the median
+          'Mean.Rel.ResMVI',  # Mean Relative residual of the median
+          # Other Observing variables
           'QDays',  # Total number of Quiet days
           'ADays',  # Total number of Active days
           'NADays',  # Total number of missing days in data
@@ -135,9 +154,8 @@ header = ['Observer',
           'InvMonths',  # Number of invalid months in observer
           'InvMoStreak',  # Highest number of invalid months in a row (biggest gap)
           'ObsStartDate',  # Starting date
-          'ObsTotLength',  # Days between starting and ending dates
-          'mneSth',  # Mean normalized error - single threshold
-          'mneMth']  # Mean normalized error - multi threshold
+          'ObsTotLength']  # Days between starting and ending dates
+
 
 
 # Read Data and plot reference search windows, minima and maxima
@@ -273,21 +291,40 @@ def run_obs(CalObsID):
         y_row = [ssn_data.CalObs,
                  ssn_data.NamObs,
                  ssn_data.wAv,  # Weighted threshold average based on the nBest matches for all simultaneous fits
-                 ssn_data.wSD, # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
-                 ssn_data.rSq,  # R square of the y=x line using a common threshold
-                 ssn_data.mRes,  # Mean residual of the y=x line using a common threshold
-                 ssn_data.mRRes,  # Mean relative residual of the y=x line using a common threshold
+                 ssn_data.wSD,  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
                  ssn_data.wAvI,  # Weighted threshold average based on the nBest matches for different intervals
                  ssn_data.wSDI,  # Weighted threshold standard deviation based on the nBest matches for different intervals
-                 ssn_data.rSqI,  # R square of the y=x line for each separate interval
-                 ssn_data.mResI,  # Mean residual of the y=x line for each separate interval
-                 ssn_data.mRResI,  # Mean relative residual of the y=x line for each separate interval
-                 ssn_data.rSqDT,  # R square of the y=x line using the average threshold for each interval
-                 ssn_data.mResDT,  # Mean residual of the y=x line using the average threshold for each interval
-                 ssn_data.mRResDT,  # Mean relative residual of the y=x line using the average threshold for each interval
-                 ssn_data.rSqOO,  # R square of the y=x line using a common threshold, but only valid intervals
-                 ssn_data.mResOO,  # Mean residual of the y=x line using a common threshold, but only valid intervals
-                 ssn_data.mRResOO,  # Mean relative residual of the y=x line using a common threshold, but only valid intervals
+                 ssn_data.mneSth,  # Mean normalized error - single threshold
+                 ssn_data.mneMth,  # Mean normalized error - multi threshold
+                 # Common threshold
+                 ssn_data.mD['rSq'],  # R square
+                 ssn_data.mD['mRes'],  # Mean residual
+                 ssn_data.mD['mRRes'],  # Mean relative residual
+                 ssn_data.mD['rSqM'],  # R square of the median
+                 ssn_data.mD['mResM'],  # Mean residual of the median
+                 ssn_data.mD['mRResM'],  # Mean relative residual of the median
+                 # Separate intervals
+                 ssn_data.rSqI,  # R square
+                 ssn_data.mResI,  # Mean residual
+                 ssn_data.mRResI,  # Mean relative residual
+                 ssn_data.rSqIM,  # R square of the median
+                 ssn_data.mResIM,  # Mean residual of the median
+                 ssn_data.mRResIM,  # Mean relative residual of the median
+                 # Using the different threshold for each interval
+                 ssn_data.mDDT['rSq'],  # R square
+                 ssn_data.mDDT['mRes'],  # Mean residual
+                 ssn_data.mDDT['mRRes'],  # Mean relative residual
+                 ssn_data.mDDT['rSqM'],  # R square of the median
+                 ssn_data.mDDT['mResM'],  # Mean residual of the median
+                 ssn_data.mDDT['mRResM'],  # Mean relative residual of the median
+                 # Common threshold, but only the valid intervals
+                 ssn_data.mDOO['rSq'],  # R square
+                 ssn_data.mDOO['mRes'],  # Mean residual
+                 ssn_data.mDOO['mRRes'],  # Mean relative residual
+                 ssn_data.mDOO['rSqM'],  # R square of the median
+                 ssn_data.mDOO['mResM'],  # Mean residual of the median
+                 ssn_data.mDOO['mRResM'],  # Mean relative residual of the median
+                 # Other Observing variables
                  ssn_data.QDays,  # Total number of Quiet days
                  ssn_data.ADays,  # Total number of Active days
                  ssn_data.NADays,  # Total number of missing days in data
@@ -301,9 +338,7 @@ def run_obs(CalObsID):
                  ssn_data.InvMonths,  # Number of invalid months in observer
                  ssn_data.InvMoStreak,  # Highest number of invalid months in a row (biggest gap)
                  ssn_data.ObsStartDate,  # Start date
-                 ssn_data.ObsTotLength,  # Days between starting and ending dates
-                 ssn_data.mneSth,  # Mean normalized error - single threshold
-                 ssn_data.mneMth  # Mean normalized error - multi threshold
+                 ssn_data.ObsTotLength  # Days between starting and ending dates
                  ]
 
         with open(output_csv_file, 'a+', newline='') as f:
