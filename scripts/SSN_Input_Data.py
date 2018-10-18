@@ -2,6 +2,7 @@ import pandas as pd
 from SSN_Config import SSN_Data
 import os
 
+
 class ssn_data(object):
     """
     A class for managing SSN data and reference data
@@ -17,7 +18,6 @@ class ssn_data(object):
         Read all reference and observational and define the search parameters
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
-        :param ref_data_path: Location of the data to be used as reference
         :param obs_data_path: Location of the observational data
         :param obs_observer_path: Location of the file containing the observer's codes and names
         :param font: Font to be used while plotting
@@ -48,11 +48,11 @@ class ssn_data(object):
         self.ssn_data.ClrN = (0.20, 0.56, 1.00)
 
         self.ssn_data.Clr = [(0.00, 0.00, 0.00),
-                    (0.31, 0.24, 0.00),
-                    (0.43, 0.16, 0.49),
-                    (0.32, 0.70, 0.30),
-                    (0.45, 0.70, 0.90),
-                    (1.00, 0.82, 0.67)]
+                             (0.31, 0.24, 0.00),
+                             (0.43, 0.16, 0.49),
+                             (0.32, 0.70, 0.30),
+                             (0.45, 0.70, 0.90),
+                             (1.00, 0.82, 0.67)]
 
         self.ssn_data.font = font  # Font to be used while plotting
 

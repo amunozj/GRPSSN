@@ -45,14 +45,13 @@ plotSwitch = True
 # Output Folder
 output_path = 'Run-2018-10-18'
 
-
 ###################
 # PARSING ARGUMENTS#
 ###################
 # Arguments will over-ride the options set above
 
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
-if (args.QDF and args.ADF):
+if args.QDF and args.ADF:
     raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
 elif args.QDF:
     SSN_ADF_Config.NUM_TYPE = "QDF"  # Set to 'QDF' to use 1-QDF calculation.
@@ -68,7 +67,6 @@ elif args.obs:
     SSN_ADF_Config.DEN_TYPE = "OBS"  # Set to 'OBS' to use observed days to determine ADF
 elif args.DTh:
     SSN_ADF_Config.DEN_TYPE = "DTh"  # Set to Dynamic Threshold to use ADF calculation.
-
 
 # Set number of threads
 if args.threads is not None:
@@ -94,7 +92,6 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
 # Output CSV file path
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
     SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
-
 
 #################
 # STARTING SCRIPT#
@@ -156,8 +153,6 @@ header = ['Observer',
           'ObsStartDate',  # Starting date
           'ObsTotLength']  # Days between starting and ending dates
 
-
-
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
                  silso_path='../input_data/SN_m_tot_V2.0.csv',
@@ -172,24 +167,21 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  phTol=2,  # Cycle phase tolerance in years
                  thN=100,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
-                 thNPc=10,  #Number of thresholds including 0 for percentile fitting
+                 thNPc=10,  # Number of thresholds including 0 for percentile fitting
                  thIPc=10,  # Threshold increments for percentile fitting
                  MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                  minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
-                 vldIntThr=0.33,  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
+                 vldIntThr=0.33,
+                 # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
                  plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
 ssn_data = ssn_adf.ssn_data
 
-
 if not os.path.exists(output_csv_file):
-
     with open(output_csv_file, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
-        
-
 
 
 # Start pipeline for an individual observer
@@ -212,21 +204,21 @@ def run_obs(CalObsID):
 
         # Calculating the Earth's Mover Distance using sliding windows for different intervals
         obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data,
-                                                       Dis_Pow = 2)  # Power index used to define the distance matrix for EMD calculation
+                                                       Dis_Pow=2)  # Power index used to define the distance matrix for EMD calculation
 
         if plotSwitch:
             # Plot active vs. observed days
             if SSN_ADF_Config.PLOT_OPTIMAL_THRESH:
                 SSN_ADF_Plotter.plotOptimalThresholdWindow(ssn_data)
-                
+
             # Plot SN vs. ADF
-            if SSN_ADF_Config.PLOT_SN_ADF and SSN_ADF_Config.DEN_TYPE  == "DTh":
+            if SSN_ADF_Config.PLOT_SN_ADF and SSN_ADF_Config.DEN_TYPE == "DTh":
                 SSN_ADF_Plotter.plotHistSnADF(ssn_data)
-                
+
             # Plot SN vs AL
-            if SSN_ADF_Config.PLOT_SN_AL and SSN_ADF_Config.DEN_TYPE  == "DTh":
+            if SSN_ADF_Config.PLOT_SN_AL and SSN_ADF_Config.DEN_TYPE == "DTh":
                 SSN_ADF_Plotter.plotFitAl(ssn_data)
-                
+
             # Plot Distribution of active thresholds
             if SSN_ADF_Config.PLOT_DIST_THRESH_MI and config.NBEST > 1:
                 SSN_ADF_Plotter.plotDistributionOfThresholdsMI(ssn_data)
@@ -238,7 +230,6 @@ def run_obs(CalObsID):
             # Plot optimal distributions for each threshold
             if SSN_ADF_Config.PLOT_INTERVAL_DISTRIBUTION:
                 SSN_ADF_Plotter.plotIntervalDistributions(ssn_data)
-
 
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         if np.sum(ssn_data.vldIntr) > 1:
@@ -255,7 +246,7 @@ def run_obs(CalObsID):
         # Calculate smoothed series for comparison
         ssn_adf.smoothedComparison(ssn_data,
                                    gssnKrnl=75)
-                                   # Width of the gaussian smoothing kernel in days
+        # Width of the gaussian smoothing kernel in days
 
         if plotSwitch:
 
@@ -286,14 +277,15 @@ def run_obs(CalObsID):
                 if SSN_ADF_Config.PLOT_SMOOTHED_SERIES:
                     SSN_ADF_Plotter.plotSmoothedSeries(ssn_data)
 
-
         # Saving row
         y_row = [ssn_data.CalObs,
                  ssn_data.NamObs,
                  ssn_data.wAv,  # Weighted threshold average based on the nBest matches for all simultaneous fits
-                 ssn_data.wSD,  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+                 ssn_data.wSD,
+                 # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
                  ssn_data.wAvI,  # Weighted threshold average based on the nBest matches for different intervals
-                 ssn_data.wSDI,  # Weighted threshold standard deviation based on the nBest matches for different intervals
+                 ssn_data.wSDI,
+                 # Weighted threshold standard deviation based on the nBest matches for different intervals
                  ssn_data.mneSth,  # Mean normalized error - single threshold
                  ssn_data.mneMth,  # Mean normalized error - multi threshold
                  # Common threshold
