@@ -77,8 +77,6 @@ class SSN_ADF_Config:
         """
         :param num_type: ADF parameter set in config
         :param den_type: month length parameter set in config
-        :param PCTLO: defines the percentile of ADF months for which low activity conditions hold
-        :param PCTLO: defines the percentile of ADF months for which high activity conditions hold
         :return: prepend for plots depending on ADF and month length
         """
 
@@ -122,8 +120,7 @@ class SSN_ADF_Config:
         return os.path.join(ssn_data.output_path,
                             "{}_{}".format(ssn_data.CalObs, ssn_data.NamObs),
                             "{}_{}_{}_{}_{}.png".format(number,
-                                                       SSN_ADF_Config.get_file_prepend(num_type, den_type),
-                                                       ssn_data.CalObs,
-                                                       ssn_data.NamObs,
-                                                       title))
-    
+                                                        SSN_ADF_Config.get_file_prepend(num_type, den_type),
+                                                        ssn_data.CalObs,
+                                                        ssn_data.NamObs,
+                                                        title))
