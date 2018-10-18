@@ -1710,3 +1710,100 @@ class ssnADF(ssn_data):
         print(' ', flush=True)
 
         return True
+
+    def smoothedComparison(self,
+                           ssn_data,
+                           gssnKrnl = 75):
+
+        """
+        Function that calculates the smoothed series if there is overlap so that it can be saved in the CSV, if not, returns NaNs
+        VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
+
+        :param gssnKrnl:  Width of the gaussian smoothing kernel in days
+        """
+
+        tcalRef = np.concatenate(ssn_data.calRef, axis=0)
+
+        # Initializing variables for appending at the end if there is no overlap
+        Grp_Comp = []
+        mneSth = np.nan
+        mneMth = np.nan
+
+        if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
+                    np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+
+            # Creating variables for plotting and calculating difference
+            Grp_Comp = ssn_data.REF_Dat[['FRACYEAR', 'ORDINAL', 'YEAR', 'MONTH', 'DAY']].copy()
+
+            # Raw Ref Groups
+            Grp_Comp['GROUPS'] = np.nansum(
+                np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], 0), axis=1)
+            Grp_Comp['GROUPS'] = Grp_Comp['GROUPS'].astype(float)
+
+            # Thresholded Ref Groups
+            Grp_Comp['SINGLETH'] = np.nansum(
+                np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], ssn_data.wAv),
+                axis=1).astype(
+                float)
+            Grp_Comp['SINGLETHVI'] = Grp_Comp['SINGLETH']
+
+            # Multi-Threshold Ref Groups
+            Grp_Comp['MULTITH'] = Grp_Comp['SINGLETH'] * np.nan
+            for n in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+                # Plot only if the period is valid and has overlap
+                if ssn_data.vldIntr[n] and np.sum(
+                        np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
+                                       ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][n + 1, 0])) > 0:
+                    intervalmsk = np.logical_and(Grp_Comp['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
+                                                 Grp_Comp['FRACYEAR'] < ssn_data.endPoints['OBS'][n + 1, 0])
+                    Grp_Comp.loc[intervalmsk, 'MULTITH'] = np.nansum(
+                        np.greater(ssn_data.REF_Dat.values[intervalmsk, 3:ssn_data.REF_Dat.values.shape[1] - 3],
+                                   ssn_data.wAvI[n]), axis=1).astype(float)
+
+            # Calibrated Observer
+            Grp_Comp['CALOBS'] = Grp_Comp['SINGLETH'] * np.nan
+            Grp_Comp.loc[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values), 'CALOBS'] = \
+            ssn_data.ObsDat.loc[
+                np.in1d(ssn_data.ObsDat['ORDINAL'].values, ssn_data.REF_Dat['ORDINAL'].values), 'GROUPS'].values
+
+            # Imprinting Calibrated Observer NaNs
+            nanmsk = np.isnan(Grp_Comp['CALOBS'])
+            Grp_Comp.loc[
+                np.logical_and(np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values),
+                               nanmsk), ['CALOBS', 'SINGLETH',
+                                         'MULTITH']] = np.nan
+
+            # Imprinting Reference NaNs
+            Grp_Comp.loc[np.isnan(ssn_data.REF_Dat['AREA1']), ['CALOBS', 'SINGLETH', 'MULTITH']] = np.nan
+
+            # Adding a Calibrated observer only in valid intervals
+            Grp_Comp['CALOBSVI'] = Grp_Comp['CALOBS']
+            Grp_Comp.loc[np.isnan(Grp_Comp['MULTITH']), 'CALOBSVI'] = np.nan
+
+            Grp_Comp.loc[np.isnan(Grp_Comp['CALOBS']), 'SINGLETHVI'] = np.nan
+
+            # Smoothing for plotting
+            Gss_1D_ker = conv.Gaussian1DKernel(gssnKrnl)
+            Grp_Comp['GROUPS'] = conv.convolve(Grp_Comp['GROUPS'].values, Gss_1D_ker, preserve_nan=True)
+            Grp_Comp['SINGLETH'] = conv.convolve(Grp_Comp['SINGLETH'].values, Gss_1D_ker, preserve_nan=True)
+            Grp_Comp['SINGLETHVI'] = conv.convolve(Grp_Comp['SINGLETHVI'].values, Gss_1D_ker, preserve_nan=True)
+            Grp_Comp['MULTITH'] = conv.convolve(Grp_Comp['MULTITH'].values, Gss_1D_ker, preserve_nan=True)
+            Grp_Comp['CALOBS'] = conv.convolve(Grp_Comp['CALOBS'].values, Gss_1D_ker, preserve_nan=True)
+            Grp_Comp['CALOBSVI'] = conv.convolve(Grp_Comp['CALOBSVI'].values, Gss_1D_ker, preserve_nan=True)
+
+            Grp_Comp.loc[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values), :]
+
+            # Calculate mean normalized error - single threshold
+            mneSth = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.max(Grp_Comp['CALOBS']),
+                           decimals=2)
+
+            # Calculate mean normalized error - multi threshold
+            mneMth = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.max(Grp_Comp['CALOBS']),
+                           decimals=2)
+
+
+        # Storing variables in object-----------------------------------------------------------------------------------
+        ssn_data.Grp_Comp = Grp_Comp  # Smoothed reference and observer series
+        ssn_data.mneSth = mneSth  # Mean normalized error - single threshold
+        ssn_data.mneMth = mneMth  # Mean normalized error - multi threshold

@@ -29,7 +29,7 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 412
+SSN_ADF_Config.OBS_START_ID = 336
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332, 338, 385, 418]
 
@@ -135,7 +135,10 @@ header = ['Observer',
           'InvMonths',  # Number of invalid months in observer
           'InvMoStreak',  # Highest number of invalid months in a row (biggest gap)
           'ObsStartDate',  # Starting date
-          'ObsTotLength']  # Days between starting and ending dates
+          'ObsTotLength',  # Days between starting and ending dates
+          'mneSth',  # Mean normalized error - single threshold
+          'mneMth']  # Mean normalized error - multi threshold
+
 
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
@@ -231,6 +234,11 @@ def run_obs(CalObsID):
                                                       maxIter=3000)
                                                       # Maximum number of iterations accepted
 
+        # Calculate smoothed series for comparison
+        ssn_adf.smoothedComparison(ssn_data,
+                                   gssnKrnl=75)
+                                   # Width of the gaussian smoothing kernel in days
+
         if plotSwitch:
 
             if np.sum(ssn_data.vldIntr) > 1 and plot_EMD_obs:
@@ -293,7 +301,9 @@ def run_obs(CalObsID):
                  ssn_data.InvMonths,  # Number of invalid months in observer
                  ssn_data.InvMoStreak,  # Highest number of invalid months in a row (biggest gap)
                  ssn_data.ObsStartDate,  # Start date
-                 ssn_data.ObsTotLength  # Days between starting and ending dates
+                 ssn_data.ObsTotLength,  # Days between starting and ending dates
+                 ssn_data.mneSth,  # Mean normalized error - single threshold
+                 ssn_data.mneMth  # Mean normalized error - multi threshold
                  ]
 
         with open(output_csv_file, 'a+', newline='') as f:
