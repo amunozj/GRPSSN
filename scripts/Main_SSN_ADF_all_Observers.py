@@ -29,7 +29,7 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 412
+SSN_ADF_Config.OBS_START_ID = 336
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332, 338, 385, 418]
 
@@ -43,8 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-15'
-
+output_path = 'Run-2018-10-18'
 
 ###################
 # PARSING ARGUMENTS#
@@ -52,7 +51,7 @@ output_path = 'Run-2018-10-15'
 # Arguments will over-ride the options set above
 
 # Quantity to use in the numerator of the ADF:  Active days or 1-quiet days
-if (args.QDF and args.ADF):
+if args.QDF and args.ADF:
     raise ValueError('Invalid Flags: Can only use one ADF/QDF flag at a time')
 elif args.QDF:
     SSN_ADF_Config.NUM_TYPE = "QDF"  # Set to 'QDF' to use 1-QDF calculation.
@@ -68,7 +67,6 @@ elif args.obs:
     SSN_ADF_Config.DEN_TYPE = "OBS"  # Set to 'OBS' to use observed days to determine ADF
 elif args.DTh:
     SSN_ADF_Config.DEN_TYPE = "DTh"  # Set to Dynamic Threshold to use ADF calculation.
-
 
 # Set number of threads
 if args.threads is not None:
@@ -95,7 +93,6 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
     SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
 
-
 #################
 # STARTING SCRIPT#
 #################
@@ -108,20 +105,39 @@ header = ['Observer',
           'Station',
           'AvThreshold',  # Weighted threshold average based on the nBest matches for all simultaneous fits
           'SDThreshold',  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
-          'R2Md',  # R square of the y=x line using a common threshold
-          'Mean.Res',  # Mean residual of the y=x line using a common threshold
-          'Mean.Rel.Res',  # Mean relative residual of the y=x line using a common threshold
           'AvThresholdS',  # Weighted threshold average based on the nBest matches for different intervals
           'SDThresholdS',  # Weighted threshold standard deviation based on the nBest matches for different intervals
-          'R2MdSI',  # R square of the y=x line for each separate interval
-          'Mean.Res.SI',  # Mean residual of the y=x line for each separate interval
-          'Mean.Rel.Res.SI',  # Mean relative residual of the y=x line for each separate interval
-          'R2MdDifT',  # R square of the y=x line using the different threshold for each interval
-          'Mean.ResDifT',  # Mean residual of the y=x line using different thresholds for each interval
-          'Mean.Rel.ResDifT',  # Mean relative residual of the y=x line using different thresholds for each interval
-          'R2MdVI',  # R square of the y=x line using a common threshold, but only the valid intervals
-          'Mean.ResVI',  # Mean residual of the y=x line using a common threshold, but only the valid intervals
-          'Mean.Rel.ResVI',  # Mean Relative residual of the y=x line using a common threshold, but only the valid intervals
+          'mneSth',  # Mean normalized error - single threshold
+          'mneMth',  # Mean normalized error - multi threshold
+          # Common threshold
+          'R2d',  # R square
+          'Mean.Res',  # Mean residual
+          'Mean.Rel.Res',  # Mean relative residual
+          'R2Md',  # R square of the median
+          'Mean.ResM',  # Mean residual of the median
+          'Mean.Rel.ResM',  # Mean relative residual of the median
+          # Separate intervals
+          'R2dSI',  # R square
+          'Mean.Res.SI',  # Mean residual
+          'Mean.Rel.Res.SI',  # Mean relative residual
+          'R2MdSI',  # R square of the median
+          'Mean.ResM.SI',  # Mean residual of the median
+          'Mean.Rel.ResM.SI',  # Mean relative residual of the median
+          # Using the different threshold for each interval
+          'R2dDifT',  # R square
+          'Mean.ResDifT',  # Mean residual
+          'Mean.Rel.ResDifT',  # Mean relative residual
+          'R2MdDifT',  # R square of the median
+          'Mean.ResMDifT',  # Mean residual of the median
+          'Mean.Rel.ResMDifT',  # Mean relative residual of the median
+          # Common threshold, but only the valid intervals
+          'R2dVI',  # R square
+          'Mean.ResVI',  # Mean residual
+          'Mean.Rel.ResVI',  # Mean Relative residual
+          'R2MdVI',  # R square of the median
+          'Mean.ResMVI',  # Mean residual of the median
+          'Mean.Rel.ResMVI',  # Mean Relative residual of the median
+          # Other Observing variables
           'QDays',  # Total number of Quiet days
           'ADays',  # Total number of Active days
           'NADays',  # Total number of missing days in data
@@ -151,24 +167,21 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  phTol=2,  # Cycle phase tolerance in years
                  thN=100,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
-                 thNPc=10,  #Number of thresholds including 0 for percentile fitting
+                 thNPc=10,  # Number of thresholds including 0 for percentile fitting
                  thIPc=10,  # Threshold increments for percentile fitting
                  MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                  minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
-                 vldIntThr=0.33,  # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
+                 vldIntThr=0.33,
+                 # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
                  plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
 ssn_data = ssn_adf.ssn_data
 
-
 if not os.path.exists(output_csv_file):
-
     with open(output_csv_file, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(header)
-        
-
 
 
 # Start pipeline for an individual observer
@@ -191,21 +204,21 @@ def run_obs(CalObsID):
 
         # Calculating the Earth's Mover Distance using sliding windows for different intervals
         obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data,
-                                                       Dis_Pow = 2)  # Power index used to define the distance matrix for EMD calculation
+                                                       Dis_Pow=2)  # Power index used to define the distance matrix for EMD calculation
 
         if plotSwitch:
             # Plot active vs. observed days
             if SSN_ADF_Config.PLOT_OPTIMAL_THRESH:
                 SSN_ADF_Plotter.plotOptimalThresholdWindow(ssn_data)
-                
+
             # Plot SN vs. ADF
-            if SSN_ADF_Config.PLOT_SN_ADF and SSN_ADF_Config.DEN_TYPE  == "DTh":
+            if SSN_ADF_Config.PLOT_SN_ADF and SSN_ADF_Config.DEN_TYPE == "DTh":
                 SSN_ADF_Plotter.plotHistSnADF(ssn_data)
-                
+
             # Plot SN vs AL
-            if SSN_ADF_Config.PLOT_SN_AL and SSN_ADF_Config.DEN_TYPE  == "DTh":
+            if SSN_ADF_Config.PLOT_SN_AL and SSN_ADF_Config.DEN_TYPE == "DTh":
                 SSN_ADF_Plotter.plotFitAl(ssn_data)
-                
+
             # Plot Distribution of active thresholds
             if SSN_ADF_Config.PLOT_DIST_THRESH_MI and config.NBEST > 1:
                 SSN_ADF_Plotter.plotDistributionOfThresholdsMI(ssn_data)
@@ -218,14 +231,22 @@ def run_obs(CalObsID):
             if SSN_ADF_Config.PLOT_INTERVAL_DISTRIBUTION:
                 SSN_ADF_Plotter.plotIntervalDistributions(ssn_data)
 
-
         # Calculating the Earth's Mover Distance using common thresholds for different intervals
         if np.sum(ssn_data.vldIntr) > 1:
             plot_EMD_obs = ssn_adf.ADFsimultaneousEMD(ssn_data,
-                                                  disThres=4,
-                                                  # Threshold above which we will ignore timeshifts in simultaneous fit
-                                                  MaxIter=3000)
-                                                  # Maximum number of iterations above which we skip simultaneous fit
+                                                      NTshifts=20,
+                                                      # Number of best distances to use per interval
+                                                      maxInterv=4,
+                                                      # Maximum number of separate intervals after which we force the root calculation
+                                                      addNTshifts=20,
+                                                      # Additional number of distances to use per each number of intervals below maxInterv
+                                                      maxIter=3000)
+                                                      # Maximum number of iterations accepted
+
+        # Calculate smoothed series for comparison
+        ssn_adf.smoothedComparison(ssn_data,
+                                   gssnKrnl=75)
+        # Width of the gaussian smoothing kernel in days
 
         if plotSwitch:
 
@@ -256,26 +277,46 @@ def run_obs(CalObsID):
                 if SSN_ADF_Config.PLOT_SMOOTHED_SERIES:
                     SSN_ADF_Plotter.plotSmoothedSeries(ssn_data)
 
-
         # Saving row
         y_row = [ssn_data.CalObs,
                  ssn_data.NamObs,
                  ssn_data.wAv,  # Weighted threshold average based on the nBest matches for all simultaneous fits
-                 ssn_data.wSD, # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
-                 ssn_data.rSq,  # R square of the y=x line using a common threshold
-                 ssn_data.mRes,  # Mean residual of the y=x line using a common threshold
-                 ssn_data.mRRes,  # Mean relative residual of the y=x line using a common threshold
+                 ssn_data.wSD,
+                 # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
                  ssn_data.wAvI,  # Weighted threshold average based on the nBest matches for different intervals
-                 ssn_data.wSDI,  # Weighted threshold standard deviation based on the nBest matches for different intervals
-                 ssn_data.rSqI,  # R square of the y=x line for each separate interval
-                 ssn_data.mResI,  # Mean residual of the y=x line for each separate interval
-                 ssn_data.mRResI,  # Mean relative residual of the y=x line for each separate interval
-                 ssn_data.rSqDT,  # R square of the y=x line using the average threshold for each interval
-                 ssn_data.mResDT,  # Mean residual of the y=x line using the average threshold for each interval
-                 ssn_data.mRResDT,  # Mean relative residual of the y=x line using the average threshold for each interval
-                 ssn_data.rSqOO,  # R square of the y=x line using a common threshold, but only valid intervals
-                 ssn_data.mResOO,  # Mean residual of the y=x line using a common threshold, but only valid intervals
-                 ssn_data.mRResOO,  # Mean relative residual of the y=x line using a common threshold, but only valid intervals
+                 ssn_data.wSDI,
+                 # Weighted threshold standard deviation based on the nBest matches for different intervals
+                 ssn_data.mneSth,  # Mean normalized error - single threshold
+                 ssn_data.mneMth,  # Mean normalized error - multi threshold
+                 # Common threshold
+                 ssn_data.mD['rSq'],  # R square
+                 ssn_data.mD['mRes'],  # Mean residual
+                 ssn_data.mD['mRRes'],  # Mean relative residual
+                 ssn_data.mD['rSqM'],  # R square of the median
+                 ssn_data.mD['mResM'],  # Mean residual of the median
+                 ssn_data.mD['mRResM'],  # Mean relative residual of the median
+                 # Separate intervals
+                 ssn_data.rSqI,  # R square
+                 ssn_data.mResI,  # Mean residual
+                 ssn_data.mRResI,  # Mean relative residual
+                 ssn_data.rSqIM,  # R square of the median
+                 ssn_data.mResIM,  # Mean residual of the median
+                 ssn_data.mRResIM,  # Mean relative residual of the median
+                 # Using the different threshold for each interval
+                 ssn_data.mDDT['rSq'],  # R square
+                 ssn_data.mDDT['mRes'],  # Mean residual
+                 ssn_data.mDDT['mRRes'],  # Mean relative residual
+                 ssn_data.mDDT['rSqM'],  # R square of the median
+                 ssn_data.mDDT['mResM'],  # Mean residual of the median
+                 ssn_data.mDDT['mRResM'],  # Mean relative residual of the median
+                 # Common threshold, but only the valid intervals
+                 ssn_data.mDOO['rSq'],  # R square
+                 ssn_data.mDOO['mRes'],  # Mean residual
+                 ssn_data.mDOO['mRRes'],  # Mean relative residual
+                 ssn_data.mDOO['rSqM'],  # R square of the median
+                 ssn_data.mDOO['mResM'],  # Mean residual of the median
+                 ssn_data.mDOO['mRResM'],  # Mean relative residual of the median
+                 # Other Observing variables
                  ssn_data.QDays,  # Total number of Quiet days
                  ssn_data.ADays,  # Total number of Active days
                  ssn_data.NADays,  # Total number of missing days in data
