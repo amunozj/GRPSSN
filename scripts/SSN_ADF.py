@@ -1105,8 +1105,6 @@ class ssnADF(ssn_data):
                     # Storing maximum value of groups for plotting
                     maxNPlt = np.max([np.nanmax(grpsREFw), np.nanmax(grpsObsw), maxNPlt])
 
-                    print(grpsREFw.shape, grpsObsw.shape)
-
                     # Removing NaNs
                     grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
                     grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
@@ -1157,7 +1155,7 @@ class ssnADF(ssn_data):
             if ssn_data.vldIntr[siInx]:
 
                 # Calculate goodness of fit if overlap is true
-                if obsRefOvrlp:
+                if obsRefOvrlp and len(calRef[siInx]) > 0:
 
                     calRefT = calRef[siInx].copy()
                     calObsT = calObs[siInx].copy()
