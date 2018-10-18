@@ -684,7 +684,7 @@ def plotOptimalThresholdWindow(ssn_data,
                              ,'AVGSNd'].values.copy()
         # Plot Matrix Only if the period is valid
         if ssn_data.vldIntr[siInx]:
-            
+
             # Find index of minimum inside sub-interval
             minYear = np.min(np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]))
             obsMinInx = (np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]) == minYear).nonzero()[0][0]
@@ -857,7 +857,7 @@ def plotOptimalThresholdWindow(ssn_data,
                             tmpth = TIdx * ssn_data.thI
 
             OpMat = np.insert(OpMat, 0, [tmpt, tmpth, tmpEMD], axis=0)
-            
+
             # Calculating mesh for plotting
             x = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
             y = np.arange(0,ssn_data.thN)*ssn_data.thI
@@ -937,7 +937,8 @@ def plotOptimalThresholdWindow(ssn_data,
             
             # Adding best points
             bestTh.append(OpMat[1:config.NBEST+1,:])
-            
+
+
         # If period not valid store an empty array
         else:
             bestTh.append([])
