@@ -98,7 +98,7 @@ class ssnADF(ssn_data):
             axis=1)
         REF_Dat['FRACYEAR'] = REF_Dat.apply(lambda x: x['YEAR'].astype(int)
                                                       + (datetime.date(x['YEAR'].astype(int), x['MONTH'].astype(int),
-                                                                       ['DAY'].astype(int)).toordinal()
+                                                                       x['DAY'].astype(int)).toordinal()
                                                          - datetime.date(x['YEAR'].astype(int), 1, 1).toordinal())
                                                       / (datetime.date(x['YEAR'].astype(int) + 1, 1, 1).toordinal()
                                                          - datetime.date(x['YEAR'].astype(int), 1, 1).toordinal())
