@@ -629,6 +629,9 @@ def plotOptimalThresholdWindow(ssn_data,
     # Creating Storing dictionaries to store best thresholds
     bestTh = []
 
+    # Y positions to use in the mesh and plot
+    y = np.arange(0, ssn_data.thN) * ssn_data.thI
+
     # Going through different sub-intervals
     for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
         # Creating axis
@@ -660,16 +663,13 @@ def plotOptimalThresholdWindow(ssn_data,
             np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
                            ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0])
             , 'AVGSNd'].values.copy()
+
         # Plot Matrix Only if the period is valid
         if ssn_data.vldIntr[siInx]:
 
             # Find index of minimum inside sub-interval
             minYear = np.min(np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]))
             obsMinInx = (np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]) == minYear).nonzero()[0][0]
-
-            # Calculating mesh for plotting
-            x = ssn_data.REF_Dat['FRACYEAR'].values[cadMaskI]
-            y = np.arange(0, ssn_data.thN) * ssn_data.thI
 
             # Creating matrix for sorting and find the best combinations of threshold and shift
             OpMat = np.concatenate(
@@ -832,7 +832,6 @@ def plotOptimalThresholdWindow(ssn_data,
 
             # Calculating mesh for plotting
             x = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
-            y = np.arange(0, ssn_data.thN) * ssn_data.thI
             xx, yy = np.meshgrid(x, y)
 
             # Plotting Optimization Matrix
@@ -912,8 +911,10 @@ def plotOptimalThresholdWindow(ssn_data,
         else:
             bestTh.append([])
 
-        # Plotting real location
-        ax1.plot(np.array([1, 1]) * TObsFYr[obsMinInx], np.array([0, np.max(y)]), 'w--', linewidth=3)
+        # Only plot real location if interval exists
+        if ssn_data.vldIntr[siInx]:
+            # Plotting real location
+            ax1.plot(np.array([1, 1]) * TObsFYr[obsMinInx], np.array([0, np.max(y)]), 'w--', linewidth=3)
 
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
@@ -1520,6 +1521,8 @@ def plotMinEMD(ssn_data,
     ax2.set_xlim(left=np.min(ssn_data.REF_Grp['FRACYEAR']), right=np.max(ssn_data.REF_Grp['FRACYEAR']))
     ax2.set_ylim(bottom=0, top=np.max(ssn_data.REF_Grp['AVGROUPS']) * 1.1)
 
+    # Initialize y to avoid crash when the first interval is invalid
+    y = 1
     # Going through different sub-intervals
     for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
