@@ -907,6 +907,7 @@ def plotOptimalThresholdWindow(ssn_data,
             # Adding best points
             bestTh.append(OpMat[1:config.NBEST + 1, :])
 
+            print(OpMat[1:nBest + 1, :])
         # If period not valid store an empty array
         else:
             bestTh.append([])
