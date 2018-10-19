@@ -1133,21 +1133,26 @@ class ssnADF(ssn_data):
         mResIM = []
         mRResIM = []
 
-        # Number of bins to use
-        Nbins = maxNPlt
+        # Initializing centers and edges in case there is no overlap
+        centers = np.nan
+        edges = np.nan
 
-        # Edges and Centers
-        edges = np.arange(0, np.ceil(maxNPlt) + np.round(maxNPlt * 0.25), (np.ceil(maxNPlt)) / Nbins) - (
-            np.ceil(maxNPlt)) / Nbins / 2
-        centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
-
-        # Applying Sqrt + 1
-        if config.SQRT_2DHIS:
-            maxNPlt = np.sqrt(maxNPlt)
+        if obsRefOvrlp:
+            # Number of bins to use
+            Nbins = maxNPlt
 
             # Edges and Centers
-            edges = np.arange(1, np.ceil(maxNPlt) * 1.05, (np.ceil(maxNPlt)) / Nbins) - (np.ceil(maxNPlt)) / Nbins / 2
+            edges = np.arange(0, np.ceil(maxNPlt) + np.round(maxNPlt * 0.25), (np.ceil(maxNPlt)) / Nbins) - (
+                np.ceil(maxNPlt)) / Nbins / 2
             centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
+
+            # Applying Sqrt + 1
+            if config.SQRT_2DHIS:
+                maxNPlt = np.sqrt(maxNPlt)
+
+                # Edges and Centers
+                edges = np.arange(1, np.ceil(maxNPlt) * 1.05, (np.ceil(maxNPlt)) / Nbins) - (np.ceil(maxNPlt)) / Nbins / 2
+                centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
 
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
@@ -1196,7 +1201,7 @@ class ssnADF(ssn_data):
                 'mRResM': np.nan}
 
         # Only if there is at least only one interval that is valid
-        if len(calRef) > 0:
+        if len(calRef) > 0 and obsRefOvrlp:
             calRefT = np.concatenate(calRef, axis=0)
             calObsT = np.concatenate(calObs, axis=0)
 
@@ -1269,7 +1274,17 @@ class ssnADF(ssn_data):
             grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
 
             # Metrics dictionary for common threshold
-            ssn_data.mD = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, centers, edges)
+            mD = {'rSq': np.nan,
+                    'mRes': np.nan,
+                    'mRRes': np.nan,
+                    'rSqM': np.nan,
+                    'mResM': np.nan,
+                    'mRResM': np.nan}
+
+            if obsRefOvrlp:
+                mD = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, centers, edges)
+
+            ssn_data.mD = mD  # Metrics dictionary for common threshold
 
         self.ssn_data = ssn_data
         # --------------------------------------------------------------------------------------------------------------
