@@ -29,8 +29,8 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 324
-SSN_ADF_Config.OBS_END_ID = 600
+SSN_ADF_Config.OBS_START_ID = 325
+SSN_ADF_Config.OBS_END_ID = 326
 SSN_ADF_Config.SKIP_OBS = [332, 385]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
@@ -43,7 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-18'
+output_path = 'Run-2018-10-20'
 
 ###################
 # PARSING ARGUMENTS#
