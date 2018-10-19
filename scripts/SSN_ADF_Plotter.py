@@ -1,5 +1,7 @@
 import numpy as np
 from astropy import convolution as conv
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from matplotlib import colors as clrs
 from pyemd import emd
