@@ -31,6 +31,15 @@ class SSN_ADF_Config:
     # '>1' calculates the threshold using the average of the NBEST points
     NBEST = 1
 
+    # DYNAMIC ADF OPTIONS
+    # PCTLO defines the percentile of ADF months for which low activity conditions must hold
+    # PCTHI defines the percentile of ADF months for which high activity conditions must hold
+    PCTLO = 85
+    PCTHI = 90
+    # QTADF maximum ADF used to consider an interval quiet
+    # ACADF minimum ADF used to consider an interval active
+    QTADF = 0.25
+    ACADF = 0.75
 
     # OVERWRITING AND SKIPPING PLOTS
     # Setting both flags to false will recreate and overwrite all plots for all observers
@@ -56,6 +65,7 @@ class SSN_ADF_Config:
     PLOT_SIM_FIT = True
     PLOT_DIST_THRESH = True
     PLOT_SINGLE_THRESH_SCATTER = True
+    PLOT_SINGLE_THRESH_DIS = True
     PLOT_MULTI_THRESH_SCATTER = True
     PLOT_SMOOTHED_SERIES = True
 
@@ -91,11 +101,14 @@ class SSN_ADF_Config:
                 'Invalid flag: Use \'OBS\' (or \'FULLM\') to use observed days (full month length), or use \'DTh\' for dynamic ADF.')
 
         prepend += "NB" + str(SSN_ADF_Config.NBEST)
+        if SSN_ADF_Config.DEN_TYPE == 'DTh':
+            prepend += "_PL" + str(SSN_ADF_Config.PCTLO) + "_PH" + str(SSN_ADF_Config.PCTHI)
+            prepend += "_QD" + str(SSN_ADF_Config.QTADF) + "_AD" + str(SSN_ADF_Config.ACADF)
 
         return prepend
 
     @staticmethod
-    def get_file_output_string(number, title, ssn_data, num_type, den_type, pctllow, pctlhigh):
+    def get_file_output_string(number, title, ssn_data, num_type, den_type):
         """
         :param number: Plot type identifier
         :param title: Plot title
@@ -107,8 +120,7 @@ class SSN_ADF_Config:
         return os.path.join(ssn_data.output_path,
                             "{}_{}".format(ssn_data.CalObs, ssn_data.NamObs),
                             "{}_{}_{}_{}_{}.png".format(number,
-                                                       SSN_ADF_Config.get_file_prepend(num_type, den_type),
-                                                       ssn_data.CalObs,
-                                                       ssn_data.NamObs,
-                                                       title))
-    
+                                                        SSN_ADF_Config.get_file_prepend(num_type, den_type),
+                                                        ssn_data.CalObs,
+                                                        ssn_data.NamObs,
+                                                        title))
