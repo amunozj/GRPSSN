@@ -29,9 +29,9 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 336
-SSN_ADF_Config.OBS_END_ID = 600
-SSN_ADF_Config.SKIP_OBS = [332, 338, 385, 418]
+SSN_ADF_Config.OBS_START_ID = 318
+SSN_ADF_Config.OBS_END_ID = 735
+SSN_ADF_Config.SKIP_OBS = [332, 385]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
@@ -157,8 +157,8 @@ header = ['Observer',
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
                  silso_path='../input_data/SN_m_tot_V2.0.csv',
                  silso_path_daily='../input_data/SN_d_tot_V2.0.csv',
-                 obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
-                 obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
+                 obs_data_path='../input_data/GNobservations_JV_V1.22.csv',
+                 obs_observer_path='../input_data/GNobservers_JV_V1.22.csv',
                  output_path='output/' + output_path,
                  font={'family': 'sans-serif',
                        'weight': 'normal',
@@ -167,8 +167,8 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  phTol=2,  # Cycle phase tolerance in years
                  thN=100,  # Number of thresholds including 0
                  thI=1,  # Threshold increments
-                 thNPc=10,  # Number of thresholds including 0 for percentile fitting
-                 thIPc=10,  # Threshold increments for percentile fitting
+                 thNPc=20,  # Number of thresholds including 0 for percentile fitting
+                 thIPc=5,  # Threshold increments for percentile fitting
                  MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                  minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
                  vldIntThr=0.33,
@@ -238,9 +238,9 @@ def run_obs(CalObsID):
                                                       # Number of best distances to use per interval
                                                       maxInterv=4,
                                                       # Maximum number of separate intervals after which we force the root calculation
-                                                      addNTshifts=20,
+                                                      addNTshifts=0,
                                                       # Additional number of distances to use per each number of intervals below maxInterv
-                                                      maxIter=3000)
+                                                      maxIter=20000)
                                                       # Maximum number of iterations accepted
 
         # Calculate smoothed series for comparison

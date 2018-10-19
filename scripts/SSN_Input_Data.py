@@ -9,8 +9,8 @@ class ssn_data(object):
     """
 
     def __init__(self,
-                 obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
-                 obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
+                 obs_data_path='../input_data/GNobservations_JV_V1.22.csv',
+                 obs_observer_path='../input_data/GNobservers_JV_V1.22.csv',
                  font={'family': 'sans-serif',
                        'weight': 'normal',
                        'size': 21}):
@@ -29,9 +29,9 @@ class ssn_data(object):
         self.ssn_data = SSN_Data()
 
         # Use relative file paths even when running script from other directory
-        dirname = os.path.dirname(__file__)
-        obs_data_path = os.path.join(dirname, obs_data_path)
-        obs_observer_path = os.path.join(dirname, obs_observer_path)
+        # dirname = os.path.dirname(__file__)
+        # obs_data_path = os.path.join(dirname, obs_data_path)
+        # obs_observer_path = os.path.join(dirname, obs_observer_path)
 
         GN_Dat = pd.read_csv(obs_data_path, quotechar='"', encoding='utf-8', header=15)
 
