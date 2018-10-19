@@ -29,8 +29,8 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 325
-SSN_ADF_Config.OBS_END_ID = 326
+SSN_ADF_Config.OBS_START_ID = 318
+SSN_ADF_Config.OBS_END_ID = 735
 SSN_ADF_Config.SKIP_OBS = [332, 385]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
@@ -43,7 +43,7 @@ SSN_ADF_Config.DEN_TYPE = "DTh"
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-20'
+output_path = 'Run-2018-10-18'
 
 ###################
 # PARSING ARGUMENTS#
@@ -157,8 +157,8 @@ header = ['Observer',
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
                  silso_path='../input_data/SN_m_tot_V2.0.csv',
                  silso_path_daily='../input_data/SN_d_tot_V2.0.csv',
-                 obs_data_path='../input_data/GNObservations_JV_V1.22.csv',
-                 obs_observer_path='../input_data/GNObservers_JV_V1.22.csv',
+                 obs_data_path='../input_data/GNobservations_JV_V1.22.csv',
+                 obs_observer_path='../input_data/GNobservers_JV_V1.22.csv',
                  output_path='output/' + output_path,
                  font={'family': 'sans-serif',
                        'weight': 'normal',

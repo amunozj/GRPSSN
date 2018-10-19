@@ -1,5 +1,7 @@
 import numpy as np
 from astropy import convolution as conv
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from matplotlib import colors as clrs
 from pyemd import emd
@@ -115,7 +117,10 @@ def plotHistSnADF(ssn_data,
     font = ssn_data.font
     plt.rc('font', **font)
 
-    figure_path = '{}/02_2DHist_SN_vs_ADF.png'.format(ssn_data.output_path)
+    prepend = "PL" + str(config.PCTLO) + "_PH" + str(config.PCTHI)
+    prepend += "QD" + str(config.QTADF) + "_AD" + str(config.ACADF)
+
+    figure_path = '{}/02_'.format(ssn_data.output_path) + prepend + '_2DHist_SN_vs_ADF.png'
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
@@ -321,7 +326,10 @@ def plotFitAl(ssn_data,
     font = ssn_data.font
     plt.rc('font', **font)
 
-    figure_path = '{}/03_SN_vs_AL.png'.format(ssn_data.output_path)
+    prepend = "PL" + str(config.PCTLO) + "_PH" + str(config.PCTHI)
+    prepend += "QD" + str(config.QTADF) + "_AD" + str(config.ACADF)
+
+    figure_path = '{}/03_'.format(ssn_data.output_path) + prepend + '_SN_vs_AL.png'
 
     if config.SKIP_PRESENT_PLOTS and os.path.exists(figure_path):
         print(
