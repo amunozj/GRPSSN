@@ -1037,7 +1037,6 @@ class ssnADF(ssn_data):
 
         # Calculating maximum for plotting, medians, and standard deviations
         maxNPlt = 0
-
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
             # Analyze period only if valid
@@ -1119,7 +1118,7 @@ class ssnADF(ssn_data):
                     calRef.append([])
                     calObs.append([])
 
-                    # If period not valid store an empty array
+            # If period not valid store an empty array
             else:
                 bestTh.append([])
                 calRef.append([])

@@ -29,7 +29,7 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 336
+SSN_ADF_Config.OBS_START_ID = 320
 SSN_ADF_Config.OBS_END_ID = 600
 SSN_ADF_Config.SKIP_OBS = [332, 338, 385, 418]
 
