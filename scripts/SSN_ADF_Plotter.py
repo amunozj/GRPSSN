@@ -1429,6 +1429,9 @@ def plotIntervalDistributions(ssn_data,
 
                 # Plot only if the period is valid
                 if ssn_data.vldIntr[n]:
+                    print(ssn_data.bestTh)
+                    print(int(ssn_data.bestTh[2][0][0]))
+                    print(int(ssn_data.bestTh[n][0][3]))
                     SIdx = int(ssn_data.bestTh[n][0][3])
                     TIdx = int(ssn_data.bestTh[n][0][4])
 
