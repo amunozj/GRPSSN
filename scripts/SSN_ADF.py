@@ -307,7 +307,11 @@ class ssnADF(ssn_data):
             xlow = np.arange(0, thNPc) * thIPc
             xlow = xlow[np.isfinite(LowALlim)]
             ylow = LowALlim[np.isfinite(LowALlim)]
-            fitlow = np.polyfit(xlow, ylow, deg=1)
+            if xlow.shape[0] > 0:
+                fitlow = np.polyfit(xlow, ylow, deg=1)
+            else:
+                fitlow = np.array([0, 0])
+                xlow = 0
 
             # fit for high solar activity
             xhigh = np.arange(0, thNPc) * thIPc
