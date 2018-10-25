@@ -914,10 +914,12 @@ def plotOptimalThresholdWindow(ssn_data,
             # Adding best points
             bestTh.append(OpMat[1:config.NBEST + 1, :])
 
+            print(OpMat[1:config.NBEST + 1, :])
         # If period not valid store an empty array
         else:
             bestTh.append([])
 
+        print('bestTh', bestTh)
         # Only plot real location if interval exists
         if ssn_data.vldIntr[siInx]:
             # Plotting real location
@@ -2287,8 +2289,15 @@ def plotSmoothedSeries(ssn_data,
             fontsize=18)
 
         MRE = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.max(Grp_Comp['CALOBS']),
-                       decimals=2)
-        ax2.text(0.005, 0.05, 'MNE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+                        decimals=2)
+        MREav = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.mean(Grp_Comp['CALOBS']),
+                        decimals=2)
+        slp = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] / Grp_Comp['CALOBS']), decimals=2)
+        ax2.text(0.005, 0.2, 'MNE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+                 transform=ax2.transAxes)
+        ax2.text(0.005, 0.125, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
+                 transform=ax2.transAxes)
+        ax2.text(0.005, 0.055, 'slp:' + str(slp), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
 
         ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])
@@ -2310,8 +2319,15 @@ def plotSmoothedSeries(ssn_data,
                    fontsize=18)
 
         MRE = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.max(Grp_Comp['CALOBS']),
-                       decimals=2)
-        ax1.text(0.005, 0.05, 'MNE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+                        decimals=2)
+        MREav = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.mean(Grp_Comp['CALOBS']),
+                        decimals=2)
+        slp = np.round(np.nanmean(Grp_Comp['MULTITH'] / Grp_Comp['CALOBSVI']), decimals=2)
+        ax1.text(0.005, 0.2, 'MNE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+                 transform=ax1.transAxes)
+        ax1.text(0.005, 0.125, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
+                 transform=ax1.transAxes)
+        ax1.text(0.005, 0.055, 'slp:' + str(slp), horizontalalignment='left', verticalalignment='center',
                  transform=ax1.transAxes)
 
         for Idx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
