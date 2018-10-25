@@ -29,9 +29,9 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 327
-SSN_ADF_Config.OBS_END_ID = 328
-SSN_ADF_Config.SKIP_OBS = [332, 385]
+SSN_ADF_Config.OBS_START_ID = 510
+SSN_ADF_Config.OBS_END_ID = 634
+SSN_ADF_Config.SKIP_OBS = [332, 385, 418, 574, 579, 635]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
@@ -41,9 +41,6 @@ SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
-
-# Output Folder
-output_path = 'Run-2018-10-25'
 
 ###################
 # PARSING ARGUMENTS#
@@ -88,6 +85,10 @@ if args.suppress_warnings:
 
 if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
+
+# Output Folder
+# output_path = 'Run-2018-10-19-SSN3'
+output_path = SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE)
 
 # Output CSV file path
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
@@ -188,6 +189,12 @@ def run_obs(CalObsID):
         return
 
     print("######## Starting run on observer {} ########\n".format(CalObsID))
+    print("ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
+    print("ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
+    if SSN_ADF_Config.DEN_TYPE == 'DTh':
+        pcText = "PL:" + str(SSN_ADF_Config.PCTLO) + ", PH:" + str(SSN_ADF_Config.PCTHI)
+        pcText += ", QD:" + str(SSN_ADF_Config.QTADF) + ", AD:" + str(SSN_ADF_Config.ACADF)
+        print(pcText + "\n")
 
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata

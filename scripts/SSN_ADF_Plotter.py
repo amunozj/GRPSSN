@@ -803,8 +803,8 @@ def plotOptimalThresholdWindow(ssn_data,
 
                         if config.DEN_TYPE == "DTh":
                             # defining solar activity level
-                            MMObsT = np.logical_and((SNdObsT > lowth), (SNdObsT < highth))
-                            MMREFT = np.logical_and((SNdREFT > lowth), (SNdREFT < highth))
+                            MMObsT = np.logical_and((SNdObsT >= lowth), (SNdObsT < highth))
+                            MMREFT = np.logical_and((SNdREFT >= lowth), (SNdREFT < highth))
 
                             HMObsT = (SNdObsT >= highth)
                             HMREFT = (SNdREFT >= highth)
@@ -860,7 +860,7 @@ def plotOptimalThresholdWindow(ssn_data,
                 , ssn_data.obsPlt['Y'][
                     np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
                                    ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                color=ssn_data.Clr[5 - siInx], linewidth=3
+                color=ssn_data.Clr[5 - siInx%6], linewidth=3
                 , alpha=0.2)
 
             # Best 5 points
@@ -876,7 +876,7 @@ def plotOptimalThresholdWindow(ssn_data,
                         , ssn_data.obsPlt['Y'][
                             np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
                                            ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                        color=ssn_data.Clr[5 - siInx], linewidth=3
+                        color=ssn_data.Clr[5 - siInx%6], linewidth=3
                         , alpha=0.2)
 
             # Best 5-10 points
@@ -892,7 +892,7 @@ def plotOptimalThresholdWindow(ssn_data,
                         , ssn_data.obsPlt['Y'][
                             np.logical_and(ssn_data.obsPlt['X'] >= np.min(TObsFYr),
                                            ssn_data.obsPlt['X'] < np.max(TObsFYr))],
-                        color=ssn_data.Clr[5 - siInx], linewidth=3
+                        color=ssn_data.Clr[5 - siInx%6], linewidth=3
                         , alpha=0.2)
 
             # Best 10-15 points
@@ -927,16 +927,16 @@ def plotOptimalThresholdWindow(ssn_data,
 
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), '-', zorder=11, linewidth=1,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
 
         # Axes properties
         ax1.set_ylabel('Area threshold (uHem)')
@@ -1570,16 +1570,16 @@ def plotMinEMD(ssn_data,
 
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), '-', zorder=11, linewidth=1,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, np.max(y)]), ':', zorder=11, linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
 
         # Axes properties
         ax1.set_ylabel('Distribution Distance')
@@ -1689,23 +1689,23 @@ def plotSimultaneousFit(ssn_data,
         # Plotting edges
         ax1.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), '-', zorder=11,
                  linewidth=1,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax1.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
 
         ax2.plot(np.array([1, 1]) * np.min(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), '-', zorder=11,
                  linewidth=1,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
         ax2.plot(np.array([1, 1]) * np.max(TObsFYr), np.array([0, ssn_data.thN * ssn_data.thI]), ':', zorder=11,
                  linewidth=3,
-                 color=ssn_data.Clr[5 - siInx])
+                 color=ssn_data.Clr[5 - siInx%6])
 
     for i in range(0, config.NBEST):
 

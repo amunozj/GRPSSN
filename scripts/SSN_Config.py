@@ -34,12 +34,12 @@ class SSN_ADF_Config:
     # DYNAMIC ADF OPTIONS
     # PCTLO defines the percentile of ADF months for which low activity conditions must hold
     # PCTHI defines the percentile of ADF months for which high activity conditions must hold
-    PCTLO = 85
-    PCTHI = 90
+    PCTLO = 100
+    PCTHI = 75
     # QTADF maximum ADF used to consider an interval quiet
     # ACADF minimum ADF used to consider an interval active
-    QTADF = 0.25
-    ACADF = 0.75
+    QTADF = 0
+    ACADF = 0.9
 
     # OVERWRITING AND SKIPPING PLOTS
     # Setting both flags to false will recreate and overwrite all plots for all observers
