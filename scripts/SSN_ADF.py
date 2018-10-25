@@ -39,8 +39,9 @@ class ssnADF(ssn_data):
                  thI=1,
                  thNPc=20,
                  thIPc=5,
-                 MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
-                 minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
+                 MoLngt=15,
+                 minObD=0.33,
+                 minADFmnth=5,
                  plot=True):
 
         """
@@ -60,6 +61,7 @@ class ssnADF(ssn_data):
         :param thIPc: Threshold increments for percentile fitting
         :param MoLngt: Duration of the interval ("month") used to calculate the ADF
         :param minObD: Minimum proportion of days with observation for a "month" to be considered valid
+        :param minADFmnth: Minimum number of months with ADF greater than 0 and lower than 1 for interval to be considered valid
         :param plot: Flag that enables the plotting and saving of relevant figures
         """
 
@@ -327,6 +329,7 @@ class ssnADF(ssn_data):
 
         self.ssn_data.MoLngt = MoLngt  # Duration of the interval ("month") used to calculate the ADF
         self.ssn_data.minObD = minObD  # Minimum proportion of days with observation for a "month" to be considered valid
+        self.ssn_data.minADFmnth = minADFmnth  # Minimum number of months with ADF greater than 0 and lower than 1 for interval to be considered valid
 
         self.ssn_data.REF_Dat = REF_Dat  # Reference data with individual group areas each day
         self.ssn_data.REF_Grp = REF_Grp  # Reference data with individual numbers of sunspot for each day
@@ -366,7 +369,8 @@ class ssnADF(ssn_data):
     # noinspection PyShadowingNames,PyShadowingNames
     def processObserver(self,
                         ssn_data,
-                        CalObs=412):
+                        CalObs=412,
+                        maxInt=6):
 
         """
         Function that breaks a given observer's data into "months", calculates the ADF and breaks it into rising and
@@ -374,6 +378,7 @@ class ssnADF(ssn_data):
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
         :param CalObs: Observer identifier denoting observer to be processed
+        :param maxInt: Maximum number of intervals that observer can have without being ignored
         :return:  (False) True if there are (no) valid intervals
         """
 
@@ -470,38 +475,27 @@ class ssnADF(ssn_data):
 
         # Finding internal endpoints and centers of Observer Intervals are included if their center is covered by the observer
 
-        # Defining boolean array of valid centers
-        # validCen = np.logical_and(ssn_data.cenPoints['SILSO'][:, 0] > np.min(yrOb),
-        #                           ssn_data.cenPoints['SILSO'][:, 0] < np.max(yrOb))
+        # Defining boolean array of valid endpoints
         validEnd = np.logical_and(ssn_data.endPoints['SILSO'][:, 0] > np.min(yrOb),
                                   ssn_data.endPoints['SILSO'][:, 0] < np.max(yrOb))
 
-        # Adding a True on the index prior to the first center to include the bracketing point
-        # validCen[0:validCen.shape[0] - 2] = np.logical_or(validCen[0:validCen.shape[0] - 2],
-        #                                                   validCen[1:validCen.shape[0] - 1])
+        # Adding a True on the index prior to the first endpoint to include the bracketing point
         validEnd[0:validEnd.shape[0] - 2] = np.logical_or(validEnd[0:validEnd.shape[0] - 2],
                                                           validEnd[1:validEnd.shape[0] - 1])
         # Adding a True on the index after the last endpoint to include the bracketing point
-        validEnd[2:validEnd.shape[0] - 0] = np.logical_or(validEnd[2:validEnd.shape[0] - 0],
+        validEnd[2:validEnd.shape[0] - 0] = np.logical_or(validEnd[2:validEnd.shape[0]],
                                                           validEnd[1:validEnd.shape[0] - 1])
 
-        # Adding a False at the beggining to account for the difference in size
-        # validCen = np.insert(validCen, 0, False)
-
         # Defining arrays
-        # endPoints = ssn_data.endPoints['SILSO'][validCen, :]
         endPoints = ssn_data.endPoints['SILSO'][validEnd, :]
-
-        cenPoints = (endPoints[0:len(endPoints) - 1, :] + endPoints[1:len(endPoints), :]) / 2
-        cenPoints[:, 1] = endPoints[1:endPoints.shape[0], 1]
 
         if endPoints.shape[0] == 0:
             endPoints = ssn_data.endPoints['SILSO'][0:2, :]
             endPoints[0, 0] = np.min(yrOb)
             endPoints[1, 0] = np.max(yrOb)
 
-        # cenPoints = (endPoints[1:endPoints.shape[0], :] + endPoints[0:endPoints.shape[0] - 1, :]) / 2
-        # cenPoints[:, 1] = endPoints[1:endPoints.shape[0], 1]
+        cenPoints = (endPoints[0:len(endPoints) - 1, :] + endPoints[1:len(endPoints), :]) / 2
+        cenPoints[:, 1] = endPoints[1:endPoints.shape[0], 1]
 
         # Identification of Min-Max Max-Min intervals with enough valid "months"
         vldIntr = np.zeros(cenPoints.shape[0], dtype=bool)
@@ -512,12 +506,12 @@ class ssnADF(ssn_data):
             if endPoints[siInx, 0] < np.min(ObsDat['FRACYEAR']):
                 print('Redefining left endpoint')
                 endPoints[siInx, 0] = np.min(ObsDat['FRACYEAR'])
-                cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
+                # cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
 
             if endPoints[siInx + 1, 0] > np.max(ObsDat['FRACYEAR']):
                 print('Redefining right endpoint')
                 endPoints[siInx + 1, 0] = np.max(ObsDat['FRACYEAR'])
-                cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
+                # cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
 
             print('Center:', np.round(cenPoints[siInx, 0], 2), 'Edges:', np.round(endPoints[siInx, 0], 2),
                   np.round(endPoints[siInx + 1, 0], 2))
@@ -540,15 +534,14 @@ class ssnADF(ssn_data):
             # Number of active days
             ADFObs = np.divide(GDObs, ODObs)
 
-            if np.sum(np.less(ADFObs, 1)) >= 5 and np.sum(np.greater(ADFObs, 0)) > 0 and len(ODObs) >= 12:
+            if np.sum(np.logical_and(ADFObs > 0, ADFObs < 1)) > ssn_data.minADFmnth:
                 # Marking interval as valid
                 vldIntr[siInx] = True
                 print('Valid interval. The number of monthly ADF equal to 0 is: ',
-                      np.sum(np.equal(ADFObs, 0)), '; The number of monthly ADF greater to 0 is: ', np.sum(np.greater(ADFObs, 0)))
+                      np.sum(np.equal(ADFObs, 0)), '; The number of monthly ADF greater to 0 is: ', np.sum(np.logical_and(ADFObs > 0, ADFObs < 1)))
 
             else:
-                print('INVALID interval. The number of monthly ADF equal to 0 is: ',
-                      np.sum(np.equal(ADFObs, 0)), '; The number of monthly ADF greater to 0 is: ', np.sum(np.greater(ADFObs, 0)))
+                print('INVALID interval. The number of months with ADF different than 0 and 1 are: ',)
 
             print(' ')
 
@@ -612,6 +605,10 @@ class ssnADF(ssn_data):
 
         if np.sum(vldIntr) == 0:
             print('done. NO VALID INTERVALS IN OBSERVER', flush=True)
+            print(' ', flush=True)
+            return False
+        elif np.sum(vldIntr) > maxInt:
+            print('done. Too many valid intervals in observer', flush=True)
             print(' ', flush=True)
             return False
         else:
@@ -1750,10 +1747,12 @@ class ssnADF(ssn_data):
 
         # Initializing variables for appending at the end if there is no overlap
         Grp_Comp = []
+        mreSth = np.nan
         mneSth = np.nan
-        mneSthav = np.nan
+        mreMth = np.nan
         mneMth = np.nan
-        mneMthav = np.nan
+        slpSth = np.nan
+        slpMth = np.nan
 
         if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
                 np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
@@ -1819,24 +1818,24 @@ class ssnADF(ssn_data):
             Grp_Comp['CALOBSVI'] = conv.convolve(Grp_Comp['CALOBSVI'].values, Gss_1D_ker, preserve_nan=True)
 
             # Calculate mean normalized error - single threshold
-            mneSth = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.max(Grp_Comp['CALOBS']),
+            mreSth = np.round(np.nanmean(np.divide(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS'], Grp_Comp['CALOBS'])),
                               decimals=2)
-            mneSthav = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.nanmean(Grp_Comp['CALOBS']),
+            mneSth = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.nanmean(Grp_Comp['CALOBS']),
                               decimals=2)
             slpSth = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] / Grp_Comp['CALOBS']), decimals=2)
 
             # Calculate mean normalized error - multi threshold
-            mneMth = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.max(Grp_Comp['CALOBS']),
+            mreMth = np.round(np.nanmean(np.divide(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI'], Grp_Comp['CALOBS'])),
                               decimals=2)
-            mneMthav = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.nanmean(Grp_Comp['CALOBS']),
+            mneMth = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.nanmean(Grp_Comp['CALOBS']),
                               decimals=2)
             slpMth = np.round(np.nanmean(Grp_Comp['MULTITH'] / Grp_Comp['CALOBSVI']), decimals=2)
 
         # Storing variables in object-----------------------------------------------------------------------------------
         ssn_data.Grp_Comp = Grp_Comp  # Smoothed reference and observer series
-        ssn_data.mneSth = mneSth  # Mean normalized error - single threshold
-        ssn_data.mneSthav = mneSthav # Mean normalized error with respect to observer group average - single threshold
+        ssn_data.mreSth = mreSth  # Mean normalized error - single threshold
+        ssn_data.mneSth = mneSth # Mean normalized error with respect to observer group average - single threshold
         ssn_data.slpSth = slpSth  # K-factor between observer and reference for single threshold
-        ssn_data.mneMth = mneMth  # Mean normalized error - multi threshold
-        ssn_data.mneMthav = mneMthav # Mean normalized error with respect to observer group average - multi threshold
+        ssn_data.mreMth = mreMth  # Mean normalized error - multi threshold
+        ssn_data.mneMth = mneMth # Mean normalized error with respect to observer group average - multi threshold
         ssn_data.slpMth = slpMth  # K-factor between observer and reference for multiple threshold

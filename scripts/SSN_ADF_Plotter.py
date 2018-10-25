@@ -2288,12 +2288,13 @@ def plotSmoothedSeries(ssn_data,
             edgecolor='none',
             fontsize=18)
 
-        MRE = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.max(Grp_Comp['CALOBS']),
-                        decimals=2)
+        MRE = np.round(np.nanmean(np.divide(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS'], Grp_Comp['CALOBS'])),
+                              decimals=2)
         MREav = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.mean(Grp_Comp['CALOBS']),
                         decimals=2)
         slp = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] / Grp_Comp['CALOBS']), decimals=2)
-        ax2.text(0.005, 0.2, 'MNE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+
+        ax2.text(0.005, 0.2, 'MRE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
         ax2.text(0.005, 0.125, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
@@ -2318,12 +2319,12 @@ def plotSmoothedSeries(ssn_data,
                    edgecolor='none',
                    fontsize=18)
 
-        MRE = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.max(Grp_Comp['CALOBS']),
-                        decimals=2)
+        MRE = np.round(np.nanmean(np.divide(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI'], Grp_Comp['CALOBS'])),
+                              decimals=2)
         MREav = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.mean(Grp_Comp['CALOBS']),
                         decimals=2)
         slp = np.round(np.nanmean(Grp_Comp['MULTITH'] / Grp_Comp['CALOBSVI']), decimals=2)
-        ax1.text(0.005, 0.2, 'MNE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+        ax1.text(0.005, 0.2, 'MRE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
                  transform=ax1.transAxes)
         ax1.text(0.005, 0.125, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
                  transform=ax1.transAxes)
