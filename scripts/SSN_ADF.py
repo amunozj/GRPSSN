@@ -307,7 +307,11 @@ class ssnADF(ssn_data):
             xlow = np.arange(0, thNPc) * thIPc
             xlow = xlow[np.isfinite(LowALlim)]
             ylow = LowALlim[np.isfinite(LowALlim)]
-            fitlow = np.polyfit(xlow, ylow, deg=1)
+            if xlow.shape[0] > 0:
+                fitlow = np.polyfit(xlow, ylow, deg=1)
+            else:
+                fitlow = np.array([0, 0])
+                xlow = 0
 
             # fit for high solar activity
             xhigh = np.arange(0, thNPc) * thIPc
@@ -958,9 +962,9 @@ class ssnADF(ssn_data):
 
                             if config.DEN_TYPE == "DTh":
                                 # Defining solar activity level
-                                MMObs = np.logical_and((SNdObsI[siInx][TIdx, SIdx, VldMnObs] > lowth),
+                                MMObs = np.logical_and((SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
                                                        (SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
-                                MMREF = np.logical_and((SNdREFI[siInx][TIdx, SIdx, VldMnREF] > lowth),
+                                MMREF = np.logical_and((SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
                                                        (SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
 
                                 HMObs = (SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)
@@ -1523,9 +1527,9 @@ class ssnADF(ssn_data):
 
                         if config.DEN_TYPE == "DTh":
                             # defining solar activity level
-                            MMObsII = np.logical_and((ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] > lowth),
+                            MMObsII = np.logical_and((ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
                                                      (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
-                            MMREFII = np.logical_and((ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] > lowth),
+                            MMREFII = np.logical_and((ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
                                                      (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
 
                             HMObsII = (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)

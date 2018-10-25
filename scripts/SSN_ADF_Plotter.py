@@ -803,8 +803,8 @@ def plotOptimalThresholdWindow(ssn_data,
 
                         if config.DEN_TYPE == "DTh":
                             # defining solar activity level
-                            MMObsT = np.logical_and((SNdObsT > lowth), (SNdObsT < highth))
-                            MMREFT = np.logical_and((SNdREFT > lowth), (SNdREFT < highth))
+                            MMObsT = np.logical_and((SNdObsT >= lowth), (SNdObsT < highth))
+                            MMREFT = np.logical_and((SNdREFT >= lowth), (SNdREFT < highth))
 
                             HMObsT = (SNdObsT >= highth)
                             HMREFT = (SNdREFT >= highth)
