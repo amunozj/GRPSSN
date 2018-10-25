@@ -29,21 +29,21 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 318
-SSN_ADF_Config.OBS_END_ID = 735
+SSN_ADF_Config.OBS_START_ID = 327
+SSN_ADF_Config.OBS_END_ID = 328
 SSN_ADF_Config.SKIP_OBS = [332, 385]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
-SSN_ADF_Config.DEN_TYPE = "DTh"
+SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
 
 # Output Folder
-output_path = 'Run-2018-10-18'
+output_path = 'Run-2018-10-25'
 
 ###################
 # PARSING ARGUMENTS#
@@ -171,8 +171,6 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  thIPc=5,  # Threshold increments for percentile fitting
                  MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                  minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
-                 vldIntThr=0.33,
-                 # Minimum proportion of valid "months" for a decaying or raising interval to be considered valid
                  plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
