@@ -1825,7 +1825,7 @@ class ssnADF(ssn_data):
             slpSth = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] / Grp_Comp['CALOBS']), decimals=2)
 
             # Calculate mean normalized error - multi threshold
-            mreMth = np.round(np.nanmean(np.divide(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI'], Grp_Comp['CALOBVI'])),
+            mreMth = np.round(np.nanmean(np.divide(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI'], Grp_Comp['CALOBSVI'])),
                               decimals=2)
             mneMth = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.nanmean(Grp_Comp['CALOBSVI']),
                               decimals=2)
