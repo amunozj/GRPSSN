@@ -506,12 +506,12 @@ class ssnADF(ssn_data):
             if endPoints[siInx, 0] < np.min(ObsDat['FRACYEAR']):
                 print('Redefining left endpoint')
                 endPoints[siInx, 0] = np.min(ObsDat['FRACYEAR'])
-                # cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
+                cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
 
             if endPoints[siInx + 1, 0] > np.max(ObsDat['FRACYEAR']):
                 print('Redefining right endpoint')
                 endPoints[siInx + 1, 0] = np.max(ObsDat['FRACYEAR'])
-                # cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
+                cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
 
             print('Center:', np.round(cenPoints[siInx, 0], 2), 'Edges:', np.round(endPoints[siInx, 0], 2),
                   np.round(endPoints[siInx + 1, 0], 2))
