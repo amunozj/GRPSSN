@@ -29,9 +29,9 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 592
-SSN_ADF_Config.OBS_END_ID = 593
-SSN_ADF_Config.SKIP_OBS = [332, 385]
+SSN_ADF_Config.OBS_START_ID = 336
+SSN_ADF_Config.OBS_END_ID = 634
+SSN_ADF_Config.SKIP_OBS = [332, 385, 418, 574, 579, 635]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
@@ -41,9 +41,6 @@ SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
-
-# Output Folder
-output_path = 'Run-2018-10-251'
 
 ###################
 # PARSING ARGUMENTS#
@@ -89,6 +86,10 @@ if args.suppress_warnings:
 if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
+# Output Folder
+output_path = 'Run-2018-10-25-SSN3-2'
+# output_path = SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE)
+
 # Output CSV file path
 output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
     SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
@@ -107,8 +108,13 @@ header = ['Observer',
           'SDThreshold',  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
           'AvThresholdS',  # Weighted threshold average based on the nBest matches for different intervals
           'SDThresholdS',  # Weighted threshold standard deviation based on the nBest matches for different intervals
+          # Smoothed series metrics
+          'mreSth',  # Mean relative error - single threshold
           'mneSth',  # Mean normalized error - single threshold
+          'KSth',  # K-factor - single threshold
+          'mreMth',  # Mean relative error - multi threshold
           'mneMth',  # Mean normalized error - multi threshold
+          'KMth',  # Mean normalized error - multi threshold
           # Common threshold
           'R2d',  # R square
           'Mean.Res',  # Mean residual
@@ -171,6 +177,7 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  thIPc=5,  # Threshold increments for percentile fitting
                  MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
                  minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
+                 minADFmnth=5,  # Minimum number of months with ADF greater than 0 and lower than 1 for interval to be considered valid
                  plot=plotSwitch)
 
 # Stores SSN metadata set in a SSN_ADF_Class
@@ -188,10 +195,17 @@ def run_obs(CalObsID):
         return
 
     print("######## Starting run on observer {} ########\n".format(CalObsID))
+    print("ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
+    print("ADF calculation flags: {} / {}\n".format(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
+    if SSN_ADF_Config.DEN_TYPE == 'DTh':
+        pcText = "PL:" + str(SSN_ADF_Config.PCTLO) + ", PH:" + str(SSN_ADF_Config.PCTHI)
+        pcText += ", QD:" + str(SSN_ADF_Config.QTADF) + ", AD:" + str(SSN_ADF_Config.ACADF)
+        print(pcText + "\n")
 
     # Processing observer
     obs_valid = ssn_adf.processObserver(ssn_data,  # SSN metadata
-                                        CalObs=CalObsID)  # Observer identifier denoting observer to be processed
+                                        CalObs=CalObsID,  # Observer identifier denoting observer to be processed
+                                        maxInt=6)  # Maximum number of intervals that observer can have without being ignored
 
     # Continue only if observer has valid intervals
     if obs_valid:
@@ -283,9 +297,13 @@ def run_obs(CalObsID):
                  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
                  ssn_data.wAvI,  # Weighted threshold average based on the nBest matches for different intervals
                  ssn_data.wSDI,
-                 # Weighted threshold standard deviation based on the nBest matches for different intervals
+                 # Smoothed series metrics
+                 ssn_data.mreSth,  # Mean relative error - single threshold
                  ssn_data.mneSth,  # Mean normalized error - single threshold
+                 ssn_data.slpSth,  # K-factor - single threshold
+                 ssn_data.mreMth,  # Mean relative error - multi threshold
                  ssn_data.mneMth,  # Mean normalized error - multi threshold
+                 ssn_data.slpMth,  # K-factor  - multi threshold
                  # Common threshold
                  ssn_data.mD['rSq'],  # R square
                  ssn_data.mD['mRes'],  # Mean residual
