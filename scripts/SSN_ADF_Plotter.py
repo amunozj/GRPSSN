@@ -371,8 +371,8 @@ def plotFitAl(ssn_data,
 
     ax1.scatter(xlow, ylow, alpha=1)
     ax1.scatter(xhigh, yhigh, alpha=1)
-    ax1.plot(xhigh, ssn_data.a1high * xhigh * ssn_data.thI + ssn_data.a0high)
-    ax1.plot(xlow, ssn_data.a1low * xlow * ssn_data.thI + ssn_data.a0low)
+    ax1.plot(xhigh, ssn_data.a1high * xhigh + ssn_data.a0high)
+    ax1.plot(xlow, ssn_data.a1low * xlow + ssn_data.a0low)
 
     ax1.set_xlabel('SN Threshold (uHem)')
     ax1.set_ylabel('Activity Level Limit (SSN)')
@@ -678,6 +678,8 @@ def plotOptimalThresholdWindow(ssn_data,
             # Find index of minimum inside sub-interval
             minYear = np.min(np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]))
             obsMinInx = (np.absolute(TObsFYr - ssn_data.cenPoints['OBS'][siInx, 0]) == minYear).nonzero()[0][0]
+            maxYear  = np.max(np.absolute(TObsFYr + ssn_data.cenPoints['OBS'][siInx, 0]))
+            obsMaxInx = (np.absolute(TObsFYr + ssn_data.cenPoints['OBS'][siInx, 0]) == maxYear).nonzero()[0][0]
 
             # Creating matrix for sorting and find the best combinations of threshold and shift
             OpMat = np.concatenate(
@@ -696,8 +698,10 @@ def plotOptimalThresholdWindow(ssn_data,
 
             # Calculate optimum threshold for real period of overlap if it exists
             # Check if real if interval is present in Observations
-            if (TObsFYr[obsMinInx] > np.min(ssn_data.REF_Dat['FRACYEAR'])) and (
-                    TObsFYr[obsMinInx] < np.max(ssn_data.REF_Dat['FRACYEAR'])):
+            if ((TObsFYr[obsMinInx] > np.min(ssn_data.REF_Dat['FRACYEAR'])) and (
+                    TObsFYr[obsMinInx] < np.max(ssn_data.REF_Dat['FRACYEAR']))) and (
+                (TObsFYr[obsMaxInx] > np.min(ssn_data.REF_Dat['FRACYEAR'])) and (
+                    TObsFYr[obsMaxInx] < np.max(ssn_data.REF_Dat['FRACYEAR']))):
 
                 # Check if first element is present in reference
                 if np.any(ssn_data.REF_Dat['ORDINAL'] == TObsOrd[0]):
@@ -919,7 +923,6 @@ def plotOptimalThresholdWindow(ssn_data,
         else:
             bestTh.append([])
 
-        print('bestTh', bestTh)
         # Only plot real location if interval exists
         if ssn_data.vldIntr[siInx]:
             # Plotting real location

@@ -444,6 +444,7 @@ class ssnADF(ssn_data):
 
         # Selecting the maximum integer amount of "months" out of the original data
         yrOb = ObsDat['FRACYEAR'].values
+        print('yrOb', yrOb)
         yrOb = yrOb[0:np.int(yrOb.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt]
 
         grpsOb = ObsDat['GROUPS'].values
@@ -638,6 +639,7 @@ class ssnADF(ssn_data):
 
         # Calculating Median for bins
         Ymedian = centers * np.nan
+
         for i in range(0, centers.shape[0]):
             ypoints = calRefT[np.logical_and(calObsT >= edges[i], calObsT <= edges[i + 1])]
             if ypoints.shape[0] > 0:
@@ -1166,6 +1168,7 @@ class ssnADF(ssn_data):
                 edges = np.arange(1, np.ceil(maxNPlt) * 1.05, (np.ceil(maxNPlt)) / Nbins) - (np.ceil(maxNPlt)) / Nbins / 2
                 centers = (edges[1:edges.shape[0]] + edges[0:edges.shape[0] - 1]) / 2
 
+
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
             # Analyze period only if valid
@@ -1260,6 +1263,7 @@ class ssnADF(ssn_data):
         ssn_data.DecMonths = dec_count  # Number of months in declining phase
 
         # Set the simultaneous threshold to the values for the valid interval if there is only one interval
+        # if len(calRef) == 1:
         if len(calRef) == 1:
             ssn_data.wAv = wAvI[ssn_data.vldIntr][0]
             ssn_data.wSD = wSDI[ssn_data.vldIntr][0]
@@ -1644,8 +1648,13 @@ class ssnADF(ssn_data):
                 'mRResM': np.nan}
 
         print('Calculating r-square if there is overlap between observer and reference...', end="", flush=True)
-        if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
-                np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+
+        # if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
+        #         np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+        if ((np.min(ssn_data.REF_Dat['ORDINAL']) <= np.max(ssn_data.ObsDat['ORDINAL'])) and (
+                np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL']))) or (
+                (np.max(ssn_data.REF_Dat['ORDINAL']) >= np.min(ssn_data.ObsDat['ORDINAL'])) and (
+                np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL']))):
 
             # Calculating number of groups in reference data for given threshold
             grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], wAv),
@@ -1754,6 +1763,7 @@ class ssnADF(ssn_data):
         slpSth = np.nan
         slpMth = np.nan
 
+
         if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
                 np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
 
@@ -1830,6 +1840,7 @@ class ssnADF(ssn_data):
             mneMth = np.round(np.nanmean(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI']) / np.nanmean(Grp_Comp['CALOBSVI']),
                               decimals=2)
             slpMth = np.round(np.nanmean(Grp_Comp['MULTITH'] / Grp_Comp['CALOBSVI']), decimals=2)
+
 
         # Storing variables in object-----------------------------------------------------------------------------------
         ssn_data.Grp_Comp = Grp_Comp  # Smoothed reference and observer series
