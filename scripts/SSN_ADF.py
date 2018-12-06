@@ -444,7 +444,6 @@ class ssnADF(ssn_data):
 
         # Selecting the maximum integer amount of "months" out of the original data
         yrOb = ObsDat['FRACYEAR'].values
-        print('yrOb', yrOb)
         yrOb = yrOb[0:np.int(yrOb.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt]
 
         grpsOb = ObsDat['GROUPS'].values
@@ -569,7 +568,7 @@ class ssnADF(ssn_data):
 
         # NEW MACHINE LEARNING PARAMETERS
         ssn_data.NumMonths = yrOb.shape[0]  # NUMBER OF MONTHS OBSERVED
-        ssn_data.ODobs = ODObs  # NUMBER OF DAYS WITH OBSERVATIONS
+        ssn_data.ODObs = ODObs  # NUMBER OF DAYS WITH OBSERVATIONS
 
         n_qui = ObsDat.loc[ObsDat.GROUPS == 0.0].shape[0]
         n_act = np.isfinite(ObsDat.loc[ObsDat.GROUPS > 0.0]).shape[0]
@@ -999,11 +998,11 @@ class ssnADF(ssn_data):
 
                             # Main ADF calculations
                             ADFObs, bins = np.histogram(ADF_Obs_fracI, bins=(np.arange(0,
-                                                                                       ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
+                                                        ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
                                                         density=True)
 
                             ADFREF, bins = np.histogram(ADF_REF_fracI, bins=(np.arange(0,
-                                                                                       ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
+                                                        ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
                                                         density=True)
 
                             EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
@@ -1262,9 +1261,10 @@ class ssnADF(ssn_data):
         ssn_data.RiseMonths = rise_count  # Number of months in rising phase
         ssn_data.DecMonths = dec_count  # Number of months in declining phase
 
+
         # Set the simultaneous threshold to the values for the valid interval if there is only one interval
-        # if len(calRef) == 1:
-        if len(calRef) == 1:
+        #if len(calRef) == 1:
+        if np.sum(ssn_data.vldIntr) == 1:
             ssn_data.wAv = wAvI[ssn_data.vldIntr][0]
             ssn_data.wSD = wSDI[ssn_data.vldIntr][0]
             ssn_data.mDOO = mDDT  # Metrics dictionary for common threshold, but only valid intervals
@@ -1337,6 +1337,7 @@ class ssnADF(ssn_data):
         """
             Update the list of indices
         """
+
         for index in range(len(indices_list) - 1, -1, -1):
 
             # If the indices equals the max values, the reset it and
@@ -1359,6 +1360,7 @@ class ssnADF(ssn_data):
                          distance between observer and reference ADFs for each sub-interval separately)
         :returns valShfInx, valShfLen:  Variables  with the indices and lengths to calculate the number of permutations
         """
+
         # Dictionary that will store valid shift indices for each sub-interval
         valShfInx = []
 
@@ -1743,6 +1745,7 @@ class ssnADF(ssn_data):
 
         return True
 
+
     def smoothedComparison(self,
                            ssn_data,
                            gssnKrnl=75):
@@ -1763,9 +1766,12 @@ class ssnADF(ssn_data):
         slpSth = np.nan
         slpMth = np.nan
 
-
-        if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
-                np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+        # if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
+        #         np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+        if ((np.min(ssn_data.REF_Dat['ORDINAL']) <= np.max(ssn_data.ObsDat['ORDINAL'])) and (
+                np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL']))) or (
+                (np.max(ssn_data.REF_Dat['ORDINAL']) >= np.min(ssn_data.ObsDat['ORDINAL'])) and (
+                np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL']))):
 
             # Creating variables for plotting and calculating difference
             Grp_Comp = ssn_data.REF_Dat[['FRACYEAR', 'ORDINAL', 'YEAR', 'MONTH', 'DAY']].copy()
@@ -1778,8 +1784,7 @@ class ssnADF(ssn_data):
             # Thresholded Ref Groups
             Grp_Comp['SINGLETH'] = np.nansum(
                 np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], ssn_data.wAv),
-                axis=1).astype(
-                float)
+                axis=1).astype(float)
             Grp_Comp['SINGLETHVI'] = Grp_Comp['SINGLETH']
 
             # Multi-Threshold Ref Groups
