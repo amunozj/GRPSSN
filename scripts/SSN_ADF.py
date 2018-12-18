@@ -489,10 +489,12 @@ class ssnADF(ssn_data):
         # Defining arrays
         endPoints = ssn_data.endPoints['SILSO'][validEnd, :]
 
+        #if endPoints.shape[0] == 0:
+        #    endPoints = ssn_data.endPoints['SILSO'][0:2, :]
+        #    endPoints[0, 0] = np.min(yrOb)
+        #    endPoints[1, 0] = np.max(yrOb)
         if endPoints.shape[0] == 0:
-            endPoints = ssn_data.endPoints['SILSO'][0:2, :]
-            endPoints[0, 0] = np.min(yrOb)
-            endPoints[1, 0] = np.max(yrOb)
+            endPoints = np.array([[np.min(yrOb), 1], [np.max(yrOb), -1]])
 
         cenPoints = (endPoints[0:len(endPoints) - 1, :] + endPoints[1:len(endPoints), :]) / 2
         cenPoints[:, 1] = endPoints[1:endPoints.shape[0], 1]
