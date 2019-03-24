@@ -489,10 +489,7 @@ class ssnADF(ssn_data):
         # Defining arrays
         endPoints = ssn_data.endPoints['SILSO'][validEnd, :]
 
-        #if endPoints.shape[0] == 0:
-        #    endPoints = ssn_data.endPoints['SILSO'][0:2, :]
-        #    endPoints[0, 0] = np.min(yrOb)
-        #    endPoints[1, 0] = np.max(yrOb)
+
         if endPoints.shape[0] == 0:
             endPoints = np.array([[np.min(yrOb), 1], [np.max(yrOb), -1]])
 
@@ -508,12 +505,10 @@ class ssnADF(ssn_data):
             if endPoints[siInx, 0] < np.min(ObsDat['FRACYEAR']):
                 print('Redefining left endpoint')
                 endPoints[siInx, 0] = np.min(ObsDat['FRACYEAR'])
-                # cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
 
             if endPoints[siInx + 1, 0] > np.max(ObsDat['FRACYEAR']):
                 print('Redefining right endpoint')
                 endPoints[siInx + 1, 0] = np.max(ObsDat['FRACYEAR'])
-                # cenPoints[siInx, 0] = (endPoints[siInx, 0] + endPoints[siInx + 1, 0]) / 2
 
             print('Center:', np.round(cenPoints[siInx, 0], 2), 'Edges:', np.round(endPoints[siInx, 0], 2),
                   np.round(endPoints[siInx + 1, 0], 2))
@@ -533,7 +528,8 @@ class ssnADF(ssn_data):
 
             # Number of days with groups
             GDObs = np.sum(np.greater(TgrpsOb, 0), axis=1)
-            # Number of active days
+
+            # Active day fraction
             ADFObs = np.divide(GDObs, ODObs)
 
             if np.sum(np.logical_and(ADFObs > 0, ADFObs < 1)) > ssn_data.minADFmnth:
