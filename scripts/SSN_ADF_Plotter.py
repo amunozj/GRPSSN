@@ -2281,6 +2281,7 @@ def plotSmoothedSeries(ssn_data,
         ax2.plot(pltx, Grp_Comp['SINGLETHVI'], 'k:', linewidth=4, alpha=1)
 
         ax2.plot(pltx, Grp_Comp['CALOBS'], color=ssn_data.Clr[4], linewidth=4, alpha=1)
+        ax2.plot(pltx, Grp_Comp['SINGLETHreal'], 'g--', linewidth=2, alpha=1)
 
         ax2.set_xlim(left=np.min(ssn_data.ObsDat['FRACYEAR']) - 7, right=np.max(ssn_data.ObsDat['FRACYEAR']) + 7)
         ax2.set_ylim(bottom=0, top=maxplt * 1.25)
@@ -2291,9 +2292,8 @@ def plotSmoothedSeries(ssn_data,
                  verticalalignment='center', transform=ax2.transAxes)
         ax2.legend(
             ['Smoothed Ref. GN', 'Smoothed Ref. GN - Single Threshold', 'Smoothed Ref. GN - Single Threshold Valid',
-             'Smoothed GN for ' + ssn_data.NamObs.capitalize()], loc='upper center', ncol=2, frameon=True,
-            edgecolor='none',
-            fontsize=18)
+             'Smoothed GN for ' + ssn_data.NamObs.capitalize(), 'Smoothed Ref. GN - Real Threshold'],
+            loc='upper center', ncol=2, frameon=True, edgecolor='none', fontsize=18)
 
         MRE = np.round(np.nanmean(np.divide(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS'], Grp_Comp['CALOBS'])),
                               decimals=2)
@@ -2301,12 +2301,20 @@ def plotSmoothedSeries(ssn_data,
                         decimals=2)
         slp = np.round(np.nanmean(Grp_Comp['SINGLETHVI'] / Grp_Comp['CALOBS']), decimals=2)
 
-        ax2.text(0.005, 0.2, 'MRE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+        # ax2.text(0.005, 0.2, 'MRE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
+        #          transform=ax2.transAxes)
+        # ax2.text(0.005, 0.125, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
+        #          transform=ax2.transAxes)
+        # ax2.text(0.005, 0.055, 'slp:' + str(slp), horizontalalignment='left', verticalalignment='center',
+        #          transform=ax2.transAxes)
+        ax2.text(0.005, 0.275, 'MRE:' + str(MRE), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
-        ax2.text(0.005, 0.125, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
+        ax2.text(0.005, 0.2, 'MNEav:' + str(MREav), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
-        ax2.text(0.005, 0.055, 'slp:' + str(slp), horizontalalignment='left', verticalalignment='center',
+        ax2.text(0.005, 0.125, 'slp:' + str(slp), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
+        ax2.text(0.005, 0.05, 'Real Sth: ' + str(np.round(ssn_data.realSth, decimals=0)), horizontalalignment='left',
+                 verticalalignment='center', transform=ax2.transAxes)
 
         ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])
 
@@ -2316,15 +2324,15 @@ def plotSmoothedSeries(ssn_data,
         ax1.plot(pltx, Grp_Comp['MULTITH'], color=ssn_data.Clr[2], linestyle=':', linewidth=4, alpha=1)
 
         ax1.plot(pltx, Grp_Comp['CALOBSVI'], color=ssn_data.Clr[4], linewidth=4, alpha=1)
+        ax1.plot(pltx, Grp_Comp['SINGLETHreal'], 'g--', linewidth=2, alpha=1)
 
         ax1.set_xlim(left=np.min(ssn_data.ObsDat['FRACYEAR']) - 7, right=np.max(ssn_data.ObsDat['FRACYEAR']) + 7)
         ax1.set_ylim(bottom=0, top=maxplt * 1.25)
         ax1.set_ylabel('Average Number of Groups')
 
         ax1.legend(['Smoothed Ref. GN', 'Smoothed Ref. GN - Single Threshold', 'Smoothed Ref. GN - Multi-Threshold',
-                    'Smoothed GN for ' + ssn_data.NamObs.capitalize()], loc='upper center', ncol=2, frameon=True,
-                   edgecolor='none',
-                   fontsize=18)
+                    'Smoothed GN for ' + ssn_data.NamObs.capitalize()], 'Smoothed Ref. GN - Real Threshold',
+                   loc='upper center', ncol=2, frameon=True, edgecolor='none', fontsize=18)
 
         MRE = np.round(np.nanmean(np.divide(Grp_Comp['MULTITH'] - Grp_Comp['CALOBSVI'], Grp_Comp['CALOBS'])),
                               decimals=2)
