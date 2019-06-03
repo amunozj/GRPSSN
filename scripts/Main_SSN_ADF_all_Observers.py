@@ -29,9 +29,9 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 417
-SSN_ADF_Config.OBS_END_ID = 631 #634
-SSN_ADF_Config.SKIP_OBS = [] #[332, 385, 418, 574, 579, 635]
+SSN_ADF_Config.OBS_START_ID = 318
+SSN_ADF_Config.OBS_END_ID = 634
+SSN_ADF_Config.SKIP_OBS = [332, 385, 418, 574, 579, 635]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
@@ -87,7 +87,7 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
 # Output Folder
-output_path = 'Run-2018-11-14-SSN3-2'
+output_path = 'Run-2019-04-03-SSN3-2'
 # output_path = SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE)
 
 # Output CSV file path
