@@ -108,6 +108,7 @@ header = ['Observer',
           'SDThreshold',  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
           'AvThresholdS',  # Weighted threshold average based on the nBest matches for different intervals
           'SDThresholdS',  # Weighted threshold standard deviation based on the nBest matches for different intervals
+          'RealThreshold',  # Best threshold identified by minimizing difference between smoothed series
           # Smoothed series metrics
           'mreSth',  # Mean relative error - single threshold
           'mneSth',  # Mean normalized error - single threshold
@@ -291,10 +292,10 @@ def run_obs(CalObsID):
         y_row = [ssn_data.CalObs,
                  ssn_data.NamObs,
                  ssn_data.wAv,  # Weighted threshold average based on the nBest matches for all simultaneous fits
-                 ssn_data.wSD,
-                 # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+                 ssn_data.wSD,  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
                  ssn_data.wAvI,  # Weighted threshold average based on the nBest matches for different intervals
-                 ssn_data.wSDI,
+                 ssn_data.wSDI,  # Weighted threshold standard deviation based on the nBest matches for different intervals
+                 ssn_data.realSth,  # Best threshold identified by minimizing difference between smoothed series
                  # Smoothed series metrics
                  ssn_data.mreSth,  # Mean relative error - single threshold
                  ssn_data.mneSth,  # Mean normalized error - single threshold

@@ -1752,6 +1752,7 @@ class ssnADF(ssn_data):
         mneMth = np.nan
         slpSth = np.nan
         slpMth = np.nan
+        realSth = np.nan
 
         # if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
         #         np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
@@ -1761,8 +1762,8 @@ class ssnADF(ssn_data):
                 np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL']))):
 
             # To define the real threshold
-            refth = 0
-            realth = 200
+            refth = ssn_data.thS
+            realth = ssn_data.thE
             niter = 0
             MNESth = 1
 
