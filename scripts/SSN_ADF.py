@@ -1840,7 +1840,7 @@ class ssnADF(ssn_data):
             niter = 0
             MNESth = 1
 
-            while MNESth != 0 or niter >= 7:
+            while MNESth != 0 and niter <= 8:
 
                 niter += 1
                 tmp_Grp_Comp = Grp_Comp.copy()
