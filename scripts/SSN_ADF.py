@@ -1754,111 +1754,11 @@ class ssnADF(ssn_data):
         slpMth = np.nan
         realSth = np.nan
 
-        # if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
-        #         np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+
         if ((np.min(ssn_data.REF_Dat['ORDINAL']) <= np.max(ssn_data.ObsDat['ORDINAL'])) and (
                 np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL']))) or (
                 (np.max(ssn_data.REF_Dat['ORDINAL']) >= np.min(ssn_data.ObsDat['ORDINAL'])) and (
                 np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL']))):
-
-            # To define the real threshold
-            refth = ssn_data.thS
-            realth = ssn_data.thE
-            niter = 0
-            MNESth = 1
-
-            while MNESth != 0 or niter >= 10:
-
-                niter - + 1
-
-                # Creating variables for plotting
-                Grp_Comp = ssn_data.REF_Dat[['FRACYEAR', 'ORDINAL', 'YEAR', 'MONTH', 'DAY']].copy()
-
-                # Raw Ref Groups
-                Grp_Comp['GROUPS'] = np.nansum(
-                    np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], refth), axis=1)
-                Grp_Comp['GROUPS'] = Grp_Comp['GROUPS'].astype(float)
-
-                # Thresholded Ref Groups
-                Grp_Comp['SINGLETH'] = np.nansum(
-                    np.greater(ssn_data.REF_Dat.values[
-                               :, 3:ssn_data.REF_Dat.values.shape[1] - 3], realth), axis=1).astype(float)
-                Grp_Comp['SINGLETHVI'] = Grp_Comp['SINGLETH']
-
-                # Half realth Thresholded Ref Groups
-                Grp_Comp['SINGLETHhalf'] = np.nansum(
-                    np.greater(ssn_data.REF_Dat.values[
-                               :, 3:ssn_data.REF_Dat.values.shape[1] - 3], (realth + refth) / 2), axis=1).astype(float)
-                Grp_Comp['SINGLETHVIhalf'] = Grp_Comp['SINGLETHhalf']
-
-                # Multi-Threshold Ref Groups
-                Grp_Comp['MULTITH'] = Grp_Comp['SINGLETH'] * np.nan
-                for n in range(0, ssn_data.cenPoints['OBS'].shape[0]):
-
-                    # Plot only if the period is valid and has overlap
-                    if ssn_data.vldIntr[n] and np.sum(
-                            np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
-                                           ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][n + 1, 0])) > 0:
-                        intervalmsk = np.logical_and(Grp_Comp['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
-                                                     Grp_Comp['FRACYEAR'] < ssn_data.endPoints['OBS'][n + 1, 0])
-                        Grp_Comp.loc[intervalmsk, 'MULTITH'] = np.nansum(
-                            np.greater(ssn_data.REF_Dat.values[intervalmsk, 3:ssn_data.REF_Dat.values.shape[1] - 3],
-                                       ssn_data.wAvI[n]), axis=1).astype(float)
-
-                # Calibrated Observer
-                Grp_Comp['CALOBS'] = Grp_Comp['SINGLETH'] * np.nan
-                Grp_Comp.loc[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values), 'CALOBS'] = \
-                    ssn_data.ObsDat.loc[
-                        np.in1d(ssn_data.ObsDat['ORDINAL'].values, ssn_data.REF_Dat['ORDINAL'].values), 'GROUPS'].values
-
-                # Imprinting Calibrated Observer NaNs
-                nanmsk = np.isnan(Grp_Comp['CALOBS'])
-                Grp_Comp.loc[
-                    np.logical_and(np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values),
-                                   nanmsk), ['CALOBS', 'SINGLETH',
-                                             'MULTITH']] = np.nan
-
-                # Imprinting Reference NaNs
-                Grp_Comp.loc[np.isnan(ssn_data.REF_Dat['AREA1']), ['CALOBS', 'SINGLETH', 'MULTITH']] = np.nan
-
-                # Adding a Calibrated observer only in valid intervals
-                Grp_Comp['CALOBSVI'] = Grp_Comp['CALOBS']
-                Grp_Comp.loc[np.isnan(Grp_Comp['MULTITH']), 'CALOBSVI'] = np.nan
-
-                Grp_Comp.loc[np.isnan(Grp_Comp['CALOBS']), 'SINGLETHVI'] = np.nan
-
-                # Smoothing for plotting
-                Gss_1D_ker = conv.Gaussian1DKernel(gssnKrnl)
-                Grp_Comp['GROUPS'] = conv.convolve(Grp_Comp['GROUPS'].values, Gss_1D_ker, preserve_nan=True)
-                Grp_Comp['SINGLETH'] = conv.convolve(Grp_Comp['SINGLETH'].values, Gss_1D_ker, preserve_nan=True)
-                Grp_Comp['SINGLETHVI'] = conv.convolve(Grp_Comp['SINGLETHVI'].values, Gss_1D_ker, preserve_nan=True)
-                Grp_Comp['SINGLETHVIhalf'] = conv.convolve(Grp_Comp['SINGLETHVIhalf'].values, Gss_1D_ker,
-                                                           preserve_nan=True)
-                Grp_Comp['MULTITH'] = conv.convolve(Grp_Comp['MULTITH'].values, Gss_1D_ker, preserve_nan=True)
-                Grp_Comp['CALOBS'] = conv.convolve(Grp_Comp['CALOBS'].values, Gss_1D_ker, preserve_nan=True)
-                Grp_Comp['CALOBSVI'] = conv.convolve(Grp_Comp['CALOBSVI'].values, Gss_1D_ker, preserve_nan=True)
-
-
-                MNESthref = np.round(
-                    np.nanmean(Grp_Comp['GROUPS'] - Grp_Comp['CALOBS']) / np.nanmean(Grp_Comp['CALOBS']), decimals=2)
-                MNESth = np.round(
-                    np.nanmean(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS']) / np.nanmean(Grp_Comp['CALOBS']),
-                    decimals=2)
-                MNESthhalf = np.round(
-                    np.nanmean(Grp_Comp['SINGLETHVIhalf'] - Grp_Comp['CALOBS']) / np.nanmean(Grp_Comp['CALOBS']),
-                    decimals=2)
-
-                signref = np.sign(MNESthref)
-                # signrefthre = np.sign(MNESth)
-                signrefthrehalf = np.sign(MNESthhalf)
-
-                if signref != signrefthrehalf:
-                    realth = (realth + refth) / 2
-                elif signref == signrefthrehalf:
-                    refth = (realth + refth) / 2
-
-            realSth = (realth + refth) / 2
-
 
             # Creating variables for plotting and calculating difference
             Grp_Comp = ssn_data.REF_Dat[['FRACYEAR', 'ORDINAL', 'YEAR', 'MONTH', 'DAY']].copy()
@@ -1873,12 +1773,6 @@ class ssnADF(ssn_data):
                 np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], ssn_data.wAv),
                 axis=1).astype(float)
             Grp_Comp['SINGLETHVI'] = Grp_Comp['SINGLETH']
-
-            # Real thresholded Ref Groups
-            Grp_Comp['SINGLETH'] = np.nansum(
-                np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], realSth),
-                axis=1).astype(float)
-            Grp_Comp['SINGLETHreal'] = Grp_Comp['SINGLETH']
 
             # Multi-Threshold Ref Groups
             Grp_Comp['MULTITH'] = Grp_Comp['SINGLETH'] * np.nan
@@ -1921,10 +1815,10 @@ class ssnADF(ssn_data):
             Grp_Comp['GROUPS'] = conv.convolve(Grp_Comp['GROUPS'].values, Gss_1D_ker, preserve_nan=True)
             Grp_Comp['SINGLETH'] = conv.convolve(Grp_Comp['SINGLETH'].values, Gss_1D_ker, preserve_nan=True)
             Grp_Comp['SINGLETHVI'] = conv.convolve(Grp_Comp['SINGLETHVI'].values, Gss_1D_ker, preserve_nan=True)
-            Grp_Comp['SINGLETHreal'] = conv.convolve(Grp_Comp['SINGLETHreal'].values, Gss_1D_ker, preserve_nan=True)
             Grp_Comp['MULTITH'] = conv.convolve(Grp_Comp['MULTITH'].values, Gss_1D_ker, preserve_nan=True)
             Grp_Comp['CALOBS'] = conv.convolve(Grp_Comp['CALOBS'].values, Gss_1D_ker, preserve_nan=True)
             Grp_Comp['CALOBSVI'] = conv.convolve(Grp_Comp['CALOBSVI'].values, Gss_1D_ker, preserve_nan=True)
+            Grp_Comp['SINGLETHreal'] = Grp_Comp['CALOBSVI']*np.nan
 
             # Calculate mean normalized error - single threshold
             mreSth = np.round(np.nanmean(np.divide(Grp_Comp['SINGLETHVI'] - Grp_Comp['CALOBS'], Grp_Comp['CALOBS'])),
@@ -1940,6 +1834,59 @@ class ssnADF(ssn_data):
                               decimals=2)
             slpMth = np.round(np.nanmean(Grp_Comp['MULTITH'] / Grp_Comp['CALOBSVI']), decimals=2)
 
+            # Finding "real" threshold
+            refth = 0
+            realth = ssn_data.thE + 20
+            niter = 0
+            MNESth = 1
+
+            while MNESth != 0 or niter >= 7:
+
+                niter += 1
+                tmp_Grp_Comp = Grp_Comp.copy()
+
+               # Thresholded Ref Groups
+                tmp_Grp_Comp['SINGLETH'] = np.nansum(
+                    np.greater(ssn_data.REF_Dat.values[
+                               :, 3:ssn_data.REF_Dat.values.shape[1] - 3], realth), axis=1).astype(float)
+
+                # Half realth Thresholded Ref Groups
+                tmp_Grp_Comp['SINGLETHhalf'] = np.nansum(
+                    np.greater(ssn_data.REF_Dat.values[
+                               :, 3:ssn_data.REF_Dat.values.shape[1] - 3], (realth + refth) / 2), axis=1).astype(float)
+
+                # Imprinting Valid Interval NaNs
+                nanmsk = np.isnan(Grp_Comp['MULTITH'])
+                tmp_Grp_Comp.loc[nanmsk, ['SINGLETH', 'SINGLETHhalf']] = np.nan           
+
+                # Smoothing
+                tmp_Grp_Comp['SINGLETH'] = conv.convolve(tmp_Grp_Comp['SINGLETH'].values, Gss_1D_ker, preserve_nan=True)
+                tmp_Grp_Comp['SINGLETHhalf'] = conv.convolve(tmp_Grp_Comp['SINGLETHhalf'].values, Gss_1D_ker, preserve_nan=True)
+
+                MNESthref = np.round(
+                    np.nanmean(Grp_Comp['GROUPS'] - Grp_Comp['CALOBS']) / np.nanmean(Grp_Comp['CALOBS']), decimals=2)
+                MNESth = np.round(
+                    np.nanmean(tmp_Grp_Comp['SINGLETH'] - Grp_Comp['CALOBSVI']) / np.nanmean(Grp_Comp['CALOBSVI']),
+                    decimals=2)
+                MNESthhalf = np.round(
+                    np.nanmean(tmp_Grp_Comp['SINGLETHhalf'] - Grp_Comp['CALOBSVI']) / np.nanmean(Grp_Comp['CALOBSVI']),
+                    decimals=2)
+
+                signref = np.sign(MNESthref)
+                signrefthrehalf = np.sign(MNESthhalf)
+
+                if signref != signrefthrehalf:
+                    realth = (realth + refth) / 2
+                elif signref == signrefthrehalf:
+                    refth = (realth + refth) / 2
+
+            realSth = (realth + refth) / 2
+
+            Grp_Comp['SINGLETHreal'] = np.nansum(
+                np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], realSth),
+                axis=1).astype(float)
+
+            Grp_Comp['SINGLETHreal'] = conv.convolve(Grp_Comp['SINGLETHreal'].values, Gss_1D_ker, preserve_nan=True)
 
         # Storing variables in object-----------------------------------------------------------------------------------
         ssn_data.Grp_Comp = Grp_Comp  # Smoothed reference and observer series
