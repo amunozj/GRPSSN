@@ -1839,7 +1839,7 @@ class ssnADF(ssn_data):
             highth = ssn_data.thE + 20
             niter = 0
 
-            while niter <= 10:
+            while niter <= 15:
 
                 niter += 1
                 tmp_Grp_Comp = Grp_Comp.copy()
@@ -1850,20 +1850,20 @@ class ssnADF(ssn_data):
                                :, 3:ssn_data.REF_Dat.values.shape[1] - 3], highth), axis=1).astype(float)
 
                 # Half highth Thresholded Ref Groups
-                tmp_Grp_Comp['LOWTH'] = np.nansum(
+                tmp_Grp_Comp['HALFTH'] = np.nansum(
                     np.greater(ssn_data.REF_Dat.values[
-                               :, 3:ssn_data.REF_Dat.values.shape[1] - 3], lowth), axis=1).astype(float)
+                               :, 3:ssn_data.REF_Dat.values.shape[1] - 3], (lowth+highth)/2), axis=1).astype(float)
 
                 # Imprinting Valid Interval NaNs
                 nanmsk = np.isnan(Grp_Comp['MULTITH'])
-                tmp_Grp_Comp.loc[nanmsk, ['HIGHTH', 'LOWTH']] = np.nan           
+                tmp_Grp_Comp.loc[nanmsk, ['HIGHTH', 'HALFTH']] = np.nan
 
                 # Smoothing
                 tmp_Grp_Comp['HIGHTH'] = conv.convolve(tmp_Grp_Comp['HIGHTH'].values, Gss_1D_ker, preserve_nan=True)
-                tmp_Grp_Comp['LOWTH'] = conv.convolve(tmp_Grp_Comp['LOWTH'].values, Gss_1D_ker, preserve_nan=True)
+                tmp_Grp_Comp['HALFTH'] = conv.convolve(tmp_Grp_Comp['HALFTH'].values, Gss_1D_ker, preserve_nan=True)
 
                 MNEThrH = np.nanmean(tmp_Grp_Comp['HIGHTH'] - Grp_Comp['CALOBSVI'])
-                MNEThrL = np.nanmean(tmp_Grp_Comp['LOWTH'] - Grp_Comp['CALOBSVI'])
+                MNEThrL = np.nanmean(tmp_Grp_Comp['HALFTH'] - Grp_Comp['CALOBSVI'])
 
                 signErrH = np.sign(MNEThrH)
                 signErrL = np.sign(MNEThrL)
