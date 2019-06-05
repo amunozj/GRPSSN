@@ -91,6 +91,8 @@ def plotSearchWindows(ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    plt.close(fig)
+
     print('done.', flush=True)
     print(' ', flush=True)
 
@@ -300,6 +302,8 @@ def plotHistSnADF(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    plt.close(fig)
+
     print('done.', flush=True)
     print(' ', flush=True)
 
@@ -378,6 +382,8 @@ def plotFitAl(ssn_data,
     ax1.set_ylabel('Activity Level Limit (SSN)')
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -553,6 +559,8 @@ def plotActiveVsObserved(ssn_data,
     ax3.set_ylim(bottom=0, top=np.ceil(np.nanmax(AvGrpOb)) + 1)
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -959,6 +967,8 @@ def plotOptimalThresholdWindow(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    plt.close(fig)
+
     print('done.', flush=True)
     print(' ', flush=True)
 
@@ -1089,6 +1099,8 @@ def plotDistributionOfThresholdsMI(ssn_data,
                     ax1.set_ylim(bottom=ssn_data.thS, top=ssn_data.thE)
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -1331,6 +1343,8 @@ def plotIntervalScatterPlots(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    plt.close(fig)
+
     print('done.', flush=True)
     print(' ', flush=True)
 
@@ -1461,6 +1475,8 @@ def plotIntervalDistributions(ssn_data,
                     ax1.set_ylabel('PDF')
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -1609,6 +1625,8 @@ def plotMinEMD(ssn_data,
                      transform=ax1.transAxes)
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -1777,6 +1795,8 @@ def plotSimultaneousFit(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    plt.close(fig)
+
     print('done.', flush=True)
     print(' ', flush=True)
 
@@ -1879,6 +1899,8 @@ def plotDistributionOfThresholds(ssn_data,
     ax1.set_ylim(bottom=ssn_data.thS, top=ssn_data.thE)
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -2012,6 +2034,8 @@ def plotSingleThresholdDistributions(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    plt.close(fig)
+
     print('done.', flush=True)
     print(' ', flush=True)
 
@@ -2099,6 +2123,8 @@ def plotSingleThresholdScatterPlot(ssn_data,
         ax1.set_title('Single threshold - All days of overlap')
 
         fig.savefig(figure_path, bbox_inches='tight')
+
+        plt.close(fig)
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -2213,6 +2239,8 @@ def plotMultiThresholdScatterPlot(ssn_data,
         plotHistSqrtSSN(ssn_data, ax2, tcalRef, tcalObs, 'Variable')
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
@@ -2361,6 +2389,8 @@ def plotSmoothedSeries(ssn_data,
                          horizontalalignment='center', verticalalignment='center')
 
     fig.savefig(figure_path, bbox_inches='tight')
+
+    plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
