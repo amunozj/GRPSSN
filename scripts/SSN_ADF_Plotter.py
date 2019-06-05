@@ -2317,7 +2317,7 @@ def plotSmoothedSeries(ssn_data,
                  transform=ax2.transAxes)
         ax2.text(0.005, 0.125, 'slp:' + str(slp), horizontalalignment='left', verticalalignment='center',
                  transform=ax2.transAxes)
-        ax2.text(0.005, 0.05, 'Real Sth: ' + str(np.round(ssn_data.realSth, decimals=0)), horizontalalignment='left',
+        ax2.text(0.005, 0.05, 'Real Threshold: ' + str(np.round(ssn_data.realThr, decimals=0)), horizontalalignment='left',
                  verticalalignment='center', transform=ax2.transAxes)
 
         ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh, pxy / fszv])

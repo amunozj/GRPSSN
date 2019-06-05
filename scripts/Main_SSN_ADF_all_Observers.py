@@ -37,7 +37,7 @@ SSN_ADF_Config.SKIP_OBS = []
 SSN_ADF_Config.NUM_TYPE = "ADF"
 
 # Quantity to use in the denominator:  Observed days "OBS" or the full month "FULLM", or dynamic ADF "DTh"
-SSN_ADF_Config.DEN_TYPE = "DTh"
+SSN_ADF_Config.DEN_TYPE = "OBS"
 
 # Flag to turn on saving of figures
 plotSwitch = True
@@ -87,7 +87,7 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
 # Output Folder
-output_path = 'Run-2019-04-03-SSN3-2'
+output_path = 'Run-2019-06-04'
 # output_path = SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE)
 
 # Output CSV file path
@@ -295,7 +295,7 @@ def run_obs(CalObsID):
                  ssn_data.wSD,  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
                  ssn_data.wAvI,  # Weighted threshold average based on the nBest matches for different intervals
                  ssn_data.wSDI,  # Weighted threshold standard deviation based on the nBest matches for different intervals
-                 ssn_data.realSth,  # Best threshold identified by minimizing difference between smoothed series
+                 ssn_data.realThr,  # Best threshold identified by minimizing difference between smoothed series
                  # Smoothed series metrics
                  ssn_data.mreSth,  # Mean relative error - single threshold
                  ssn_data.mneSth,  # Mean normalized error - single threshold
