@@ -1752,7 +1752,7 @@ class ssnADF(ssn_data):
         mneMth = np.nan
         slpSth = np.nan
         slpMth = np.nan
-        realThr = np.nan
+        realTh = np.nan
 
 
         if ((np.min(ssn_data.REF_Dat['ORDINAL']) <= np.max(ssn_data.ObsDat['ORDINAL'])) and (
@@ -1835,7 +1835,7 @@ class ssnADF(ssn_data):
             slpMth = np.round(np.nanmean(Grp_Comp['MULTITH'] / Grp_Comp['CALOBSVI']), decimals=2)
 
             # Finding "real" threshold
-            RealTh = ssn_data.thE*2
+            realTh = ssn_data.thE*2
             MNEReal = 1e10
 
             # Going through different thresholds
@@ -1859,10 +1859,10 @@ class ssnADF(ssn_data):
 
                 if MNEThr < MNEReal:
                     MNEReal = MNEThr
-                    RealTh = Thr
+                    realTh = Thr
 
             Grp_Comp['SINGLETHreal'] = np.nansum(
-                np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], RealTh),
+                np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], realTh),
                 axis=1).astype(float)
 
             Grp_Comp['SINGLETHreal'] = conv.convolve(Grp_Comp['SINGLETHreal'].values, Gss_1D_ker, preserve_nan=True)
@@ -1875,4 +1875,4 @@ class ssnADF(ssn_data):
         ssn_data.mreMth = mreMth  # Mean normalized error - multi threshold
         ssn_data.mneMth = mneMth # Mean normalized error with respect to observer group average - multi threshold
         ssn_data.slpMth = slpMth  # K-factor between observer and reference for multiple threshold
-        ssn_data.realThr = realThr  # Real threshold for single threshold
+        ssn_data.realThr = realTh  # Real threshold for single threshold
