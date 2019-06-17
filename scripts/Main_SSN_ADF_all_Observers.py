@@ -31,7 +31,7 @@ args, leftovers = parser.parse_known_args()
 # Observer ID range and who to skip
 SSN_ADF_Config.OBS_START_ID = 318
 SSN_ADF_Config.OBS_END_ID = 634
-SSN_ADF_Config.SKIP_OBS = []
+SSN_ADF_Config.SKIP_OBS = [574, 579]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
 SSN_ADF_Config.NUM_TYPE = "ADF"
@@ -172,9 +172,9 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                        'size': 21},
                  dt=10,  # Temporal Stride in days
                  phTol=2,  # Cycle phase tolerance in years
-                 thS=5,  # Starting threshold
-                 thE=130, # Ending Threshold
-                 thI=2,  # Threshold increments
+                 thS=1,  # Starting threshold
+                 thE=120, # Ending Threshold
+                 thI=1,  # Threshold increments
                  thNPc=20,  # Number of thresholds including 0 for percentile fitting
                  thIPc=5,  # Threshold increments for percentile fitting
                  MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
