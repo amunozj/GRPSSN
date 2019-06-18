@@ -1476,8 +1476,6 @@ class ssnADF(ssn_data):
                     # Calculating minimum distance
                     y = ssn_data.EMDD[siInx][TIdx,:]
                     sortIn = np.argsort(y)
-                    xy,  x_ind, y_ind = np.intersect1d(sortIn, cadMaskI, return_indices=True)
-                    sortIn = sortIn[np.sort(x_ind)]
 
                     # Appending valid indices to variable and storing length
                     valShfInx.append(sortIn[0:NTshifts])
