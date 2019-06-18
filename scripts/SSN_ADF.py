@@ -1423,7 +1423,7 @@ class ssnADF(ssn_data):
 
         return valShfInx, valShfLen
 
-    def ADFsimultaneousEMD(self,
+    def ADFsimultaneousEMDNew(self,
                            ssn_data,
                            NTshifts=15,
                            maxIter=5000):
@@ -1716,6 +1716,362 @@ class ssnADF(ssn_data):
 
         # Storing variables in object-----------------------------------------------------------------------------------
         ssn_data.NTshifts = NTshifts  # Number of best distances to use per interval
+        ssn_data.maxIter = maxIter  # Maximum number of iterations accepted
+        ssn_data.EMDComb = EMDComb  # Variable storing best simultaneous fits
+
+        ssn_data.wAv = wAv  # Weighted threshold average based on the nBest matches for all simultaneous fits
+        ssn_data.wSD = wSD  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+
+        ssn_data.mD = mD  # metrics dictionary for common threshold
+        ssn_data.mDOO = mDOO  # metrics dictionary for common threshold, but only the valid intervals
+
+        # --------------------------------------------------------------------------------------------------------------
+
+        print('done.', flush=True)
+        print(' ', flush=True)
+
+        return True
+
+
+    def ADFsimultaneousEMD(self,
+                           ssn_data,
+                           NTshifts=20,
+                           maxInterv=4,
+                           addNTshifts=20,
+                           maxIter=160001):
+
+        """
+        Function that peforms the EMD optimization by allowing variations of shift while keeping thresholds constant
+        VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
+        :param NTshifts:  Number of best distances to use per interval
+        :param maxInterv:  Maximum number of separate intervals after which we force the root calculation
+        :param addNTshifts:  Additional number of distances to use per each number of intervals below maxInterv
+        :param maxIter:  Maximum number of iterations accepted
+        :return plot_EMD_obs: whether to plot or not the figures
+        """
+
+        print('Identify valid shifts for simultaneous fitting...', flush=True)
+
+        # Add a more iterations for fewer valid intervals
+        if np.sum(ssn_data.vldIntr) <= maxInterv:
+            NTshifts = int(NTshifts + addNTshifts * (maxInterv - np.sum(ssn_data.vldIntr)))
+            NTshifts = int(np.min([NTshifts, np.power(maxIter, 1 / np.sum(ssn_data.vldIntr))]))
+        else:
+            NTshifts = int(np.power(maxIter, 1 / np.sum(ssn_data.vldIntr)))
+
+        # Dictionary that will store valid shift indices for each sub-interval
+        valShfInx = []
+
+        # Dictionary that will store the length of the index array for each sub-interval
+        valShfLen = []
+
+        # Going through different sub-intervals
+        for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+            # Plot only if period is valid
+            if ssn_data.vldIntr[siInx]:
+
+                # Calculating minimum distance
+                # y = np.amin(ssn_data.EMDD[siInx], axis=0)
+                y = np.mean(ssn_data.EMDD[siInx], axis=0)
+                sortIn = np.argsort(y)
+
+                # Appending valid indices to variable and storing length
+                valShfInx.append(sortIn[0:NTshifts])
+                valShfLen.append(valShfInx[siInx].shape[0])
+
+            # If period is not valid append ones so that they don't add to the permutations
+            else:
+                valShfInx.append(1)
+                valShfLen.append(1)
+
+        # Saving lengths as array
+        valShfLen = np.array(valShfLen)
+
+        print('Number of valid combinations:', np.nanprod(valShfLen))
+        print(valShfLen)
+
+        print('done.', flush=True)
+        print(' ', flush=True)
+
+        if np.nanprod(valShfLen) < 0:
+            ssn_data.disThres = np.nan  # Threshold above which we will ignore timeshifts
+            ssn_data.EMDComb = np.nan  # Variable storing best simultaneous fits
+
+            ssn_data.wAv = np.nan  # Weighted threshold average based on the nBest matches for all simultaneous fits
+            ssn_data.wSD = np.nan  # Weighted threshold standard deviation based on the nBest matches for all simultaneous fits
+
+            ssn_data.rSq = np.nan  # R square of the y=x line using a common threshold
+            ssn_data.mRes = np.nan  # Mean residual of the y=x line using a common threshold
+            ssn_data.mRRes = np.nan  # Mean relative residual of the y=x line using a common threshold
+
+            ssn_data.rSqOO = np.nan  # R square of the y=x line using a common threshold, but only the valid intervals
+            ssn_data.mResOO = np.nan  # Mean residual of the y=x line using a common threshold, but only the valid intervals
+            ssn_data.mRResOO = np.nan  # Mean relative residual of the y=x line using a common threshold, but only the valid intervals
+
+            return False
+
+        print('Optimize EMD by varying shifts, but using the same threshold...', flush=True)
+
+        # Allocating variable to store top matches
+        EMDComb = np.ones((ssn_data.cenPoints['OBS'].shape[0] + 2, config.NBEST)) * 10000
+
+        print('EMDComb', EMDComb.shape)
+
+        # Identify first valid index
+        fstVldIn = ssn_data.vldIntr.nonzero()[0][0]
+
+        print('start', datetime.datetime.now(), '0 of', valShfLen[fstVldIn] - 1)
+
+        comProg = 0
+        for comb in self._mrange(valShfLen):
+
+            # Inform user of progress
+            if comb[fstVldIn] != comProg:
+                print(comb[fstVldIn], 'of', valShfLen[fstVldIn] - 1, 'at', datetime.datetime.now())
+                comProg = comb[fstVldIn]
+
+            # Going through different thresholds for a given combination of shifts
+            for TIdx in range(0, ssn_data.thN):
+
+                if config.DEN_TYPE == 'DTh':
+                    highth = ssn_data.a1high * TIdx * ssn_data.thI + ssn_data.a0high
+                    if TIdx * ssn_data.thI >= ssn_data.minVldThr:
+                        lowth = ssn_data.a1low * TIdx * ssn_data.thI + ssn_data.a0low
+                    else:
+                        lowth = 0
+
+                # Initializing arrays for joining the ADFs of all sub-intervals
+                ADFObsI = np.array([])
+                ADFREFI = np.array([])
+
+                # Joining ADF from all sub-interval for the specified shifts
+                for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+                    # Append only if period is valid
+                    if ssn_data.vldIntr[siInx]:
+
+                        # Time Shift Index
+                        SIdx = valShfInx[siInx][comb[siInx]]
+
+                        VldMnObs = ssn_data.ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
+                        # Numerator and denominator for given observer
+                        numADObsII = ssn_data.GDObsI[siInx][TIdx, SIdx, VldMnObs]
+                        numQDObsII = ssn_data.MoLngt - ssn_data.QDObsI[siInx][TIdx, SIdx, VldMnObs]
+                        denFMObsII = ssn_data.GDObsI[siInx][TIdx, SIdx, VldMnObs] * 0 + ssn_data.MoLngt
+                        denODObsII = ssn_data.ODObsI[siInx][TIdx, SIdx, VldMnObs]
+
+                        VldMnREF = ssn_data.ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
+                        # Numerator and denominator for reference
+                        numADREFII = ssn_data.GDREFI[siInx][TIdx, SIdx, VldMnREF]
+                        numQDREFII = ssn_data.MoLngt - ssn_data.QDREFI[siInx][TIdx, SIdx, VldMnREF]
+                        denFMREFII = ssn_data.GDREFI[siInx][TIdx, SIdx, VldMnREF] * 0 + ssn_data.MoLngt
+                        denODREFII = ssn_data.ODREFI[siInx][TIdx, SIdx, VldMnREF]
+
+                        if config.NUM_TYPE == "ADF":
+                            numObsII = numADObsII
+                            numREFII = numADREFII
+                        else:
+                            numObsII = numQDObsII
+                            numREFII = numQDREFII
+
+                        if config.DEN_TYPE == "OBS":
+                            denObsII = denODObsII
+                            denREFII = denODREFII
+                        else:
+                            denObsII = denFMObsII
+                            denREFII = denFMREFII
+
+                        if config.DEN_TYPE == "DTh":
+                            # defining solar activity level
+                            MMObsII = np.logical_and((ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
+                                                     (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
+                            MMREFII = np.logical_and((ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
+                                                     (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
+
+                            HMObsII = (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)
+                            HMREFII = (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= highth)
+
+                            # Default numerators and denominators
+                            numObsII = numADObsII
+                            numREFII = numADREFII
+                            denObsII = denFMObsII
+                            denREFII = denFMREFII
+
+                            numObsII[HMObsII] = numQDObsII[HMObsII]
+                            numREFII[HMREFII] = numQDREFII[HMREFII]
+
+                            denObsII[MMObsII] = denODObsII[MMObsII]
+                            denREFII[MMREFII] = denODREFII[MMREFII]
+
+                        # ADF calculations
+                        ADF_Obs_fracII = np.divide(numObsII, denObsII)
+                        ADF_REF_fracII = np.divide(numREFII, denREFII)
+
+                        # If it is the first interval re-create the arrays
+                        if ADFObsI.shape[0] == 0:
+                            ADFObsI = ADF_Obs_fracII
+                            ADFREFI = ADF_REF_fracII
+
+                        # If not, append ADF from all sub-interval for the specified shifts
+                        else:
+                            ADFObsI = np.append(ADFObsI, ADF_Obs_fracII)
+                            ADFREFI = np.append(ADFREFI, ADF_REF_fracII)
+
+                            # Calculating Earth Mover's Distance
+                ADFObs, bins = np.histogram(ADFObsI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
+                                            density=True)
+                ADFREF, bins = np.histogram(ADFREFI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
+                                            density=True)
+                tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
+
+                if np.any(EMDComb[0, :] > tmpEMD):
+
+                    # Initializing array to be inserted
+                    insArr = [tmpEMD, TIdx]
+
+                    # Append shifts
+                    for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+                        # Append only if period is valid
+                        if ssn_data.vldIntr[siInx]:
+                            insArr.append(valShfInx[siInx][comb[siInx]])
+                        # If not, append dummy
+                        else:
+                            insArr.append(np.nan)
+
+                    # Convert to numpy array
+                    insArr = np.array(insArr)
+
+                    # Determining index for insertion
+                    insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
+
+                    # Insert values
+                    EMDComb = np.insert(EMDComb, insInx, insArr, axis=1)
+
+                    # Remove last element
+                    EMDComb = EMDComb[:, 0:config.NBEST]
+
+        print('done.', flush=True)
+        print(' ', flush=True)
+
+        print('Calculating average threshold and its standard deviation...', end="", flush=True)
+
+        # Only plot if using more than one theshold
+        if config.NBEST == 1:
+
+            wAv = EMDComb[1, :][0] * ssn_data.thI
+            wSD = np.nan
+
+        else:
+            # Constructing weights
+            alph = 1 - (EMDComb[0, :] - np.min(EMDComb[0, :])) / (np.max(EMDComb[0, :]) - np.min(EMDComb[0, :]))
+
+            # Weighted average
+            wAv = np.sum(np.multiply(alph, EMDComb[1, :])) / np.sum(alph)
+
+            # Weighted Standard Deviation
+            wSD = np.sqrt(np.sum(np.multiply(alph, np.power(EMDComb[1, :] - wAv, 2))) / np.sum(alph))
+
+        print('done.', flush=True)
+        print(' ', flush=True)
+
+        # Metrics dictionary for common threshold
+        mD = {'rSq': np.nan,
+              'mRes': np.nan,
+              'mRRes': np.nan,
+              'rSqM': np.nan,
+              'mResM': np.nan,
+              'mRResM': np.nan}
+
+        # Common threshold, but only the valid intervals
+        mDOO = {'rSq': np.nan,
+                'mRes': np.nan,
+                'mRRes': np.nan,
+                'rSqM': np.nan,
+                'mResM': np.nan,
+                'mRResM': np.nan}
+
+        print('Calculating r-square if there is overlap between observer and reference...', end="", flush=True)
+
+        # if (np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL'])) or (
+        #         np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL'])):
+        if ((np.min(ssn_data.REF_Dat['ORDINAL']) <= np.max(ssn_data.ObsDat['ORDINAL'])) and (
+                np.max(ssn_data.REF_Dat['ORDINAL']) >= np.max(ssn_data.ObsDat['ORDINAL']))) or (
+                (np.max(ssn_data.REF_Dat['ORDINAL']) >= np.min(ssn_data.ObsDat['ORDINAL'])) and (
+                np.min(ssn_data.REF_Dat['ORDINAL']) <= np.min(ssn_data.ObsDat['ORDINAL']))):
+
+            # Calculating number of groups in reference data for given threshold
+            grpsREFw = np.nansum(np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], wAv),
+                                 axis=1).astype(float)
+            grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+
+            # Selecting the days of overlap with calibrated observer
+            grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, ssn_data.ObsDat['ORDINAL'].values)]
+            grpsObsw = ssn_data.ObsDat.loc[
+                np.in1d(ssn_data.ObsDat['ORDINAL'].values, ssn_data.REF_Dat['ORDINAL'].values), 'GROUPS'].values
+
+            # Removing NaNs
+            grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
+            grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
+
+            grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
+            grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
+
+            # Calculating goodness of fit of Y=X
+            mD = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
+
+            # Calculate R^2 and residual using only valid periods
+            calRefN = np.array([0])
+            calObsN = np.array([0])
+            for n in range(0, ssn_data.cenPoints['OBS'].shape[0]):
+
+                # Plot only if the period is valid and has overlap
+                if ssn_data.vldIntr[n] and np.sum(
+                        np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
+                                       ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][
+                                           n + 1, 0])) > 0:
+                    # Calculating number of groups in reference data for given threshold
+                    grpsREFw = np.nansum(
+                        np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3], wAv),
+                        axis=1).astype(float)
+                    grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
+
+                    # Selecting observer's interval
+                    TObsDat = ssn_data.ObsDat.loc[
+                        np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
+                                       ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][n + 1, 0])
+                        , 'GROUPS'].values.copy()
+                    TObsOrd = ssn_data.ObsDat.loc[
+                        np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][n, 0],
+                                       ssn_data.ObsDat['FRACYEAR'] < ssn_data.endPoints['OBS'][n + 1, 0])
+                        , 'ORDINAL'].values.copy()
+
+                    # Selecting the days of overlap with calibrated observer
+                    grpsREFw = grpsREFw[np.in1d(ssn_data.REF_Dat['ORDINAL'].values, TObsOrd)]
+                    grpsObsw = TObsDat[np.in1d(TObsOrd, ssn_data.REF_Dat['ORDINAL'].values)]
+
+                    # Removing NaNs
+                    grpsREFw = grpsREFw[np.isfinite(grpsObsw)]
+                    grpsObsw = grpsObsw[np.isfinite(grpsObsw)]
+
+                    grpsObsw = grpsObsw[np.isfinite(grpsREFw)]
+                    grpsREFw = grpsREFw[np.isfinite(grpsREFw)]
+
+                    # Appending to calibrated arrays?
+                    calRefN = np.append(calRefN, grpsREFw)
+                    calObsN = np.append(calObsN, grpsObsw)
+
+            # Calculating goodness of fit of Y=X
+            mDOO = self._Calculate_R2M_MRes_MRRes(grpsObsw, grpsREFw, ssn_data.centers, ssn_data.edges)
+
+        print('done.', flush=True)
+        print(' ', flush=True)
+
+        # Storing variables in object-----------------------------------------------------------------------------------
+        ssn_data.NTshifts = NTshifts  # Number of best distances to use per interval
+        ssn_data.maxInterv = maxInterv  # Maximum number of separate intervals after which we force the root calculation
+        ssn_data.addNTshifts = addNTshifts  # Additional number of distances to use per each number of intervals below maxInterv
         ssn_data.maxIter = maxIter  # Maximum number of iterations accepted
         ssn_data.EMDComb = EMDComb  # Variable storing best simultaneous fits
 
