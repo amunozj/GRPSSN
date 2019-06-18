@@ -1832,7 +1832,7 @@ class ssnADF(ssn_data):
                 comProg = comb[fstVldIn]
 
             # Going through different thresholds for a given combination of shifts
-            for TIdx in range(0, ssn_data.thN):
+            for TIdx, Thr in enumerate(ssn_data.Thresholds):
 
                 if config.DEN_TYPE == 'DTh':
                     highth = ssn_data.a1high * TIdx * ssn_data.thI + ssn_data.a0high
