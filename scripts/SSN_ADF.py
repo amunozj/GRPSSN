@@ -1423,7 +1423,7 @@ class ssnADF(ssn_data):
 
         return valShfInx, valShfLen
 
-    def ADFsimultaneousEMDNew(self,
+    def ADFsimultaneousEMD(self,
                            ssn_data,
                            NTshifts=15,
                            maxIter=5000):
@@ -1457,12 +1457,27 @@ class ssnADF(ssn_data):
             # Going through different sub-intervals
             for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
-                # Plot only if period is valid
+
+                # Defining mask based on the interval type (rise or decay)
+                if ssn_data.cenPoints['OBS'][siInx, 1] > 0:
+                    cadMaskI = ssn_data.risMask['INDEX']
+                else:
+                    cadMaskI = ssn_data.decMask['INDEX']
+
+                # If we want to ignore overlaps
+                if ssn_data.noOvrlpSw:
+                    Ovrlp = np.array(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                                                    ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0]).to_numpy().nonzero()[0])
+                    cadMaskI = np.setdiff1d(cadMaskI, Ovrlp)
+
+                # Process only if period is valid
                 if ssn_data.vldIntr[siInx]:
 
                     # Calculating minimum distance
-                    y = np.amin(ssn_data.EMDD[siInx], axis=0)
+                    y = ssn_data.EMDD[siInx][TIdx,:]
                     sortIn = np.argsort(y)
+                    xy,  x_ind, y_ind = np.intersect1d(sortIn, cadMaskI, return_indices=True)
+                    sortIn = sortIn[np.sort(x_ind)]
 
                     # Appending valid indices to variable and storing length
                     valShfInx.append(sortIn[0:NTshifts])
@@ -1479,7 +1494,6 @@ class ssnADF(ssn_data):
             print('Threshold ', Thr, ' - Number of valid combinations:', np.nanprod(valShfLen))
             print(valShfLen)
 
-            comProg = 0
             for comb in self._mrange(valShfLen):
 
                 if config.DEN_TYPE == 'DTh':
@@ -1733,7 +1747,7 @@ class ssnADF(ssn_data):
         return True
 
 
-    def ADFsimultaneousEMD(self,
+    def ADFsimultaneousEMD2(self,
                            ssn_data,
                            NTshifts=20,
                            maxInterv=4,
