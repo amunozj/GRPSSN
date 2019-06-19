@@ -1745,6 +1745,12 @@ def plotSimultaneousFit(ssn_data,
             else:
                 cadMaskI = ssn_data.decMask['INDEX']
 
+            # If we want to ignore overlaps
+            if ssn_data.noOvrlpSw:
+                Ovrlp = np.array(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                                                ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][siInx + 1, 0]).to_numpy().nonzero()[0])
+                cadMaskI = np.setdiff1d(cadMaskI, Ovrlp)
+
             Year = ssn_data.REF_Dat['FRACYEAR'].values[cadMaskI]
 
             # Append only if period is valid
@@ -1969,6 +1975,13 @@ def plotSingleThresholdDistributions(ssn_data,
             cadMaskI = ssn_data.risMask['INDEX']
         else:
             cadMaskI = ssn_data.decMask['INDEX']
+
+        # If we want to ignore overlaps
+        if ssn_data.noOvrlpSw:
+            Ovrlp = np.array(np.logical_and(ssn_data.REF_Dat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
+                                            ssn_data.REF_Dat['FRACYEAR'] < ssn_data.endPoints['OBS'][
+                                                siInx + 1, 0]).to_numpy().nonzero()[0])
+            cadMaskI = np.setdiff1d(cadMaskI, Ovrlp)
 
         Year = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI]
 

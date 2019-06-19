@@ -1474,7 +1474,7 @@ class ssnADF(ssn_data):
                 if ssn_data.vldIntr[siInx]:
 
                     # Calculating minimum distance
-                    y = ssn_data.EMDD[siInx][TIdx,:]
+                    y = ssn_data.EMDD[siInx][TIdx, :]
                     sortIn = np.argsort(y)
 
                     # Appending valid indices to variable and storing length
