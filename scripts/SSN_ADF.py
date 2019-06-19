@@ -695,6 +695,7 @@ class ssnADF(ssn_data):
     def ADFscanningWindowEMD(self,
                              ssn_data,
                              noOvrlpSw = True,
+                             fulActSw = True,
                              Dis_Pow=2):
 
         """
@@ -704,6 +705,7 @@ class ssnADF(ssn_data):
 
         :param ssn_data: ssn_data class object storing SSN metadata
         :param noOvrlpSw: Switch that forces the code to ignore the true overlapping phase in calibration if present
+        :param fulActSw: Switch that sets whether ADF = 1 are included in the distribution calculations or not
         :param Dis_Pow: Power index used to define the distance matrix for EMD calculation
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """
@@ -712,6 +714,9 @@ class ssnADF(ssn_data):
 
         # Reducing number of valid intervals to maximum allowed.  This is done here so that the ignored intervals are marked clearly in the plots
         ssn_data.vldIntr[np.isnan(ssn_data.vldIntr)] = 0
+
+        # Setting the bin edges for EMD calculation
+        EMDbins = (np.arange(0, ssn_data.MoLngt + 1 + fulActSw) - 0.5) / ssn_data.MoLngt
 
         # Creating Storing dictionaries
         # Number of days with groups
@@ -1027,13 +1032,9 @@ class ssnADF(ssn_data):
                             ADF_REF_fracI = np.divide(numREF, denREF)
 
                             # Main ADF calculations
-                            ADFObs, bins = np.histogram(ADF_Obs_fracI, bins=(np.arange(0,
-                                                        ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-                                                        density=True)
+                            ADFObs, bins = np.histogram(ADF_Obs_fracI, bins=EMDbins, density=True)
 
-                            ADFREF, bins = np.histogram(ADF_REF_fracI, bins=(np.arange(0,
-                                                        ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-                                                        density=True)
+                            ADFREF, bins = np.histogram(ADF_REF_fracI, bins=EMDbins, density=True)
 
                             EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
                                                   Dis.astype(np.float64))
@@ -1267,6 +1268,8 @@ class ssnADF(ssn_data):
         ssn_data.EMDD = EMDD  # Variable that stores the EMD between the reference and the observer for each interval, threshold, and window shift
         ssn_data.EMDtD = EMDtD  # Variable that stores the windowshift matching EMDD for each interval, threshold, and window shift
         ssn_data.EMDthD = EMDthD  # Variable that stores the threshold matching EMDD for each interval, threshold, and window shift
+
+        ssn_data.EMDbins = EMDbins  # Bin edges for EMD calculation
 
         ssn_data.Dis = Dis  # Distance matrix used to calcualte the EMD
 
@@ -1579,10 +1582,8 @@ class ssnADF(ssn_data):
                             ADFREFI = np.append(ADFREFI, ADF_REF_fracII)
 
                             # Calculating Earth Mover's Distance
-                ADFObs, bins = np.histogram(ADFObsI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-                                            density=True)
-                ADFREF, bins = np.histogram(ADFREFI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-                                            density=True)
+                ADFObs, bins = np.histogram(ADFObsI, bins=ssn_data.EMDbins, density=True)
+                ADFREF, bins = np.histogram(ADFREFI, bins=ssn_data.EMDbins, density=True)
                 tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
 
                 if np.any(EMDComb[0, :] > tmpEMD):
@@ -1931,10 +1932,8 @@ class ssnADF(ssn_data):
                             ADFREFI = np.append(ADFREFI, ADF_REF_fracII)
 
                             # Calculating Earth Mover's Distance
-                ADFObs, bins = np.histogram(ADFObsI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-                                            density=True)
-                ADFREF, bins = np.histogram(ADFREFI, bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt,
-                                            density=True)
+                ADFObs, bins = np.histogram(ADFObsI, bins=ssn_data.EMDbins, density=True)
+                ADFREF, bins = np.histogram(ADFREFI, bins=ssn_data.EMDbins, density=True)
                 tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
 
                 if np.any(EMDComb[0, :] > tmpEMD):

@@ -829,11 +829,11 @@ def plotOptimalThresholdWindow(ssn_data,
                         # Calculating Earth Mover's Distance
                         ADFObsDis, bins = np.histogram(
                             ADF_Obs_fracT[ODObsT / ssn_data.MoLngt >= ssn_data.minObD],
-                            bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
+                            bins=ssn_data.EMDbins, density=True)
 
                         ADFREFDis, bins = np.histogram(
                             ADF_REF_fracT[ODREFT / ssn_data.MoLngt >= ssn_data.minObD],
-                            bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=True)
+                            bins=ssn_data.EMDbins, density=True)
 
                         tmp = emd(ADFREFDis.astype(np.float64), ADFObsDis.astype(np.float64),
                                   ssn_data.Dis.astype(np.float64))
@@ -1455,7 +1455,7 @@ def plotIntervalDistributions(ssn_data,
                             TIdx, SIdx, ssn_data.ODObsI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
                         ssn_data.ODObsI[n][
                             TIdx, SIdx, ssn_data.ODObsI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
-                        bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False, color='0.5',
+                        bins=ssn_data.EMDbins, density=False, color='0.5',
                         alpha=.6)
 
                     (xAD, yAD) = histOutline(np.divide(
@@ -1463,7 +1463,7 @@ def plotIntervalDistributions(ssn_data,
                             TIdx, SIdx, ssn_data.ODREFI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
                         ssn_data.ODREFI[n][
                             TIdx, SIdx, ssn_data.ODREFI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
-                        bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False)
+                        bins=ssn_data.EMDbins, density=False)
                     ax1.plot(xAD, yAD, color=ssn_data.Clr[4], linewidth=3)
 
                     ax1.text(0.02, 0.96, 'From ' + str(np.round(ssn_data.endPoints['OBS'][n, 0], decimals=1)) + ' to '
@@ -2033,10 +2033,9 @@ def plotSingleThresholdDistributions(ssn_data,
 
     # Calculating Earth Mover's Distance
     ax1.hist(ADFObsI,
-             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False, color='0.5', alpha=.6)
+             bins=ssn_data.EMDbins, density=False, color='0.5', alpha=.6)
 
-    (xAD, yAD) = histOutline(ADFREFI,
-                             bins=(np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt, density=False)
+    (xAD, yAD) = histOutline(ADFREFI, bins=ssn_data.EMDbins, density=False)
     ax1.plot(xAD, yAD, color=ssn_data.Clr[4], linewidth=3)
 
     ax1.text(0.015, 0.96, txt1 + '\n' + txt2 + '\nTh: ' + str(int(ssn_data.wAv)), horizontalalignment='left',

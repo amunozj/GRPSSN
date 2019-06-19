@@ -87,7 +87,7 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
 # Output Folder
-output_path = 'Run-2019-06-04'
+output_path = 'Test'
 # output_path = SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE)
 
 # Output CSV file path
@@ -219,7 +219,8 @@ def run_obs(CalObsID):
         # Calculating the Earth's Mover Distance using sliding windows for different intervals
         obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data,
                                                        noOvrlpSw=True,  # Switch that forces the code to ignore the true overlapping phase in calibration if present
-                                                       Dis_Pow=1)  # Power index used to define the distance matrix for EMD calculation
+                                                       fulActSw=False, # Switch that sets whether ADF = 1 are included in the distribution calculations or not
+                                                       Dis_Pow=1)       # Power index used to define the distance matrix for EMD calculation
 
         if plotSwitch:
             # Plot active vs. observed days
