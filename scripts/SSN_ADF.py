@@ -921,8 +921,8 @@ class ssnADF(ssn_data):
         EMDthiD = []
 
         # Calculation of distance matrix to be used in the Earth Movers Metric
-        x = np.arange(0, ssn_data.MoLngt + 1)
-        y = np.arange(0, ssn_data.MoLngt + 1)
+        x = np.arange(0, ssn_data.MoLngt + fulActSw)
+        y = np.arange(0, ssn_data.MoLngt + fulActSw)
         xx, yy = np.meshgrid(x, y)
         Dis = np.absolute(np.power(xx - yy, Dis_Pow))
 

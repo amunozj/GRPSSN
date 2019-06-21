@@ -1607,7 +1607,7 @@ def plotMinEMD(ssn_data,
         # Axes properties
         ax1.set_ylabel('Distribution Distance')
         ax1.set_xlim(left=np.min(ssn_data.REF_Dat['FRACYEAR']), right=np.max(ssn_data.REF_Dat['FRACYEAR']))
-        ax1.set_ylim(bottom=0, top=np.min(y) * 5 + 10)
+        ax1.set_ylim(bottom=0, top=np.nanmin(y) * 5 + 10)
 
         ax1.spines['bottom'].set_color(ssn_data.Clr[siInx % 6])
         ax1.spines['bottom'].set_linewidth(3)
