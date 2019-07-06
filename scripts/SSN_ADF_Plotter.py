@@ -1997,8 +1997,8 @@ def plotSingleThresholdDistributions(ssn_data,
                 np.round(Year[ssn_data.EMDComb[siInx + 2, 0].astype(np.int)], decimals=1)) + '  '
 
 
-    ADFObs = ssn_data.EMDComb[6:6+ssn_data.MoLngt, 0]
-    ADFREf = ssn_data.EMDComb[6+ssn_data.MoLngt+1:6+2*ssn_data.MoLngt+1, 0]
+    ADFObs = ssn_data.EMDComb[ssn_data.EMDComb.shape[0]-2*ssn_data.MoLngt-1:ssn_data.EMDComb.shape[0]-ssn_data.MoLngt-1, 0]
+    ADFREf = ssn_data.EMDComb[ssn_data.EMDComb.shape[0]-ssn_data.MoLngt:ssn_data.EMDComb.shape[0], 0]
 
     # Start Figure
     fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))

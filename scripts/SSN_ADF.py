@@ -1647,14 +1647,18 @@ class ssnADF(ssn_data):
                     insArr = np.append(insArr, ADFObs)
                     insArr = np.append(insArr, ADFREF)
 
-                    # Determining index for insertion
-                    insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
+                    if config.NBEST == 1:
+                        EMDComb = insArr
 
-                    # Insert values
-                    EMDComb = np.insert(EMDComb, insInx, insArr, axis=1)
+                    else:
+                        # Determining index for insertion
+                        insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
 
-                    # Remove last element
-                    EMDComb = EMDComb[:, 0:config.NBEST]
+                        # Insert values
+                        EMDComb = np.insert(EMDComb, insInx, insArr, axis=1)
+
+                        # Remove last element
+                        EMDComb = EMDComb[:, 0:config.NBEST]
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -1662,7 +1666,7 @@ class ssnADF(ssn_data):
         # Only plot if using more than one threshold
         if config.NBEST == 1:
 
-            wAv = EMDComb[1, :][0]
+            wAv = EMDComb[1, 0]
             wSD = np.nan
 
         else:
