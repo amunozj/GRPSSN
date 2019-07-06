@@ -696,6 +696,7 @@ class ssnADF(ssn_data):
                              ssn_data,
                              noOvrlpSw = True,
                              fulActSw = True,
+                             emdSw = True,
                              Dis_Pow=2):
 
         """
@@ -703,9 +704,11 @@ class ssnADF(ssn_data):
         comparing the observer and the reference
         VARIABLES APPENDED TO THE OBJECT ARE SPECIFIED AT THE END
 
+        :input
         :param ssn_data: ssn_data class object storing SSN metadata
         :param noOvrlpSw: Switch that forces the code to ignore the true overlapping phase in calibration if present
         :param fulActSw: Switch that sets whether ADF = 1 are included in the distribution calculations or not
+        :param emdSw: Switch that activates the EMD metric (True), vs the L2 norm (False)
         :param Dis_Pow: Power index used to define the distance matrix for EMD calculation
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """
@@ -716,7 +719,7 @@ class ssnADF(ssn_data):
         ssn_data.vldIntr[np.isnan(ssn_data.vldIntr)] = 0
 
         # Setting the bin edges for EMD calculation
-        EMDbins = (np.arange(0, ssn_data.MoLngt + 1 + fulActSw) - 0.5) / ssn_data.MoLngt
+        EMDbins = (np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt
 
         # Creating Storing dictionaries
         # Number of days with groups
@@ -920,9 +923,13 @@ class ssnADF(ssn_data):
         EMDthD = []
         EMDthiD = []
 
+        # Creating dictionary for storing ADFs for plotting
+        ADFObsMD = []
+        ADFRefMD = []
+
         # Calculation of distance matrix to be used in the Earth Movers Metric
-        x = np.arange(0, ssn_data.MoLngt + fulActSw)
-        y = np.arange(0, ssn_data.MoLngt + fulActSw)
+        x = np.arange(0, ssn_data.MoLngt + 1)
+        y = np.arange(0, ssn_data.MoLngt + 1)
         xx, yy = np.meshgrid(x, y)
         Dis = np.absolute(np.power(xx - yy, Dis_Pow))
 
@@ -958,6 +965,10 @@ class ssnADF(ssn_data):
                 EMDt = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
                 EMDth = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
                 EMDthi = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1]))
+
+                # Pre-allocating ADF matrix to store the ADF calculations for plotting
+                ADFObsM = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1], ssn_data.MoLngt+1))*np.nan
+                ADFRefM = np.zeros((GDREFI[siInx].shape[0], GDREFI[siInx].shape[1], ssn_data.MoLngt+1))*np.nan
 
                 # Going through different thresholds
                 for TIdx, Thr in enumerate(ssn_data.Thresholds):
@@ -1031,16 +1042,26 @@ class ssnADF(ssn_data):
                             ADF_Obs_fracI = np.divide(numObs, denObs)
                             ADF_REF_fracI = np.divide(numREF, denREF)
 
+                            # Removing last bin if we are going to ignore ADF = 1
+                            if not fulActSw:
+                                ADF_Obs_fracI[ADF_Obs_fracI == 1] = np.nan
+                                ADF_REF_fracI[ADF_REF_fracI == 1] = np.nan
+
                             # Main ADF calculations
                             ADFObs, bins = np.histogram(ADF_Obs_fracI, bins=EMDbins, density=True)
-
                             ADFREF, bins = np.histogram(ADF_REF_fracI, bins=EMDbins, density=True)
 
-                            EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
-                                                  Dis.astype(np.float64))
-                            EMDi[TIdx, SIdx] = SIdx
+                            if emdSw:
+                                EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
+                                                      Dis.astype(np.float64))
+                            else:
+                                EMD[TIdx, SIdx] = np.sqrt(np.mean(np.power(ADFObs-ADFREF, 2)))
 
-                        # Storing coordinates of EMD distances
+                            EMDi[TIdx, SIdx] = SIdx
+                            ADFObsM[TIdx, SIdx, :] = ADFObs
+                            ADFRefM[TIdx, SIdx, :] = ADFREF
+
+                            # Storing coordinates of EMD distances
                         EMDt[TIdx, SIdx] = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI[SIdx]]
                         EMDth[TIdx, SIdx] = Thr
                         EMDthi[TIdx, SIdx] = TIdx
@@ -1053,6 +1074,8 @@ class ssnADF(ssn_data):
                 EMDt = []
                 EMDth = []
                 EMDthi = []
+                ADFObsM = []
+                ADFRefM = []
 
             print(' ')
 
@@ -1061,6 +1084,8 @@ class ssnADF(ssn_data):
             EMDtD.append(EMDt)
             EMDthD.append(EMDth)
             EMDthiD.append(EMDthi)
+            ADFObsMD.append(ADFObsM)
+            ADFRefMD.append(ADFRefM)
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -1254,6 +1279,8 @@ class ssnADF(ssn_data):
 
         # Storing variables in object-----------------------------------------------------------------------------------
         ssn_data.noOvrlpSw = noOvrlpSw   ## Switch that forces the code to ignore the true overlapping phase in calibration if present
+        ssn_data.fulActSw = fulActSw  # Switch that sets whether ADF = 1 are included in the distribution calculations or not
+        ssn_data.emdSw = emdSw  # Switch that activates the EMD metric (True), vs the L2 norm (False)
 
         ssn_data.GDObsI = GDObsI  # Variable that stores the number of days with groups of the observer for each interval, threshold, window shift, and window
         ssn_data.ODObsI = ODObsI  # Variable that stores the number of days with observations of the observer for each interval, threshold, window shift, and window
@@ -1268,6 +1295,9 @@ class ssnADF(ssn_data):
         ssn_data.EMDD = EMDD  # Variable that stores the EMD between the reference and the observer for each interval, threshold, and window shift
         ssn_data.EMDtD = EMDtD  # Variable that stores the windowshift matching EMDD for each interval, threshold, and window shift
         ssn_data.EMDthD = EMDthD  # Variable that stores the threshold matching EMDD for each interval, threshold, and window shift
+
+        ssn_data.ADFObsMD = ADFObsMD  # Variable that stores the ADF distribution for the observer
+        ssn_data.ADFRefMD = ADFRefMD  # Variable that stores the ADF distribution for the reference
 
         ssn_data.EMDbins = EMDbins  # Bin edges for EMD calculation
 
@@ -1298,7 +1328,6 @@ class ssnADF(ssn_data):
 
 
         # Set the simultaneous threshold to the values for the valid interval if there is only one interval
-        #if len(calRef) == 1:
         if np.sum(ssn_data.vldIntr) == 1:
             ssn_data.wAv = wAvI[ssn_data.vldIntr][0]
             ssn_data.wSD = wSDI[ssn_data.vldIntr][0]
@@ -1445,7 +1474,7 @@ class ssnADF(ssn_data):
         NTshifts = int(np.min([NTshifts, np.power(maxIter, 1 / np.sum(ssn_data.vldIntr > 0))]))
 
         # Allocating variable to store top matches
-        EMDComb = np.ones((ssn_data.cenPoints['OBS'].shape[0] + 2, config.NBEST)) * 10000
+        EMDComb = np.ones((ssn_data.cenPoints['OBS'].shape[0] + 2 + 2*ssn_data.MoLngt +2, config.NBEST)) * 10000
 
         # Going through different thresholds for a given combination of shifts
         for TIdx, Thr in enumerate(ssn_data.Thresholds):
@@ -1581,10 +1610,20 @@ class ssnADF(ssn_data):
                             ADFObsI = np.append(ADFObsI, ADF_Obs_fracII)
                             ADFREFI = np.append(ADFREFI, ADF_REF_fracII)
 
-                            # Calculating Earth Mover's Distance
+                # Removing last bin if we are going to ignore ADF = 1
+                if not ssn_data.fulActSw:
+                    ADFObsI[ADFObsI == 1] = np.nan
+                    ADFREFI[ADFREFI == 1] = np.nan
+
+                # Calculating Earth Mover's Distance
                 ADFObs, bins = np.histogram(ADFObsI, bins=ssn_data.EMDbins, density=True)
                 ADFREF, bins = np.histogram(ADFREFI, bins=ssn_data.EMDbins, density=True)
-                tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
+
+                if ssn_data.emdSw:
+                    tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
+                else:
+                    tmpEMD = np.sqrt(np.mean(np.power(ADFObs - ADFREF, 2)))
+
 
                 if np.any(EMDComb[0, :] > tmpEMD):
 
@@ -1603,6 +1642,10 @@ class ssnADF(ssn_data):
 
                     # Convert to numpy array
                     insArr = np.array(insArr)
+
+                    # Append Distributions for plotting
+                    insArr = np.append(insArr, ADFObs)
+                    insArr = np.append(insArr, ADFREF)
 
                     # Determining index for insertion
                     insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)

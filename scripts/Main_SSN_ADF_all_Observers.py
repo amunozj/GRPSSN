@@ -219,8 +219,9 @@ def run_obs(CalObsID):
         # Calculating the Earth's Mover Distance using sliding windows for different intervals
         obs_ref_overlap = ssn_adf.ADFscanningWindowEMD(ssn_data,
                                                        noOvrlpSw=True,  # Switch that forces the code to ignore the true overlapping phase in calibration if present
-                                                       fulActSw=False, # Switch that sets whether ADF = 1 are included in the distribution calculations or not
-                                                       Dis_Pow=1)       # Power index used to define the distance matrix for EMD calculation
+                                                       fulActSw=True, # Switch that sets whether ADF = 1 are included in the distribution calculations or not
+                                                       emdSw=False,  # Switch that activates the EMD metric (True), vs the L2 norm (False)
+                                                       Dis_Pow=1)   # Power index used to define the distance matrix for EMD calculation
 
         if plotSwitch:
             # Plot active vs. observed days

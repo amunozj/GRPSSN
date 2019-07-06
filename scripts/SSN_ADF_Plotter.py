@@ -91,6 +91,7 @@ def plotSearchWindows(ssn_data, SILSO_Sn, SIL_max, SIL_min, REF_min, REF_max,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -302,6 +303,7 @@ def plotHistSnADF(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -383,6 +385,7 @@ def plotFitAl(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -560,6 +563,7 @@ def plotActiveVsObserved(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -967,6 +971,7 @@ def plotOptimalThresholdWindow(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -1100,6 +1105,7 @@ def plotDistributionOfThresholdsMI(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -1343,13 +1349,14 @@ def plotIntervalScatterPlots(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
     print(' ', flush=True)
 
 
-def histOutline(dataIn, *args, **kwargs):
+def _histOutline(histIn, binsIn):
     """
     Wrapper around the histogram to create an outline that can be used to plot distributions
 
@@ -1358,8 +1365,8 @@ def histOutline(dataIn, *args, **kwargs):
     :param kwargs:
     :return:
     """
-
-    (histIn, binsIn) = np.histogram(dataIn, *args, **kwargs)
+    #
+    # (histIn, binsIn) = np.histogram(dataIn, *args, **kwargs)
 
     stepSize = binsIn[1] - binsIn[0]
 
@@ -1435,47 +1442,39 @@ def plotIntervalDistributions(ssn_data,
     for i in range(0, nph):
         for j in range(0, npv):
 
-            n = (nph * j + i)
+            siInx = (nph * j + i)
 
             # Only add the panel if it exists
-            if n < ssn_data.vldIntr.shape[0]:
+            if siInx < ssn_data.vldIntr.shape[0]:
 
                 # Plot only if the period is valid
-                if ssn_data.vldIntr[n]:
-                    SIdx = int(ssn_data.bestTh[n][0][3])
-                    TIdx = int(ssn_data.bestTh[n][0][4])
+                if ssn_data.vldIntr[siInx]:
+                    SIdx = int(ssn_data.bestTh[siInx][0][3])
+                    TIdx = int(ssn_data.bestTh[siInx][0][4])
 
                     ax1 = fig.add_axes(
                         [ppadh + i * (pxx / fszh + ppadh2), ppadv + j * (pxy / fszv + ppadv2), pxx / fszh * frc,
-                         pxy / fszv * frc], label='b' + str(n))
+                         pxy / fszv * frc], label='b' + str(siInx))
 
-                    # Calculating Earth Mover's Distance
-                    ax1.hist(np.divide(
-                        ssn_data.GDObsI[n][
-                            TIdx, SIdx, ssn_data.ODObsI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                        ssn_data.ODObsI[n][
-                            TIdx, SIdx, ssn_data.ODObsI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
-                        bins=ssn_data.EMDbins, density=False, color='0.5',
-                        alpha=.6)
+                    (xAD, yAD) = _histOutline(ssn_data.ADFObsMD[siInx][TIdx, SIdx, :], ssn_data.EMDbins)
+                    ax1.fill_between(xAD, yAD, color='0.5')
 
-                    (xAD, yAD) = histOutline(np.divide(
-                        ssn_data.GDREFI[n][
-                            TIdx, SIdx, ssn_data.ODREFI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                        ssn_data.ODREFI[n][
-                            TIdx, SIdx, ssn_data.ODREFI[n][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD]),
-                        bins=ssn_data.EMDbins, density=False)
+                    (xAD, yAD) = _histOutline(ssn_data.ADFRefMD[siInx][TIdx, SIdx, :], ssn_data.EMDbins)
                     ax1.plot(xAD, yAD, color=ssn_data.Clr[4], linewidth=3)
 
-                    ax1.text(0.02, 0.96, 'From ' + str(np.round(ssn_data.endPoints['OBS'][n, 0], decimals=1)) + ' to '
-                             + str(np.round(ssn_data.endPoints['OBS'][n + 1, 0], decimals=1))
-                             + '\nbest match: ' + str(np.round(ssn_data.bestTh[n][0][0], decimals=1))
-                             + '  Th: ' + str(int(ssn_data.bestTh[n][0][1])), horizontalalignment='left',
+                    ax1.text(0.02, 0.96, 'From ' + str(np.round(ssn_data.endPoints['OBS'][siInx, 0], decimals=1)) + ' to '
+                             + str(np.round(ssn_data.endPoints['OBS'][siInx + 1, 0], decimals=1))
+                             + '\nbest match: ' + str(np.round(ssn_data.bestTh[siInx][0][0], decimals=1))
+                             + '  Th: ' + str(int(ssn_data.bestTh[siInx][0][1])), horizontalalignment='left',
                              verticalalignment='top', transform=ax1.transAxes)
                     ax1.set_xlabel('ADF')
                     ax1.set_ylabel('PDF')
+                    ax1.set_xlim(left=np.min(ssn_data.EMDbins), right=np.max(ssn_data.EMDbins))
+                    ax1.set_ylim(bottom=0)
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -1626,6 +1625,7 @@ def plotMinEMD(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -1801,6 +1801,7 @@ def plotSimultaneousFit(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -1906,6 +1907,7 @@ def plotDistributionOfThresholds(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -1960,10 +1962,6 @@ def plotSingleThresholdDistributions(ssn_data,
     ppadv = padv / fszv  # Vertical padding in relative units
     ppadh = padh / fszv  # Horizontal padding the edge of the figure in relative units
 
-    TIdx = int((ssn_data.EMDComb[1, 0] - ssn_data.thS)/ssn_data.thI)
-    ADFObsI = np.array([])
-    ADFREFI = np.array([])
-
     txt1 = 'Real Loc. ->  '
     txt2 = 'Optimal   ->  '
 
@@ -1987,7 +1985,6 @@ def plotSingleThresholdDistributions(ssn_data,
 
         # Append only if period is valid
         if ssn_data.vldIntr[siInx]:
-            tmpInx = int(ssn_data.EMDComb[siInx + 2, 0])
 
             TObsFYr = ssn_data.ObsDat.loc[
                 np.logical_and(ssn_data.ObsDat['FRACYEAR'] >= ssn_data.endPoints['OBS'][siInx, 0],
@@ -1998,44 +1995,20 @@ def plotSingleThresholdDistributions(ssn_data,
                 np.round((np.min(TObsFYr) + np.max(TObsFYr)) / 2, decimals=1)) + '  '
             txt2 = txt2 + str(siInx + 1) + ': ' + str(
                 np.round(Year[ssn_data.EMDComb[siInx + 2, 0].astype(np.int)], decimals=1)) + '  '
-            # If it is the first interval re-create the arrays
-            if ADFObsI.shape[0] == 0:
-                ADFObsI = np.divide(
-                    ssn_data.GDObsI[siInx][
-                        TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                    ssn_data.ODObsI[siInx][
-                        TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD])
 
-                ADFREFI = np.divide(
-                    ssn_data.GDREFI[siInx][
-                        TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                    ssn_data.ODREFI[siInx][
-                        TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD])
 
-            # If not, append ADF from all sub-interval for the specified shifts
-            else:
-                ADFObsI = np.append(ADFObsI, np.divide(
-                    ssn_data.GDObsI[siInx][
-                        TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                    ssn_data.ODObsI[siInx][
-                        TIdx, tmpInx, ssn_data.ODObsI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD]))
-
-                ADFREFI = np.append(ADFREFI, np.divide(
-                    ssn_data.GDREFI[siInx][
-                        TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD],
-                    ssn_data.ODREFI[siInx][
-                        TIdx, tmpInx, ssn_data.ODREFI[siInx][TIdx, tmpInx, :] / ssn_data.MoLngt >= ssn_data.minObD]))
+    ADFObs = ssn_data.EMDComb[6:6+ssn_data.MoLngt, 0]
+    ADFREf = ssn_data.EMDComb[6+ssn_data.MoLngt+1:6+2*ssn_data.MoLngt+1, 0]
 
     # Start Figure
     fig = plt.figure(figsize=(fszh / dpi, fszv / dpi))
 
     ax1 = fig.add_axes([ppadh, ppadv, pxx / fszh * frc, pxy / fszv * frc])
 
-    # Calculating Earth Mover's Distance
-    ax1.hist(ADFObsI,
-             bins=ssn_data.EMDbins, density=False, color='0.5', alpha=.6)
+    (xAD, yAD) = _histOutline(ADFObs, ssn_data.EMDbins)
+    ax1.fill_between(xAD, yAD, color='0.5')
 
-    (xAD, yAD) = histOutline(ADFREFI, bins=ssn_data.EMDbins, density=False)
+    (xAD, yAD) = _histOutline(ADFREf, ssn_data.EMDbins)
     ax1.plot(xAD, yAD, color=ssn_data.Clr[4], linewidth=3)
 
     ax1.text(0.015, 0.96, txt1 + '\n' + txt2 + '\nTh: ' + str(int(ssn_data.wAv)), horizontalalignment='left',
@@ -2044,8 +2017,12 @@ def plotSingleThresholdDistributions(ssn_data,
     ax1.set_xlabel('ADF')
     ax1.set_ylabel('PDF')
 
+    ax1.set_xlim(left=np.min(ssn_data.EMDbins), right=np.max(ssn_data.EMDbins))
+    ax1.set_ylim(bottom=0)
+
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -2136,6 +2113,7 @@ def plotSingleThresholdScatterPlot(ssn_data,
 
         fig.savefig(figure_path, bbox_inches='tight')
 
+        fig.clear()
         plt.close(fig)
 
         print('done.', flush=True)
@@ -2252,6 +2230,7 @@ def plotMultiThresholdScatterPlot(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
@@ -2402,6 +2381,7 @@ def plotSmoothedSeries(ssn_data,
 
     fig.savefig(figure_path, bbox_inches='tight')
 
+    fig.clear()
     plt.close(fig)
 
     print('done.', flush=True)
