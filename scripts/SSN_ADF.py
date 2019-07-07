@@ -1647,18 +1647,14 @@ class ssnADF(ssn_data):
                     insArr = np.append(insArr, ADFObs)
                     insArr = np.append(insArr, ADFREF)
 
-                    if config.NBEST == 1:
-                        EMDComb = insArr
+                    # Determining index for insertion
+                    insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
 
-                    else:
-                        # Determining index for insertion
-                        insInx = config.NBEST - np.sum(EMDComb[0, :] >= tmpEMD)
+                    # Insert values
+                    EMDComb = np.insert(EMDComb, insInx, insArr, axis=1)
 
-                        # Insert values
-                        EMDComb = np.insert(EMDComb, insInx, insArr, axis=1)
-
-                        # Remove last element
-                        EMDComb = EMDComb[:, 0:config.NBEST]
+                    # Remove last element
+                    EMDComb = EMDComb[:, 0:config.NBEST]
 
         print('done.', flush=True)
         print(' ', flush=True)
