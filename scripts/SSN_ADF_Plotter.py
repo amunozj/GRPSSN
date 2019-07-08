@@ -1902,7 +1902,7 @@ def plotDistributionOfThresholds(ssn_data,
              rotation='vertical', verticalalignment='center')
     ax1.set_xlabel('EMD')
     ax1.text(0.5, 1.01, 'EMD for ' + ssn_data.NamObs, horizontalalignment='center', transform=ax1.transAxes)
-    ax1.set_xlim(left=np.floor(np.min(ssn_data.EMDComb[0, :])), right=np.ceil(np.max(ssn_data.EMDComb[0, :])))
+    ax1.set_xlim(left=np.floor(np.min(ssn_data.EMDComb[0, :])), right=3*np.floor(np.min(ssn_data.EMDComb[0, ssn_data.EMDComb[0, :]>0])))
     ax1.set_ylim(bottom=ssn_data.thS, top=ssn_data.thE)
 
     fig.savefig(figure_path, bbox_inches='tight')
