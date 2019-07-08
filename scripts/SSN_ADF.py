@@ -1625,7 +1625,7 @@ class ssnADF(ssn_data):
                     tmpEMD = np.sqrt(np.mean(np.power(ADFObs - ADFREF, 2)))
 
 
-                if np.any(EMDComb[0, :] > tmpEMD):
+                if np.any(EMDComb[0, :] > tmpEMD) and np.isfinite(tmpEMD) and tmpEMD:
 
                     # Initializing array to be inserted
                     insArr = [tmpEMD, Thr]
@@ -1655,6 +1655,7 @@ class ssnADF(ssn_data):
 
                     # Remove last element
                     EMDComb = EMDComb[:, 0:config.NBEST]
+
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -1979,7 +1980,7 @@ class ssnADF(ssn_data):
                 ADFREF, bins = np.histogram(ADFREFI, bins=ssn_data.EMDbins, density=True)
                 tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
 
-                if np.any(EMDComb[0, :] > tmpEMD):
+                if np.any(EMDComb[0, :] > tmpEMD) and np.isfinite(tmpEMD):
 
                     # Initializing array to be inserted
                     insArr = [tmpEMD, TIdx]

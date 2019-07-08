@@ -1060,7 +1060,7 @@ def plotDistributionOfThresholdsMI(ssn_data,
                     ax2 = fig.add_axes(
                         [ppadh + i * (pxx / fszh + ppadh2) + pxx / fszh * frc, ppadv + j * (pxy / fszv + ppadv2),
                          pxx / fszh * frc * (1 - frc), pxy / fszv * frc], label='b' + str(n))
-                    ax2.hist(ssn_data.bestTh[n][:, 1], bins=np.arange(0, ssn_data.thN, ssn_data.thI * 2),
+                    ax2.hist(ssn_data.bestTh[n][:, 1], bins=ssn_data.Thresholds,
                              color=ssn_data.Clr[2],
                              alpha=.6,
                              orientation='horizontal', density=True)
@@ -1868,12 +1868,12 @@ def plotDistributionOfThresholds(ssn_data,
                   + np.floor(np.min(ssn_data.EMDComb[0, :])), color=ssn_data.Clr[4], alpha=.6, density=True)
 
     # Axes properties
-    axd.set_xlim(left=np.floor(np.min(ssn_data.EMDComb[0, :])), right=np.ceil(np.max(ssn_data.EMDComb[0, :])))
+    axd.set_xlim(left=np.floor(np.min(ssn_data.EMDComb[0, :])), right=3*np.floor(np.min(ssn_data.EMDComb[0, ssn_data.EMDComb[0, :]>0])))
     axd.set_axis_off()
 
     # Right Distribution
     ax2 = fig.add_axes([ppadh + pxx / fszh * frc, ppadv, pxx / fszh * frc * (1 - frc), pxy / fszv * frc])
-    ax2.hist(ssn_data.EMDComb[1, :], bins=np.arange(0, ssn_data.thN, ssn_data.thI * 2), color=ssn_data.Clr[2], alpha=.6,
+    ax2.hist(ssn_data.EMDComb[1, :], bins=ssn_data.Thresholds, color=ssn_data.Clr[2], alpha=.6,
              orientation='horizontal', density=True)
 
     # # Axes properties
