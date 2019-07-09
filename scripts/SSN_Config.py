@@ -29,7 +29,7 @@ class SSN_ADF_Config:
     # '1' uses the absolute best combination of time and threshold and prevents the code from plotting the
     # EMD vs. Threshold plots
     # '>1' calculates the threshold using the average of the NBEST points
-    NBEST = 1
+    NBEST = 50
 
     # DYNAMIC ADF OPTIONS
     # PCTLO defines the percentile of ADF months for which low activity conditions must hold
