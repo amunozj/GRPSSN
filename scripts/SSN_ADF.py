@@ -33,6 +33,7 @@ class ssnADF(ssn_data):
                  obs_observer_path='../input_data/GNobservers_JV_V1.22.csv',
                  output_path='output',
                  font=None,
+                 minYrRef=1900,
                  dt=10,
                  phTol=2,
                  thS=5,
@@ -55,6 +56,7 @@ class ssnADF(ssn_data):
         :param obs_data_path: Location of the observational data
         :param obs_observer_path: Location of the file containing the observer's codes and names
         :param font: Font to be used while plotting
+        :param minYrRef: Minimum year used for reference
         :param dt: Temporal Stride in days
         :param phTol: Cycle phase tolerance in years
         :param thS: Starting threshold
@@ -94,6 +96,8 @@ class ssnADF(ssn_data):
 
         REF_Dat = pd.read_csv(ref_data_path, quotechar='"', encoding='utf-8', header=0)
         print('done.')
+        REF_Dat = REF_Dat.loc[REF_Dat['YEAR']>=minYrRef,:]
+
 
         print('Calculating ordinal day, fractional year, and number of groups...', end="")
         REF_Dat['ORDINAL'] = REF_Dat.apply(

@@ -173,6 +173,7 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  font={'family': 'sans-serif',
                        'weight': 'normal',
                        'size': 21},
+                 minYrRef=1900,  #Minimum year used for reference
                  dt=10,  # Temporal Stride in days
                  phTol=1,  # Cycle phase tolerance in years
                  thS=1,  # Starting threshold
