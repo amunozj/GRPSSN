@@ -96,7 +96,7 @@ class ssnADF(ssn_data):
 
         REF_Dat = pd.read_csv(ref_data_path, quotechar='"', encoding='utf-8', header=0)
         print('done.')
-        REF_Dat = REF_Dat.loc[REF_Dat['YEAR']>=minYrRef,:]
+        REF_Dat = REF_Dat.loc[REF_Dat['YEAR'] >= minYrRef, :].reset_index(drop=True)
 
 
         print('Calculating ordinal day, fractional year, and number of groups...', end="")
@@ -336,7 +336,7 @@ class ssnADF(ssn_data):
         self.ssn_data.thS = thS  # Starting threshold
         self.ssn_data.thE = thE  # Ending Threshold
         self.ssn_data.thI = thI  # Threshold increments
-        self.ssn_data.Thresholds = range(thS,thE+thI,thI) # Threshold to use in search
+        self.ssn_data.Thresholds = np.arange(thS, thE+thI, thI) # Threshold to use in search
 
         self.ssn_data.MoLngt = MoLngt  # Duration of the interval ("month") used to calculate the ADF
         self.ssn_data.minObD = minObD  # Minimum proportion of days with observation for a "month" to be considered valid
@@ -701,6 +701,7 @@ class ssnADF(ssn_data):
                              noOvrlpSw = True,
                              fulActSw = True,
                              emdSw = True,
+                             disDis = 'ADF',
                              Dis_Pow=2):
 
         """
@@ -713,6 +714,7 @@ class ssnADF(ssn_data):
         :param noOvrlpSw: Switch that forces the code to ignore the true overlapping phase in calibration if present
         :param fulActSw: Switch that sets whether ADF = 1 are included in the distribution calculations or not
         :param emdSw: Switch that activates the EMD metric (True), vs the L2 norm (False)
+        :param disDis: Switch that chooses which distribution difference to minimize 'ADF', 'Grp', or 'Both'
         :param Dis_Pow: Power index used to define the distance matrix for EMD calculation
         :return:  (False) True if there are (no) valid days of overlap between observer and reference
         """
@@ -723,7 +725,9 @@ class ssnADF(ssn_data):
         ssn_data.vldIntr[np.isnan(ssn_data.vldIntr)] = 0
 
         # Setting the bin edges for EMD calculation
+        NGrpsBins = 30
         EMDbins = (np.arange(0, ssn_data.MoLngt + 2) - 0.5) / ssn_data.MoLngt
+        EMDbinsG = (np.arange(1, NGrpsBins + 2) - 0.5)
 
         # Creating Storing dictionaries
         # Number of days with groups
@@ -742,9 +746,9 @@ class ssnADF(ssn_data):
         SNdObsI = []
         SNdREFI = []
 
-        #         #creating storing dictionaries for ADF
-        #         ADF_Obs_fracI = []
-        #         ADF_REF_fracI = []
+        # Distance between distributions of sunspot groups for interval
+        ObsGOBsI = []
+        ObsREFsI = []
 
         # Number of days rising or declining
         rise_count = 0
@@ -807,27 +811,31 @@ class ssnADF(ssn_data):
 
                 # Creating Storing Variables
                 # Number of days with groups
-                GDObs = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
-                GDREF = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                GDObs = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                GDREF = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
 
                 # Number of days with observations
-                ODObs = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
-                ODREF = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                ODObs = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                ODREF = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
 
                 # Number of days with no groups
-                QDObs = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
-                QDREF = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                QDObs = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
+                QDREF = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsDat.shape[0] / ssn_data.MoLngt)))
 
                 # mask for monthly (from daily) sunspot number
-                SNdObs = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsSNd.shape[0] / ssn_data.MoLngt)))
-                SNdREF = np.zeros((len(ssn_data.Thresholds), cadMaskI.shape[0], np.int(TObsSNd.shape[0] / ssn_data.MoLngt)))
+                SNdObs = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsSNd.shape[0] / ssn_data.MoLngt)))
+                SNdREF = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], np.int(TObsSNd.shape[0] / ssn_data.MoLngt)))
+
+                # Observed number of groups
+                ObsGOBs = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], ssn_data.MoLngt*np.int(TObsSNd.shape[0] / ssn_data.MoLngt)))*np.nan
+                ObsREFs = np.zeros((ssn_data.Thresholds.shape[0], cadMaskI.shape[0], ssn_data.MoLngt*np.int(TObsSNd.shape[0] / ssn_data.MoLngt)))*np.nan
 
                 # Going through different thresholds
                 for TIdx, Thr in enumerate(ssn_data.Thresholds):
 
                     # Calculating number of groups in reference data for given threshold
                     grpsREFw = np.nansum(
-                        np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 3],
+                        np.greater(ssn_data.REF_Dat.values[:, 3:ssn_data.REF_Dat.values.shape[1] - 2],
                                    Thr),
                         axis=1).astype(float)
                     grpsREFw[np.isnan(ssn_data.REF_Dat['AREA1'])] = np.nan
@@ -837,7 +845,6 @@ class ssnADF(ssn_data):
 
                         # Selecting the maximum integer amount of "months" out of the original data
                         TgrpsOb = TObsDat[0:np.int(TObsDat.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
-
                         TObsSNd = TObsSNd[0:np.int(TObsDat.shape[0] / ssn_data.MoLngt) * ssn_data.MoLngt].copy()
 
                         # Calculating bracketing indices
@@ -856,18 +863,23 @@ class ssnADF(ssn_data):
 
                             # Making sure selections have the same length
                             if TgrpsREF.shape[0] == TgrpsOb.shape[0]:
-                                # Reshaping into "months"
-                                TgrpsOb = TgrpsOb.reshape((-1, ssn_data.MoLngt))
-                                TgrpsREF = TgrpsREF.reshape((-1, ssn_data.MoLngt))
-                                # Reshaping SN into "months"
-                                TObsSNd = TObsSNd.reshape((-1, ssn_data.MoLngt))
-                                TSNdREF = TSNdREF.reshape((-1, ssn_data.MoLngt))
 
                                 # Imprinting missing days
                                 # OBSERVER
                                 TgrpsOb[np.isnan(TgrpsREF)] = np.nan
                                 # REFERENCE
                                 TgrpsREF[np.isnan(TgrpsOb)] = np.nan
+
+                                # Storing observed groups
+                                ObsGOBs[TIdx, SIdx, :] = TgrpsOb
+                                ObsREFs[TIdx, SIdx, :] = TgrpsREF
+
+                                # Reshaping into "months"
+                                TgrpsOb = TgrpsOb.reshape((-1, ssn_data.MoLngt))
+                                TgrpsREF = TgrpsREF.reshape((-1, ssn_data.MoLngt))
+                                # Reshaping SN into "months"
+                                TObsSNd = TObsSNd.reshape((-1, ssn_data.MoLngt))
+                                TSNdREF = TSNdREF.reshape((-1, ssn_data.MoLngt))
 
                                 # Number of days with groups
                                 # OBSERVER
@@ -902,6 +914,8 @@ class ssnADF(ssn_data):
                 QDREF = []
                 SNdObs = []
                 SNdREF = []
+                ObsGOBs = []
+                ObsREFs = []
 
             print(' ')
 
@@ -914,6 +928,8 @@ class ssnADF(ssn_data):
             QDREFI.append(QDREF)
             SNdObsI.append(SNdObs)
             SNdREFI.append(SNdREF)
+            ObsGOBsI.append(ObsGOBs)
+            ObsREFsI.append(ObsREFs)
 
         print('done.', flush=True)
         print(' ', flush=True)
@@ -936,6 +952,13 @@ class ssnADF(ssn_data):
         y = np.arange(0, ssn_data.MoLngt + 1)
         xx, yy = np.meshgrid(x, y)
         Dis = np.absolute(np.power(xx - yy, Dis_Pow))
+
+
+        x = np.arange(0, NGrpsBins + 1)
+        y = np.arange(0, NGrpsBins + 1)
+        xx, yy = np.meshgrid(x, y)
+        DisG = np.absolute(np.power(xx - yy, Dis_Pow))
+
 
         # Going through different sub-intervals
         for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
@@ -990,85 +1013,110 @@ class ssnADF(ssn_data):
 
                         if np.any(ODObsI[siInx][TIdx, SIdx, :] != 0) and np.any(ODREFI[siInx][TIdx, SIdx, :] != 0):
 
-                            # Calculating Earth Mover's Distance
+                            ## Initializing EMD with groups distribution or a one
+                            if (disDis == 'Grp') or (disDis == 'Both'):
 
-                            VldMnObs = ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                            # Numerator and denominator for given observer
-                            numADObs = GDObsI[siInx][TIdx, SIdx, VldMnObs]
-                            numQDObs = ssn_data.MoLngt - QDObsI[siInx][TIdx, SIdx, VldMnObs]
-                            denFMObs = GDObsI[siInx][TIdx, SIdx, VldMnObs] * 0 + ssn_data.MoLngt
-                            denODObs = ODObsI[siInx][TIdx, SIdx, VldMnObs]
+                                # Calculating Earth Mover's Distance for group numbers
+                                DisObs, bins = np.histogram(ObsGOBsI[siInx][TIdx, SIdx, :], bins=EMDbinsG,
+                                                            density=True)
 
-                            VldMnREF = ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                            # Numerator and denominator for reference
-                            numADREF = GDREFI[siInx][TIdx, SIdx, VldMnREF]
-                            numQDREF = ssn_data.MoLngt - QDREFI[siInx][TIdx, SIdx, VldMnREF]
-                            denFMREF = GDREFI[siInx][TIdx, SIdx, VldMnREF] * 0 + ssn_data.MoLngt
-                            denODREF = ODREFI[siInx][TIdx, SIdx, VldMnREF]
+                                DisREF, bins = np.histogram(ObsREFsI[siInx][TIdx, SIdx, :], bins=EMDbinsG,
+                                                            density=True)
 
-                            if config.NUM_TYPE == "ADF":
-                                numObs = numADObs
-                                numREF = numADREF
+                                if emdSw:
+                                    EMD[TIdx, SIdx] = emd(DisREF.astype(np.float64), DisObs.astype(np.float64),
+                                                          DisG.astype(np.float64))
+                                else:
+                                    EMD[TIdx, SIdx] = np.sqrt(np.mean(np.power(DisObs-DisREF, 2)))
+
+                                if disDis == 'Grp':
+                                    ADFObsM = []
+                                    ADFRefM = []
+
                             else:
-                                numObs = numQDObs
-                                numREF = numQDREF
+                                EMD[TIdx, SIdx] = 1
 
-                            if config.DEN_TYPE == "OBS":
-                                denObs = denODObs
-                                denREF = denODREF
-                            else:
-                                denObs = denFMObs
-                                denREF = denFMREF
+                            ## Add the ADF if necessary
+                            if (disDis == 'ADF') or (disDis == 'Both'):
 
-                            if config.DEN_TYPE == "DTh":
-                                # Defining solar activity level
-                                MMObs = np.logical_and((SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
-                                                       (SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
-                                MMREF = np.logical_and((SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
-                                                       (SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
+                                # Calculating Earth Mover's Distance
+                                VldMnObs = ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
+                                # Numerator and denominator for given observer
+                                numADObs = GDObsI[siInx][TIdx, SIdx, VldMnObs]
+                                numQDObs = ssn_data.MoLngt - QDObsI[siInx][TIdx, SIdx, VldMnObs]
+                                denFMObs = GDObsI[siInx][TIdx, SIdx, VldMnObs] * 0 + ssn_data.MoLngt
+                                denODObs = ODObsI[siInx][TIdx, SIdx, VldMnObs]
 
-                                HMObs = (SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)
-                                HMREF = (SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= highth)
+                                VldMnREF = ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
+                                # Numerator and denominator for reference
+                                numADREF = GDREFI[siInx][TIdx, SIdx, VldMnREF]
+                                numQDREF = ssn_data.MoLngt - QDREFI[siInx][TIdx, SIdx, VldMnREF]
+                                denFMREF = GDREFI[siInx][TIdx, SIdx, VldMnREF] * 0 + ssn_data.MoLngt
+                                denODREF = ODREFI[siInx][TIdx, SIdx, VldMnREF]
 
-                                # Default numerators and denominators
-                                numObs = numADObs
-                                numREF = numADREF
-                                denObs = denFMObs
-                                denREF = denFMREF
+                                if config.NUM_TYPE == "ADF":
+                                    numObs = numADObs
+                                    numREF = numADREF
+                                else:
+                                    numObs = numQDObs
+                                    numREF = numQDREF
 
-                                numObs[HMObs] = numQDObs[HMObs]
-                                numREF[HMREF] = numQDREF[HMREF]
+                                if config.DEN_TYPE == "OBS":
+                                    denObs = denODObs
+                                    denREF = denODREF
+                                else:
+                                    denObs = denFMObs
+                                    denREF = denFMREF
 
-                                denObs[MMObs] = denODObs[MMObs]
-                                denREF[MMREF] = denODREF[MMREF]
+                                if config.DEN_TYPE == "DTh":
+                                    # Defining solar activity level
+                                    MMObs = np.logical_and((SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
+                                                           (SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
+                                    MMREF = np.logical_and((SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
+                                                           (SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
 
-                            # ADF calculations
-                            ADF_Obs_fracI = np.divide(numObs, denObs)
-                            ADF_REF_fracI = np.divide(numREF, denREF)
+                                    HMObs = (SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)
+                                    HMREF = (SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= highth)
 
-                            # Removing last bin if we are going to ignore ADF = 1
-                            if not fulActSw:
-                                ADF_Obs_fracI[ADF_Obs_fracI == 1] = np.nan
-                                ADF_REF_fracI[ADF_REF_fracI == 1] = np.nan
+                                    # Default numerators and denominators
+                                    numObs = numADObs
+                                    numREF = numADREF
+                                    denObs = denFMObs
+                                    denREF = denFMREF
 
-                            # Main ADF calculations
-                            ADFObs, bins = np.histogram(ADF_Obs_fracI, bins=EMDbins, density=True)
-                            ADFREF, bins = np.histogram(ADF_REF_fracI, bins=EMDbins, density=True)
+                                    numObs[HMObs] = numQDObs[HMObs]
+                                    numREF[HMREF] = numQDREF[HMREF]
 
-                            if emdSw:
-                                EMD[TIdx, SIdx] = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
-                                                      Dis.astype(np.float64))
-                            else:
-                                EMD[TIdx, SIdx] = np.sqrt(np.mean(np.power(ADFObs-ADFREF, 2)))
+                                    denObs[MMObs] = denODObs[MMObs]
+                                    denREF[MMREF] = denODREF[MMREF]
 
-                            EMDi[TIdx, SIdx] = SIdx
-                            ADFObsM[TIdx, SIdx, :] = ADFObs
-                            ADFRefM[TIdx, SIdx, :] = ADFREF
+                                # ADF calculations
+                                ADF_Obs_fracI = np.divide(numObs, denObs)
+                                ADF_REF_fracI = np.divide(numREF, denREF)
 
-                            # Storing coordinates of EMD distances
+                                # Removing last bin if we are going to ignore ADF = 1
+                                if not fulActSw:
+                                    ADF_Obs_fracI[ADF_Obs_fracI == 1] = np.nan
+                                    ADF_REF_fracI[ADF_REF_fracI == 1] = np.nan
+
+                                # Main ADF calculations
+                                ADFObs, bins = np.histogram(ADF_Obs_fracI, bins=EMDbins, density=True)
+                                ADFREF, bins = np.histogram(ADF_REF_fracI, bins=EMDbins, density=True)
+                                ADFObsM[TIdx, SIdx, :] = ADFObs
+                                ADFRefM[TIdx, SIdx, :] = ADFREF
+
+                                # Add EMD from ADF
+                                if emdSw:
+                                    EMD[TIdx, SIdx] = EMD[TIdx, SIdx] * emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64),
+                                                          Dis.astype(np.float64))
+                                else:
+                                    EMD[TIdx, SIdx] = EMD[TIdx, SIdx] * np.sqrt(np.mean(np.power(ADFObs-ADFREF, 2)))
+
+                        # Storing coordinates of EMD distances
                         EMDt[TIdx, SIdx] = ssn_data.REF_Grp['FRACYEAR'].values[cadMaskI[SIdx]]
                         EMDth[TIdx, SIdx] = Thr
                         EMDthi[TIdx, SIdx] = TIdx
+                        EMDi[TIdx, SIdx] = SIdx
 
             # If period is not valid append empty variables
             else:
@@ -1285,6 +1333,7 @@ class ssnADF(ssn_data):
         ssn_data.noOvrlpSw = noOvrlpSw   ## Switch that forces the code to ignore the true overlapping phase in calibration if present
         ssn_data.fulActSw = fulActSw  # Switch that sets whether ADF = 1 are included in the distribution calculations or not
         ssn_data.emdSw = emdSw  # Switch that activates the EMD metric (True), vs the L2 norm (False)
+        ssn_data.disDis = disDis # Variable that specifies the distributions that go into the distance
 
         ssn_data.GDObsI = GDObsI  # Variable that stores the number of days with groups of the observer for each interval, threshold, window shift, and window
         ssn_data.ODObsI = ODObsI  # Variable that stores the number of days with observations of the observer for each interval, threshold, window shift, and window
@@ -1296,6 +1345,9 @@ class ssnADF(ssn_data):
         ssn_data.SNdObsI = SNdObsI  # Variable that stores the daily sunspot number of days for each interval, threshold, window shift, and window
         ssn_data.SNdREFI = SNdREFI  # Variable that stores the daily sunspot number of days for each interval, threshold, window shift, and window
 
+        ssn_data.ObsGOBsI = ObsGOBsI # Variable that stores the number of groups observed by the observer
+        ssn_data.ObsREFsI = ObsREFsI # Variable that stores the number of groups observed by the reference for a given shift and threshold
+
         ssn_data.EMDD = EMDD  # Variable that stores the EMD between the reference and the observer for each interval, threshold, and window shift
         ssn_data.EMDtD = EMDtD  # Variable that stores the windowshift matching EMDD for each interval, threshold, and window shift
         ssn_data.EMDthD = EMDthD  # Variable that stores the threshold matching EMDD for each interval, threshold, and window shift
@@ -1304,8 +1356,10 @@ class ssnADF(ssn_data):
         ssn_data.ADFRefMD = ADFRefMD  # Variable that stores the ADF distribution for the reference
 
         ssn_data.EMDbins = EMDbins  # Bin edges for EMD calculation
+        ssn_data.EMDbinsG = EMDbinsG # Bin edges for group EMD calculation
 
         ssn_data.Dis = Dis  # Distance matrix used to calcualte the EMD
+        ssn_data.DisG = DisG  # Distance matrix used to calcualte the group EMD
 
         ssn_data.bestTh = bestTh  # Variable that stores the nBest matches for each interval
         ssn_data.wAvI = wAvI  # Weighted threshold average based on the nBest matches for different intervals
@@ -1541,6 +1595,11 @@ class ssnADF(ssn_data):
                 ADFObsI = np.array([])
                 ADFREFI = np.array([])
 
+                # Initializing arrays for joining the Groups of all sub-intervals
+                GrpObsI = np.array([])
+                GrpREFI = np.array([])
+
+
                 # Joining ADF from all sub-interval for the specified shifts
                 for siInx in range(0, ssn_data.cenPoints['OBS'].shape[0]):
 
@@ -1550,83 +1609,122 @@ class ssnADF(ssn_data):
                         # Time Shift Index
                         SIdx = valShfInx[siInx][comb[siInx]]
 
-                        VldMnObs = ssn_data.ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                        # Numerator and denominator for given observer
-                        numADObsII = ssn_data.GDObsI[siInx][TIdx, SIdx, VldMnObs]
-                        numQDObsII = ssn_data.MoLngt - ssn_data.QDObsI[siInx][TIdx, SIdx, VldMnObs]
-                        denFMObsII = ssn_data.GDObsI[siInx][TIdx, SIdx, VldMnObs] * 0 + ssn_data.MoLngt
-                        denODObsII = ssn_data.ODObsI[siInx][TIdx, SIdx, VldMnObs]
+                        # Proces Group array calculation if we are using that distance
+                        if (ssn_data.disDis == 'Grp') or (ssn_data.disDis == 'Both'):
 
-                        VldMnREF = ssn_data.ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
-                        # Numerator and denominator for reference
-                        numADREFII = ssn_data.GDREFI[siInx][TIdx, SIdx, VldMnREF]
-                        numQDREFII = ssn_data.MoLngt - ssn_data.QDREFI[siInx][TIdx, SIdx, VldMnREF]
-                        denFMREFII = ssn_data.GDREFI[siInx][TIdx, SIdx, VldMnREF] * 0 + ssn_data.MoLngt
-                        denODREFII = ssn_data.ODREFI[siInx][TIdx, SIdx, VldMnREF]
+                            # If it is the first interval re-create the arrays
+                            if ADFObsI.shape[0] == 0:
+                                GrpObsI = ssn_data.ObsGOBsI[siInx][TIdx, SIdx, :]
+                                GrpREFI = ssn_data.ObsREFsI[siInx][TIdx, SIdx, :]
 
-                        if config.NUM_TYPE == "ADF":
-                            numObsII = numADObsII
-                            numREFII = numADREFII
-                        else:
-                            numObsII = numQDObsII
-                            numREFII = numQDREFII
+                            # If not, append ADF from all sub-interval for the specified shifts
+                            else:
+                                GrpObsI = np.append(GrpObsI, ssn_data.ObsGOBsI[siInx][TIdx, SIdx, :])
+                                GrpREFI = np.append(GrpREFI, ssn_data.ObsREFsI[siInx][TIdx, SIdx, :])
 
-                        if config.DEN_TYPE == "OBS":
-                            denObsII = denODObsII
-                            denREFII = denODREFII
-                        else:
-                            denObsII = denFMObsII
-                            denREFII = denFMREFII
 
-                        if config.DEN_TYPE == "DTh":
-                            # defining solar activity level
-                            MMObsII = np.logical_and((ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
-                                                     (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
-                            MMREFII = np.logical_and((ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
-                                                     (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
+                        # Proces ADF array calculation if we are using that distance
+                        if (ssn_data.disDis == 'ADF') or (ssn_data.disDis == 'Both'):
 
-                            HMObsII = (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)
-                            HMREFII = (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= highth)
+                            VldMnObs = ssn_data.ODObsI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
+                            # Numerator and denominator for given observer
+                            numADObsII = ssn_data.GDObsI[siInx][TIdx, SIdx, VldMnObs]
+                            numQDObsII = ssn_data.MoLngt - ssn_data.QDObsI[siInx][TIdx, SIdx, VldMnObs]
+                            denFMObsII = ssn_data.GDObsI[siInx][TIdx, SIdx, VldMnObs] * 0 + ssn_data.MoLngt
+                            denODObsII = ssn_data.ODObsI[siInx][TIdx, SIdx, VldMnObs]
 
-                            # Default numerators and denominators
-                            numObsII = numADObsII
-                            numREFII = numADREFII
-                            denObsII = denFMObsII
-                            denREFII = denFMREFII
+                            VldMnREF = ssn_data.ODREFI[siInx][TIdx, SIdx, :] / ssn_data.MoLngt >= ssn_data.minObD
+                            # Numerator and denominator for reference
+                            numADREFII = ssn_data.GDREFI[siInx][TIdx, SIdx, VldMnREF]
+                            numQDREFII = ssn_data.MoLngt - ssn_data.QDREFI[siInx][TIdx, SIdx, VldMnREF]
+                            denFMREFII = ssn_data.GDREFI[siInx][TIdx, SIdx, VldMnREF] * 0 + ssn_data.MoLngt
+                            denODREFII = ssn_data.ODREFI[siInx][TIdx, SIdx, VldMnREF]
 
-                            numObsII[HMObsII] = numQDObsII[HMObsII]
-                            numREFII[HMREFII] = numQDREFII[HMREFII]
+                            if config.NUM_TYPE == "ADF":
+                                numObsII = numADObsII
+                                numREFII = numADREFII
+                            else:
+                                numObsII = numQDObsII
+                                numREFII = numQDREFII
 
-                            denObsII[MMObsII] = denODObsII[MMObsII]
-                            denREFII[MMREFII] = denODREFII[MMREFII]
+                            if config.DEN_TYPE == "OBS":
+                                denObsII = denODObsII
+                                denREFII = denODREFII
+                            else:
+                                denObsII = denFMObsII
+                                denREFII = denFMREFII
 
-                        # ADF calculations
-                        ADF_Obs_fracII = np.divide(numObsII, denObsII)
-                        ADF_REF_fracII = np.divide(numREFII, denREFII)
+                            if config.DEN_TYPE == "DTh":
+                                # defining solar activity level
+                                MMObsII = np.logical_and((ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= lowth),
+                                                         (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] < highth))
+                                MMREFII = np.logical_and((ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= lowth),
+                                                         (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] < highth))
 
-                        # If it is the first interval re-create the arrays
-                        if ADFObsI.shape[0] == 0:
-                            ADFObsI = ADF_Obs_fracII
-                            ADFREFI = ADF_REF_fracII
+                                HMObsII = (ssn_data.SNdObsI[siInx][TIdx, SIdx, VldMnObs] >= highth)
+                                HMREFII = (ssn_data.SNdREFI[siInx][TIdx, SIdx, VldMnREF] >= highth)
 
-                        # If not, append ADF from all sub-interval for the specified shifts
-                        else:
-                            ADFObsI = np.append(ADFObsI, ADF_Obs_fracII)
-                            ADFREFI = np.append(ADFREFI, ADF_REF_fracII)
+                                # Default numerators and denominators
+                                numObsII = numADObsII
+                                numREFII = numADREFII
+                                denObsII = denFMObsII
+                                denREFII = denFMREFII
 
-                # Removing last bin if we are going to ignore ADF = 1
-                if not ssn_data.fulActSw:
-                    ADFObsI[ADFObsI == 1] = np.nan
-                    ADFREFI[ADFREFI == 1] = np.nan
+                                numObsII[HMObsII] = numQDObsII[HMObsII]
+                                numREFII[HMREFII] = numQDREFII[HMREFII]
 
-                # Calculating Earth Mover's Distance
-                ADFObs, bins = np.histogram(ADFObsI, bins=ssn_data.EMDbins, density=True)
-                ADFREF, bins = np.histogram(ADFREFI, bins=ssn_data.EMDbins, density=True)
+                                denObsII[MMObsII] = denODObsII[MMObsII]
+                                denREFII[MMREFII] = denODREFII[MMREFII]
 
-                if ssn_data.emdSw:
-                    tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
+                            # ADF calculations
+                            ADF_Obs_fracII = np.divide(numObsII, denObsII)
+                            ADF_REF_fracII = np.divide(numREFII, denREFII)
+
+                            # If it is the first interval re-create the arrays
+                            if ADFObsI.shape[0] == 0:
+                                ADFObsI = ADF_Obs_fracII
+                                ADFREFI = ADF_REF_fracII
+
+                            # If not, append ADF from all sub-interval for the specified shifts
+                            else:
+                                ADFObsI = np.append(ADFObsI, ADF_Obs_fracII)
+                                ADFREFI = np.append(ADFREFI, ADF_REF_fracII)
+
+                if (ssn_data.disDis == 'ADF') or (ssn_data.disDis == 'Both'):
+
+                    # Removing last bin if we are going to ignore ADF = 1
+                    if not ssn_data.fulActSw:
+                        ADFObsI[ADFObsI == 1] = np.nan
+                        ADFREFI[ADFREFI == 1] = np.nan
+
+                    # Calculating Earth Mover's Distance
+                    ADFObs, bins = np.histogram(ADFObsI, bins=ssn_data.EMDbins, density=True)
+                    ADFREF, bins = np.histogram(ADFREFI, bins=ssn_data.EMDbins, density=True)
+
+                    if ssn_data.emdSw:
+                        tmpEMD = emd(ADFREF.astype(np.float64), ADFObs.astype(np.float64), ssn_data.Dis.astype(np.float64))
+                    else:
+                        tmpEMD = np.sqrt(np.mean(np.power(ADFObs - ADFREF, 2)))
+
                 else:
-                    tmpEMD = np.sqrt(np.mean(np.power(ADFObs - ADFREF, 2)))
+                    tmpEMD = 1
+
+                if (ssn_data.disDis == 'Grp') or (ssn_data.disDis == 'Both'):
+
+                    # Calculating Earth Mover's Distance for group numbers
+                    DisObs, bins = np.histogram(GrpObsI,
+                                                bins=ssn_data.EMDbinsG,
+                                                density=True)
+
+                    DisREF, bins = np.histogram(GrpREFI,
+                                                bins=ssn_data.EMDbinsG,
+                                                density=True)
+
+                    if ssn_data.emdSw:
+                        tmpEMD = tmpEMD*emd(DisREF.astype(np.float64), DisObs.astype(np.float64),
+                                              ssn_data.DisG.astype(np.float64))
+                    else:
+                        tmpEMD = tmpEMD*np.sqrt(np.mean(np.power(DisObs - DisREF, 2)))
 
 
                 if np.any(EMDComb[0, :] > tmpEMD) and np.isfinite(tmpEMD) and tmpEMD:
