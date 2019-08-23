@@ -29,8 +29,8 @@ args, leftovers = parser.parse_known_args()
 #################
 
 # Observer ID range and who to skip
-SSN_ADF_Config.OBS_START_ID = 358
-SSN_ADF_Config.OBS_END_ID = 634
+SSN_ADF_Config.OBS_START_ID = 318
+SSN_ADF_Config.OBS_END_ID = 419
 SSN_ADF_Config.SKIP_OBS = [574, 579]
 
 # Quantity to use in the numerator of the ADF:  Active days "ADF", 1-quiet days "QDF"
@@ -87,11 +87,11 @@ if SSN_ADF_Config.SUPPRESS_NP_WARNINGS:
     np.warnings.filterwarnings('ignore')
 
 # Output Folder
-output_path = 'TestL2Mul'
+output_path = 'MulL2'
 # output_path = SSN_ADF_Config.get_file_prepend(SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE)
 
 # Output CSV file path
-output_csv_file = 'output/{}/{}_Observer_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
+output_csv_file = 'output/{}/{}_Observer1_ADF.csv'.format(output_path, SSN_ADF_Config.get_file_prepend(
     SSN_ADF_Config.NUM_TYPE, SSN_ADF_Config.DEN_TYPE))
 
 #################
@@ -159,7 +159,9 @@ header = ['Observer',
           'InvMoStreak',  # Highest number of invalid months in a row (biggest gap)
           'ObsStartDate',  # Starting date
           'ObsTotLength',  # Days between starting and ending dates
-          'BestThSF']  # Best thresholds of the simultaneous fit
+          # Simultaneous fit
+          'BestThSF', # Best thresholds
+          'BestDisSF'] # Distances
 
 # Read Data and plot reference search windows, minima and maxima
 ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.csv',
@@ -171,14 +173,15 @@ ssn_adf = ssnADF(ref_data_path='../input_data/SC_SP_RG_DB_KM_group_areas_by_day.
                  font={'family': 'sans-serif',
                        'weight': 'normal',
                        'size': 21},
-                 dt=15,  # Temporal Stride in days
+                 minYrRef=1900,  #Minimum year used for reference
+                 dt=10,  # Temporal Stride in days
                  phTol=1,  # Cycle phase tolerance in years
                  thS=1,  # Starting threshold
-                 thE=120, # Ending Threshold
-                 thI=2,  # Threshold increments
+                 thE=90, # Ending Threshold
+                 thI=1,  # Threshold increments
                  thNPc=20,  # Number of thresholds including 0 for percentile fitting
                  thIPc=5,  # Threshold increments for percentile fitting
-                 MoLngt=15,  # Duration of the interval ("month") used to calculate the ADF
+                 MoLngt=20,  # Duration of the interval ("month") used to calculate the ADF
                  minObD=0.33,  # Minimum proportion of days with observation for a "month" to be considered valid
                  minADFmnth=5,  # Minimum number of months with ADF greater than 0 and lower than 1 for interval to be considered valid
                  maxValInt=3,  # Maximum number of valid intervals to be used in calibration
@@ -349,8 +352,9 @@ def run_obs(CalObsID):
                  ssn_data.InvMoStreak,  # Highest number of invalid months in a row (biggest gap)
                  ssn_data.ObsStartDate,  # Start date
                  ssn_data.ObsTotLength, # Days between starting and ending dates
-                 # Best thresholds of the simultaneous fit
-                 ssn_data.EMDComb[1, :]
+                 # Simultaneous fit
+                 ssn_data.EMDComb[1, :],  # Best thresholds
+                 ssn_data.EMDComb[0, :]  # Distances
                  ]
 
         with open(output_csv_file, 'a+', newline='') as f:
