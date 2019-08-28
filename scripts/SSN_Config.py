@@ -9,7 +9,7 @@ class SSN_Data:
     pass
 
 
-class SSN_ADF_Config:
+class SSN_GRP_Config:
     """
     Class to store static config variables
     """
@@ -25,22 +25,6 @@ class SSN_ADF_Config:
     # "False" --> Use GN
     SQRT_2DHIS = False
 
-    # OPTIMIZATION OPTIONS
-    # '1' uses the absolute best combination of time and threshold and prevents the code from plotting the
-    # EMD vs. Threshold plots
-    # '>1' calculates the threshold using the average of the NBEST points
-    NBEST = 50
-
-    # DYNAMIC ADF OPTIONS
-    # PCTLO defines the percentile of ADF months for which low activity conditions must hold
-    # PCTHI defines the percentile of ADF months for which high activity conditions must hold
-    PCTLO = 85
-    PCTHI = 90
-    # QTADF maximum ADF used to consider an interval quiet
-    # ACADF minimum ADF used to consider an interval active
-    QTADF = 0.25
-    ACADF = 0.75
-
     # OVERWRITING AND SKIPPING PLOTS
     # Setting both flags to false will recreate and overwrite all plots for all observers
     # Overwrite plots already present
@@ -54,7 +38,7 @@ class SSN_ADF_Config:
     SKIP_OBSERVERS_WITH_PLOTS = False
 
     # Plotting config variables
-    PLOT_SN_ADF = True
+    PLOT_SN_GRP = True
     PLOT_SN_AL = True
     PLOT_OPTIMAL_THRESH = True
     PLOT_ACTIVE_OBSERVED = True
@@ -73,54 +57,31 @@ class SSN_ADF_Config:
     SUPPRESS_NP_WARNINGS = False
 
     @staticmethod
-    def get_file_prepend(num_type, den_type):
+    def get_file_prepend():
         """
-        :param num_type: ADF parameter set in config
+        :param num_type: GRP parameter set in config
         :param den_type: month length parameter set in config
-        :return: prepend for plots depending on ADF and month length
+        :return: prepend for plots depending on GRP and month length
         """
 
-        # Type of numerator
-        if num_type == "ADF":
-            prepend = "A_"
-        elif num_type == "QDF":
-            prepend = "Q_"
-        else:
-            raise ValueError(
-                'Invalid flag: Use \'ADF\' (or \'QDF\') for active (quiet) day fraction')
-
-        # Type of denominator
-        if den_type == "FULLM":
-            prepend += "M_"
-        elif den_type == "OBS":
-            prepend += "O_"
-        elif den_type == "DTh":
-            prepend += "D_"
-        else:
-            raise ValueError(
-                'Invalid flag: Use \'OBS\' (or \'FULLM\') to use observed days (full month length), or use \'DTh\' for dynamic ADF.')
-
-        prepend += "NB" + str(SSN_ADF_Config.NBEST)
-        if SSN_ADF_Config.DEN_TYPE == 'DTh':
-            prepend += "_PL" + str(SSN_ADF_Config.PCTLO) + "_PH" + str(SSN_ADF_Config.PCTHI)
-            prepend += "_QD" + str(SSN_ADF_Config.QTADF) + "_AD" + str(SSN_ADF_Config.ACADF)
+        prepend = "GRP_"
 
         return prepend
 
     @staticmethod
-    def get_file_output_string(number, title, ssn_data, num_type, den_type):
+    def get_file_output_string(number, title, ssn_data):
         """
         :param number: Plot type identifier
         :param title: Plot title
         :param ssn_data: SSN_Data object storing metadata
-        :param num_type: ADF parameter set in config
+        :param num_type: GRP parameter set in config
         :param den_type: month length parameter set in config
         :return: Path
         """
         return os.path.join(ssn_data.output_path,
                             "{}_{}".format(ssn_data.CalObs, ssn_data.NamObs),
                             "{}_{}_{}_{}_{}.png".format(number,
-                                                        SSN_ADF_Config.get_file_prepend(num_type, den_type),
+                                                        SSN_GRP_Config.get_file_prepend(),
                                                         ssn_data.CalObs,
                                                         ssn_data.NamObs,
                                                         title))
